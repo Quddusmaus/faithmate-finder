@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Heart, ArrowLeft, User, LogOut, Settings } from "lucide-react";
+import { Heart, ArrowLeft, User, LogOut, Settings, MessageCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ProfileCard } from "@/components/ProfileCard";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface Profile {
@@ -22,6 +23,7 @@ const Profiles = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [matchCount, setMatchCount] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -33,6 +35,14 @@ const Profiles = () => {
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
+    
+    if (user) {
+      // Get match count
+      const { data } = await supabase.rpc('get_user_matches', {
+        user_uuid: user.id
+      });
+      setMatchCount(data?.length || 0);
+    }
   };
 
   const handleSignOut = async () => {
@@ -92,6 +102,17 @@ const Profiles = () => {
             </Link>
             {user ? (
               <>
+                <Link to="/messages">
+                  <Button variant="outline" className="relative">
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Messages
+                    {matchCount > 0 && (
+                      <Badge className="ml-2 bg-primary text-primary-foreground">
+                        {matchCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </Link>
                 <Link to="/profile-setup">
                   <Button variant="outline">
                     <Settings className="mr-2 h-4 w-4" />

@@ -2,13 +2,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
   id: string;
@@ -19,6 +21,7 @@ interface Profile {
   photo_urls: string[];
   gender: string | null;
   looking_for: string | null;
+  user_id?: string;
 }
 
 interface ProfileCardProps {
@@ -27,7 +30,120 @@ interface ProfileCardProps {
 
 export const ProfileCard = ({ profile }: ProfileCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [liking, setLiking] = useState(false);
+  const { toast } = useToast();
   const imageUrl = profile.photo_urls[0] || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400";
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    if (currentUser && profile.user_id) {
+      checkIfLiked();
+    }
+  }, [currentUser, profile.user_id]);
+
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setCurrentUser(user?.id || null);
+  };
+
+  const checkIfLiked = async () => {
+    if (!currentUser || !profile.user_id) return;
+
+    try {
+      const { data } = await supabase
+        .from("likes")
+        .select("id")
+        .eq("user_id", currentUser)
+        .eq("liked_user_id", profile.user_id)
+        .maybeSingle();
+
+      setLiked(!!data);
+    } catch (error) {
+      console.error("Error checking like status:", error);
+    }
+  };
+
+  const handleLike = async () => {
+    if (!currentUser) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to like profiles.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!profile.user_id) {
+      toast({
+        title: "Cannot like this profile",
+        description: "This is a demo profile.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLiking(true);
+    try {
+      if (liked) {
+        const { error } = await supabase
+          .from("likes")
+          .delete()
+          .eq("user_id", currentUser)
+          .eq("liked_user_id", profile.user_id);
+
+        if (error) throw error;
+        setLiked(false);
+        toast({
+          title: "Unliked",
+          description: "Profile removed from your likes.",
+        });
+      } else {
+        const { error } = await supabase
+          .from("likes")
+          .insert([{
+            user_id: currentUser,
+            liked_user_id: profile.user_id
+          }]);
+
+        if (error) throw error;
+        setLiked(true);
+
+        // Check if it's a match
+        const { data: matchData } = await supabase
+          .from("likes")
+          .select("id")
+          .eq("user_id", profile.user_id)
+          .eq("liked_user_id", currentUser)
+          .maybeSingle();
+
+        if (matchData) {
+          toast({
+            title: "It's a match! 🎉",
+            description: `You and ${profile.name} liked each other!`,
+          });
+        } else {
+          toast({
+            title: "Liked",
+            description: "Profile added to your likes.",
+          });
+        }
+      }
+    } catch (error: any) {
+      console.error("Error toggling like:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update like status.",
+        variant: "destructive",
+      });
+    } finally {
+      setLiking(false);
+    }
+  };
 
   return (
     <>
@@ -66,9 +182,17 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
             >
               View Profile
             </Button>
-            <Button variant="outline" size="icon" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-              <Heart className="h-4 w-4" />
-            </Button>
+            {currentUser && profile.user_id && (
+              <Button 
+                variant={liked ? "default" : "outline"} 
+                size="icon" 
+                onClick={handleLike}
+                disabled={liking}
+                className={liked ? "bg-primary text-primary-foreground" : "border-primary text-primary hover:bg-primary hover:text-primary-foreground"}
+              >
+                <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -114,10 +238,21 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
               )}
             </div>
 
-            <Button className="w-full bg-primary hover:bg-primary/90">
-              <Heart className="mr-2 h-4 w-4" />
-              Like Profile
-            </Button>
+            {currentUser && profile.user_id ? (
+              <Button 
+                onClick={handleLike}
+                disabled={liking}
+                className={`w-full ${liked ? 'bg-muted hover:bg-muted/80' : 'bg-primary hover:bg-primary/90'}`}
+              >
+                <Heart className={`mr-2 h-4 w-4 ${liked ? 'fill-current' : ''}`} />
+                {liked ? 'Unlike Profile' : 'Like Profile'}
+              </Button>
+            ) : (
+              <Button className="w-full bg-primary hover:bg-primary/90" disabled>
+                <Heart className="mr-2 h-4 w-4" />
+                {!currentUser ? 'Sign in to like' : 'Demo profile'}
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
