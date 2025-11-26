@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Heart, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Heart, ArrowLeft, User, LogOut, Settings } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { ProfileCard } from "@/components/ProfileCard";
 import { useToast } from "@/hooks/use-toast";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface Profile {
   id: string;
@@ -20,21 +21,48 @@ interface Profile {
 const Profiles = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
+    checkAuth();
     fetchProfiles();
   }, []);
 
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully.",
+    });
+  };
+
   const fetchProfiles = async () => {
     try {
-      const { data, error } = await supabase
-        .from("demo_profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      // Fetch both demo profiles and real user profiles
+      const [demoResult, profilesResult] = await Promise.all([
+        supabase.from("demo_profiles").select("*").order("created_at", { ascending: false }),
+        supabase.from("profiles").select("*").order("created_at", { ascending: false })
+      ]);
 
-      if (error) throw error;
-      setProfiles(data || []);
+      if (demoResult.error) throw demoResult.error;
+      if (profilesResult.error) throw profilesResult.error;
+
+      // Combine and filter out current user's profile from the list
+      const currentUser = (await supabase.auth.getUser()).data.user;
+      const allProfiles = [
+        ...(demoResult.data || []),
+        ...(profilesResult.data || []).filter(p => p.user_id !== currentUser?.id)
+      ];
+
+      setProfiles(allProfiles);
     } catch (error) {
       console.error("Error fetching profiles:", error);
       toast({
@@ -62,9 +90,24 @@ const Profiles = () => {
                 Back to Home
               </Button>
             </Link>
-            <Link to="/auth">
-              <Button className="bg-primary hover:bg-primary/90">Sign In</Button>
-            </Link>
+            {user ? (
+              <>
+                <Link to="/profile-setup">
+                  <Button variant="outline">
+                    <Settings className="mr-2 h-4 w-4" />
+                    My Profile
+                  </Button>
+                </Link>
+                <Button variant="ghost" onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <Link to="/auth">
+                <Button className="bg-primary hover:bg-primary/90">Sign In</Button>
+              </Link>
+            )}
           </div>
         </div>
       </nav>
