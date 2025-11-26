@@ -24,23 +24,46 @@ const Auth = () => {
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          navigate("/profiles");
+          // Check if user has a profile
+          setTimeout(async () => {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("id")
+              .eq("user_id", session.user.id)
+              .maybeSingle();
+            
+            if (profile) {
+              navigate("/profiles");
+            } else {
+              navigate("/profile-setup");
+            }
+          }, 0);
         }
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        navigate("/profiles");
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        
+        if (profile) {
+          navigate("/profiles");
+        } else {
+          navigate("/profile-setup");
+        }
       }
     });
 
