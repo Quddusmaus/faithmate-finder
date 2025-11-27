@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Shield, Users, CheckCircle, XCircle, Clock, ArrowLeft, Flag, AlertTriangle, Ban } from "lucide-react";
+import { Heart, Shield, Users, CheckCircle, XCircle, Clock, ArrowLeft, Flag, AlertTriangle, Ban, Scale } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -58,6 +58,17 @@ interface ProfileReport {
   reported_profile?: Profile;
 }
 
+interface BanAppeal {
+  id: string;
+  user_id: string;
+  appeal_reason: string;
+  status: string;
+  admin_response: string | null;
+  submitted_at: string;
+  reviewed_at: string | null;
+  profile?: Profile;
+}
+
 const REASON_LABELS: Record<string, string> = {
   fake_profile: "Fake or misleading profile",
   inappropriate_content: "Inappropriate photos or content",
@@ -72,12 +83,15 @@ const Admin = () => {
   const { isAdmin, isLoading: isAdminLoading } = useAdminStatus();
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
   const [reports, setReports] = useState<ProfileReport[]>([]);
+  const [appeals, setAppeals] = useState<BanAppeal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState("pending");
-  const [activeSection, setActiveSection] = useState<"verifications" | "reports">("verifications");
+  const [activeSection, setActiveSection] = useState<"verifications" | "reports" | "appeals">("verifications");
   const [selectedReport, setSelectedReport] = useState<ProfileReport | null>(null);
+  const [selectedAppeal, setSelectedAppeal] = useState<BanAppeal | null>(null);
   const [resolutionNotes, setResolutionNotes] = useState("");
+  const [appealResponse, setAppealResponse] = useState("");
   const [actionType, setActionType] = useState<"none" | "suspend" | "ban">("none");
   const [suspensionDuration, setSuspensionDuration] = useState<string>("7");
 
@@ -92,6 +106,7 @@ const Admin = () => {
     if (isAdmin) {
       fetchVerificationRequests();
       fetchReports();
+      fetchAppeals();
     }
   }, [isAdmin]);
 
@@ -158,6 +173,37 @@ const Admin = () => {
     } catch (error) {
       console.error("Error fetching reports:", error);
       toast.error("Failed to load reports");
+    }
+  };
+
+  const fetchAppeals = async () => {
+    try {
+      const { data: appealsData, error: appealsError } = await supabase
+        .from("ban_appeals")
+        .select("*")
+        .order("submitted_at", { ascending: false });
+
+      if (appealsError) throw appealsError;
+
+      const appealsWithProfiles: BanAppeal[] = [];
+      
+      for (const appeal of appealsData || []) {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("id, user_id, name, age, location, photo_urls, bio, status, suspended_until, suspension_reason")
+          .eq("user_id", appeal.user_id)
+          .maybeSingle();
+
+        appealsWithProfiles.push({
+          ...appeal,
+          profile: profileData || undefined,
+        });
+      }
+
+      setAppeals(appealsWithProfiles);
+    } catch (error) {
+      console.error("Error fetching appeals:", error);
+      toast.error("Failed to load appeals");
     }
   };
 
@@ -331,6 +377,7 @@ const Admin = () => {
 
       toast.success(`${profile.name}'s profile has been reactivated`);
       fetchReports();
+      fetchAppeals();
     } catch (error) {
       console.error("Error unbanning profile:", error);
       toast.error("Failed to unban profile");
@@ -339,8 +386,58 @@ const Admin = () => {
     }
   };
 
+  const handleAppealAction = async (appealId: string, action: "approved" | "rejected") => {
+    try {
+      setIsProcessing(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      const appeal = appeals.find(a => a.id === appealId);
+
+      if (!appeal) return;
+
+      // Update appeal status
+      const { error: appealError } = await supabase
+        .from("ban_appeals")
+        .update({
+          status: action,
+          admin_response: appealResponse || null,
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: user?.id,
+        })
+        .eq("id", appealId);
+
+      if (appealError) throw appealError;
+
+      // If approved, reactivate the profile
+      if (action === "approved" && appeal.profile) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({
+            status: "active",
+            suspended_until: null,
+            suspension_reason: null,
+          })
+          .eq("user_id", appeal.user_id);
+
+        if (profileError) throw profileError;
+      }
+
+      toast.success(action === "approved" ? "Appeal approved - profile reactivated" : "Appeal rejected");
+      setSelectedAppeal(null);
+      setAppealResponse("");
+      fetchAppeals();
+      fetchReports();
+    } catch (error) {
+      console.error("Error processing appeal:", error);
+      toast.error("Failed to process appeal");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const filteredRequests = requests.filter((r) => r.status === activeTab);
   const filteredReports = reports.filter((r) => r.status === activeTab);
+  const filteredAppeals = appeals.filter((a) => a.status === activeTab);
 
   const verificationStats = {
     pending: requests.filter((r) => r.status === "pending").length,
@@ -352,6 +449,12 @@ const Admin = () => {
     pending: reports.filter((r) => r.status === "pending").length,
     resolved: reports.filter((r) => r.status === "resolved").length,
     dismissed: reports.filter((r) => r.status === "dismissed").length,
+  };
+
+  const appealStats = {
+    pending: appeals.filter((a) => a.status === "pending").length,
+    approved: appeals.filter((a) => a.status === "approved").length,
+    rejected: appeals.filter((a) => a.status === "rejected").length,
   };
 
   if (isAdminLoading) {
@@ -432,6 +535,22 @@ const Admin = () => {
             {reportStats.pending > 0 && (
               <Badge variant="destructive" className="ml-1">
                 {reportStats.pending}
+              </Badge>
+            )}
+          </Button>
+          <Button
+            variant={activeSection === "appeals" ? "default" : "outline"}
+            onClick={() => {
+              setActiveSection("appeals");
+              setActiveTab("pending");
+            }}
+            className="gap-2"
+          >
+            <Scale className="h-4 w-4" />
+            Appeals
+            {appealStats.pending > 0 && (
+              <Badge variant="outline" className="ml-1 border-purple-500 text-purple-600">
+                {appealStats.pending}
               </Badge>
             )}
           </Button>
@@ -572,7 +691,7 @@ const Admin = () => {
               )}
             </Tabs>
           </>
-        ) : (
+        ) : activeSection === "reports" ? (
           <>
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-foreground">Profile Reports</h1>
@@ -734,6 +853,165 @@ const Admin = () => {
                                     <div className="mt-2 p-2 bg-muted rounded text-xs">
                                       <span className="font-medium">Notes: </span>
                                       {report.resolution_notes}
+                                    </div>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </TabsContent>
+                  ))}
+                </>
+              )}
+            </Tabs>
+          </>
+        ) : (
+          <>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-foreground">Ban Appeals</h1>
+              <p className="text-muted-foreground">Review appeals from users whose accounts have been suspended or banned</p>
+            </div>
+
+            {/* Appeal Stats */}
+            <div className="grid gap-6 md:grid-cols-3 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Pending</CardTitle>
+                  <Clock className="h-4 w-4 text-purple-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{appealStats.pending}</div>
+                  <p className="text-xs text-muted-foreground">Awaiting review</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Approved</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{appealStats.approved}</div>
+                  <p className="text-xs text-muted-foreground">Profiles reinstated</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+                  <XCircle className="h-4 w-4 text-red-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{appealStats.rejected}</div>
+                  <p className="text-xs text-muted-foreground">Appeals denied</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Appeals Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsTrigger value="pending" className="gap-2">
+                  <Clock className="h-4 w-4" />
+                  Pending ({appealStats.pending})
+                </TabsTrigger>
+                <TabsTrigger value="approved" className="gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Approved ({appealStats.approved})
+                </TabsTrigger>
+                <TabsTrigger value="rejected" className="gap-2">
+                  <XCircle className="h-4 w-4" />
+                  Rejected ({appealStats.rejected})
+                </TabsTrigger>
+              </TabsList>
+
+              {isLoading ? (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-48" />
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {["pending", "approved", "rejected"].map((status) => (
+                    <TabsContent key={status} value={status}>
+                      {filteredAppeals.length === 0 ? (
+                        <Card className="p-12 text-center">
+                          <Scale className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                          <h3 className="text-lg font-medium">No {status} appeals</h3>
+                          <p className="text-muted-foreground">
+                            {status === "pending" 
+                              ? "All appeals have been reviewed." 
+                              : `No appeals have been ${status} yet.`}
+                          </p>
+                        </Card>
+                      ) : (
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          {filteredAppeals.map((appeal) => (
+                            <Card key={appeal.id} className="overflow-hidden">
+                              <CardHeader className="pb-2">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex items-center gap-3">
+                                    {appeal.profile?.photo_urls?.[0] ? (
+                                      <img
+                                        src={appeal.profile.photo_urls[0]}
+                                        alt={appeal.profile.name}
+                                        className="h-12 w-12 rounded-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                                        <Users className="h-6 w-6 text-muted-foreground" />
+                                      </div>
+                                    )}
+                                    <div>
+                                      <div className="flex items-center gap-2">
+                                        <CardTitle className="text-base">
+                                          {appeal.profile?.name || "Unknown"}
+                                        </CardTitle>
+                                        {appeal.profile?.status && appeal.profile.status !== "active" && (
+                                          <Badge variant="destructive" className="text-xs">
+                                            {appeal.profile.status === "banned" ? "Banned" : "Suspended"}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <p className="text-xs text-muted-foreground">
+                                        {formatDistanceToNow(new Date(appeal.submitted_at), { addSuffix: true })}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Badge 
+                                    variant={
+                                      appeal.status === "pending" ? "outline" :
+                                      appeal.status === "approved" ? "default" : "destructive"
+                                    }
+                                    className={
+                                      appeal.status === "pending" ? "border-purple-500 text-purple-600" : ""
+                                    }
+                                  >
+                                    {appeal.status}
+                                  </Badge>
+                                </div>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="space-y-2">
+                                  <div>
+                                    <p className="text-sm font-medium">Appeal Reason</p>
+                                    <p className="text-sm text-muted-foreground line-clamp-3">
+                                      {appeal.appeal_reason}
+                                    </p>
+                                  </div>
+                                  {appeal.status === "pending" && (
+                                    <Button
+                                      className="w-full mt-4"
+                                      onClick={() => setSelectedAppeal(appeal)}
+                                    >
+                                      Review Appeal
+                                    </Button>
+                                  )}
+                                  {appeal.admin_response && (
+                                    <div className="mt-2 p-2 bg-muted rounded text-xs">
+                                      <span className="font-medium">Response: </span>
+                                      {appeal.admin_response}
                                     </div>
                                   )}
                                 </div>
@@ -910,6 +1188,88 @@ const Admin = () => {
                   disabled={isProcessing}
                 >
                   {actionType === "ban" ? "Ban & Resolve" : actionType === "suspend" ? "Suspend & Resolve" : "Resolve"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Appeal Review Dialog */}
+      <Dialog open={!!selectedAppeal} onOpenChange={(open) => {
+        if (!open) {
+          setSelectedAppeal(null);
+          setAppealResponse("");
+        }
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Scale className="h-5 w-5 text-purple-600" />
+              Review Appeal
+            </DialogTitle>
+            <DialogDescription>
+              Review this ban appeal and decide whether to reinstate the profile.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedAppeal && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                {selectedAppeal.profile?.photo_urls?.[0] ? (
+                  <img
+                    src={selectedAppeal.profile.photo_urls[0]}
+                    alt={selectedAppeal.profile.name}
+                    className="h-16 w-16 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-16 w-16 rounded-full bg-background flex items-center justify-center">
+                    <Users className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <p className="font-medium">{selectedAppeal.profile?.name || "Unknown"}</p>
+                  <Badge variant="destructive" className="text-xs">
+                    {selectedAppeal.profile?.status === "banned" ? "Banned" : "Suspended"}
+                  </Badge>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium mb-1">Appeal Reason</p>
+                <p className="text-sm text-muted-foreground bg-muted p-3 rounded">
+                  {selectedAppeal.appeal_reason}
+                </p>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium">Your Response</Label>
+                <Textarea
+                  placeholder="Provide a response to the user..."
+                  value={appealResponse}
+                  onChange={(e) => setAppealResponse(e.target.value)}
+                  rows={3}
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="destructive"
+                  className="flex-1"
+                  onClick={() => handleAppealAction(selectedAppeal.id, "rejected")}
+                  disabled={isProcessing}
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Reject
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => handleAppealAction(selectedAppeal.id, "approved")}
+                  disabled={isProcessing}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Approve & Reinstate
                 </Button>
               </div>
             </div>
