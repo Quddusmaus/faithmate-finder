@@ -7,15 +7,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { PhotoUpload } from "@/components/PhotoUpload";
-import { Loader2 } from "lucide-react";
+import { Loader2, BadgeCheck, Clock, ShieldCheck } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 const ProfileSetup = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
+  const [verificationLoading, setVerificationLoading] = useState(false);
   const [existingProfile, setExistingProfile] = useState<any>(null);
+  const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
@@ -54,9 +57,66 @@ const ProfileSetup = () => {
       setLookingFor(profile.looking_for || "");
       setBio(profile.bio || "");
       setPhotoUrls(profile.photo_urls || []);
+      
+      // Check verification status
+      if (profile.verified) {
+        setVerificationStatus("verified");
+      } else {
+        const { data: verificationRequest } = await supabase
+          .from("verification_requests")
+          .select("status")
+          .eq("user_id", user.id)
+          .order("submitted_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        if (verificationRequest) {
+          setVerificationStatus(verificationRequest.status);
+        }
+      }
     } else {
       // Set name from signup if available
       setName(user.user_metadata?.name || "");
+    }
+  };
+
+  const handleRequestVerification = async () => {
+    if (!user) return;
+    
+    setVerificationLoading(true);
+    try {
+      const { error } = await supabase
+        .from("verification_requests")
+        .insert({
+          user_id: user.id,
+          status: "pending",
+        });
+
+      if (error) {
+        if (error.code === "23505") {
+          toast({
+            title: "Already Requested",
+            description: "You already have a pending verification request.",
+            variant: "destructive",
+          });
+        } else {
+          throw error;
+        }
+      } else {
+        setVerificationStatus("pending");
+        toast({
+          title: "Verification Requested",
+          description: "Your verification request has been submitted for review.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit verification request.",
+        variant: "destructive",
+      });
+    } finally {
+      setVerificationLoading(false);
     }
   };
 
@@ -230,6 +290,64 @@ const ProfileSetup = () => {
                   onPhotosChange={setPhotoUrls}
                 />
               </div>
+
+              {/* Verification Section */}
+              {existingProfile && (
+                <Card className="border-primary/20 bg-primary/5">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <ShieldCheck className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="font-medium">Profile Verification</p>
+                          <p className="text-sm text-muted-foreground">
+                            Get a verified badge on your profile
+                          </p>
+                        </div>
+                      </div>
+                      {verificationStatus === "verified" ? (
+                        <Badge className="gap-1 bg-green-500">
+                          <BadgeCheck className="h-3 w-3" />
+                          Verified
+                        </Badge>
+                      ) : verificationStatus === "pending" ? (
+                        <Badge variant="outline" className="gap-1 border-yellow-500 text-yellow-600">
+                          <Clock className="h-3 w-3" />
+                          Pending Review
+                        </Badge>
+                      ) : verificationStatus === "rejected" ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRequestVerification}
+                          disabled={verificationLoading}
+                        >
+                          {verificationLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            "Request Again"
+                          )}
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleRequestVerification}
+                          disabled={verificationLoading}
+                        >
+                          {verificationLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            "Request Verification"
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               <div className="flex gap-3">
                 <Button
