@@ -132,6 +132,10 @@ const Index = () => {
 
       <footer className="border-t border-border py-8">
         <div className="container mx-auto px-6 text-center text-muted-foreground">
+          <div className="flex justify-center gap-6 mb-4">
+            <Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
+            <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+          </div>
           <p>&copy; 2024 {t('common.appName')}.</p>
         </div>
       </footer>
