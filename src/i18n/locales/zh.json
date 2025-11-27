@@ -188,5 +188,15 @@
     "privacy": "隐私",
     "account": "账户",
     "deleteAccount": "删除账户"
+  },
+  "block": {
+    "blockUser": "拉黑用户",
+    "unblock": "取消拉黑",
+    "unmatch": "取消配对",
+    "blockConfirmation": "确定要拉黑{{name}}吗？对方将无法查看你的资料或给你发消息。",
+    "unmatchConfirmation": "确定要取消与{{name}}的配对吗？这将删除配对和对话记录。",
+    "userBlocked": "已拉黑用户",
+    "userUnblocked": "已取消拉黑",
+    "unmatched": "已取消配对"
   }
 }

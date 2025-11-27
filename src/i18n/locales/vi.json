@@ -188,5 +188,15 @@
     "privacy": "Quyền riêng tư",
     "account": "Tài khoản",
     "deleteAccount": "Xóa tài khoản"
+  },
+  "block": {
+    "blockUser": "Chặn người dùng",
+    "unblock": "Bỏ chặn",
+    "unmatch": "Hủy ghép đôi",
+    "blockConfirmation": "Bạn có chắc muốn chặn {{name}}? Họ sẽ không thể xem hồ sơ của bạn hoặc nhắn tin cho bạn.",
+    "unmatchConfirmation": "Bạn có chắc muốn hủy ghép đôi với {{name}}? Điều này sẽ xóa ghép đôi và cuộc trò chuyện của bạn.",
+    "userBlocked": "Đã chặn người dùng",
+    "userUnblocked": "Đã bỏ chặn người dùng",
+    "unmatched": "Đã hủy ghép đôi"
   }
 }

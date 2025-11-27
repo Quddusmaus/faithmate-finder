@@ -12,6 +12,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ReportProfileDialog } from "./ReportProfileDialog";
+import { BlockUserDialog } from "./BlockUserDialog";
 
 interface Profile {
   id: string;
@@ -273,7 +274,12 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
             )}
 
             {currentUser && profile.user_id && (
-              <div className="flex justify-end pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <BlockUserDialog
+                  userId={profile.user_id}
+                  userName={profile.name}
+                  onBlock={() => setShowDetails(false)}
+                />
                 <ReportProfileDialog
                   profileId={profile.id}
                   profileName={profile.name}

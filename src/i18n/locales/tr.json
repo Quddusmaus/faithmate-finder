@@ -188,5 +188,15 @@
     "privacy": "Gizlilik",
     "account": "Hesap",
     "deleteAccount": "Hesabı Sil"
+  },
+  "block": {
+    "blockUser": "Kullanıcıyı Engelle",
+    "unblock": "Engeli Kaldır",
+    "unmatch": "Eşleşmeyi Kaldır",
+    "blockConfirmation": "{{name}} adlı kullanıcıyı engellemek istediğinizden emin misiniz? Profilinizi göremez veya size mesaj gönderemez.",
+    "unmatchConfirmation": "{{name}} ile eşleşmeyi kaldırmak istediğinizden emin misiniz? Bu, eşleşmenizi ve sohbetinizi silecektir.",
+    "userBlocked": "Kullanıcı engellendi",
+    "userUnblocked": "Engel kaldırıldı",
+    "unmatched": "Eşleşme kaldırıldı"
   }
 }

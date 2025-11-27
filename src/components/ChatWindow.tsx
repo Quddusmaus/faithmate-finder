@@ -8,6 +8,7 @@ import { ArrowLeft, Send, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { User } from "@supabase/supabase-js";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { BlockUserDialog } from "./BlockUserDialog";
 
 interface Message {
   id: string;
@@ -175,7 +176,7 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
           <AvatarFallback>{match.name[0]}</AvatarFallback>
         </Avatar>
 
-        <div>
+        <div className="flex-1">
           <h2 className="font-semibold">{match.name}</h2>
           {match.age && match.location && (
             <p className="text-sm text-muted-foreground">
@@ -183,6 +184,14 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
             </p>
           )}
         </div>
+
+        <BlockUserDialog
+          userId={match.match_id}
+          userName={match.name}
+          isMatch
+          onBlock={onBack}
+          onUnmatch={onBack}
+        />
       </div>
 
       {/* Messages */}
