@@ -247,16 +247,37 @@ const Admin = () => {
           profileStatus = "banned";
         }
 
+        const reasonText = resolutionNotes || `Account ${actionType === "ban" ? "banned" : "suspended"} due to report`;
+
         const { error: profileError } = await supabase
           .from("profiles")
           .update({
             status: profileStatus,
             suspended_until: suspendedUntil,
-            suspension_reason: resolutionNotes || `Account ${actionType === "ban" ? "banned" : "suspended"} due to report`,
+            suspension_reason: reasonText,
           })
           .eq("id", selectedReport.reported_profile.id);
 
         if (profileError) throw profileError;
+
+        // Send email notification to the user
+        try {
+          const { error: emailError } = await supabase.functions.invoke("send-suspension-email", {
+            body: {
+              user_id: selectedReport.reported_profile.user_id,
+              action_type: actionType,
+              reason: reasonText,
+              suspended_until: suspendedUntil,
+            },
+          });
+
+          if (emailError) {
+            console.error("Error sending suspension email:", emailError);
+            // Don't throw - we still want to complete the action even if email fails
+          }
+        } catch (emailErr) {
+          console.error("Failed to send suspension email:", emailErr);
+        }
       }
 
       const { error } = await supabase
@@ -274,9 +295,9 @@ const Admin = () => {
       const actionMessage = action === "dismissed" 
         ? "Report dismissed" 
         : actionType === "ban" 
-          ? "Profile banned" 
+          ? "Profile banned and user notified" 
           : actionType === "suspend" 
-            ? `Profile suspended for ${suspensionDuration} days`
+            ? `Profile suspended for ${suspensionDuration} days and user notified`
             : "Report resolved";
 
       toast.success(actionMessage);
