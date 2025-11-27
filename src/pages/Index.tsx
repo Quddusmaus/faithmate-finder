@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Heart, Users, Shield, Sparkles, Settings } from "lucide-react";
+import { Heart, Globe, Users, MessageCircleHeart, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { useTranslation } from "react-i18next";
@@ -76,7 +76,7 @@ const Index = () => {
           <div className="grid gap-8 md:grid-cols-3">
             <div className="rounded-2xl bg-card p-8 text-center shadow-lg transition-transform hover:scale-105">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                <Users className="h-8 w-8 text-primary" />
+                <Globe className="h-8 w-8 text-primary" />
               </div>
               <h3 className="mb-2 text-xl font-semibold text-card-foreground">
                 {t('landing.smartMatching')}
@@ -88,7 +88,7 @@ const Index = () => {
 
             <div className="rounded-2xl bg-card p-8 text-center shadow-lg transition-transform hover:scale-105">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10">
-                <Shield className="h-8 w-8 text-secondary" />
+                <Users className="h-8 w-8 text-secondary" />
               </div>
               <h3 className="mb-2 text-xl font-semibold text-card-foreground">
                 {t('landing.verifiedProfiles')}
@@ -100,7 +100,7 @@ const Index = () => {
 
             <div className="rounded-2xl bg-card p-8 text-center shadow-lg transition-transform hover:scale-105">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-accent/10">
-                <Sparkles className="h-8 w-8 text-accent" />
+                <MessageCircleHeart className="h-8 w-8 text-accent" />
               </div>
               <h3 className="mb-2 text-xl font-semibold text-card-foreground">
                 {t('landing.secureMessaging')}
