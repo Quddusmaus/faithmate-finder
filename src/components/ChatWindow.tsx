@@ -10,6 +10,9 @@ import type { User } from "@supabase/supabase-js";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { BlockUserDialog } from "./BlockUserDialog";
 import { MessageReactions } from "./MessageReactions";
+import { CallButton } from "./CallButton";
+import { VideoCall } from "./VideoCall";
+import { useWebRTC } from "@/hooks/useWebRTC";
 
 interface Reaction {
   id: string;
@@ -39,21 +42,94 @@ interface ChatWindowProps {
   user: User;
   match: Match;
   onBack: () => void;
+  incomingCallData?: {
+    callerId: string;
+    offerData: any;
+  } | null;
+  onCallHandled?: () => void;
 }
 
-export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
+export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandled }: ChatWindowProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isInCall, setIsInCall] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const presenceChannelRef = useRef<RealtimeChannel | null>(null);
   const reactionsChannelRef = useRef<RealtimeChannel | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
+
+  const {
+    localStream,
+    remoteStream,
+    isConnecting,
+    isConnected,
+    isMuted,
+    isVideoOff,
+    initiateCall,
+    acceptCall,
+    endCall,
+    toggleMute,
+    toggleVideo,
+  } = useWebRTC({
+    localUserId: user.id,
+    remoteUserId: match.match_id,
+    onCallEnded: () => setIsInCall(false),
+  });
+
+  // Handle incoming call
+  useEffect(() => {
+    if (incomingCallData && incomingCallData.callerId === match.match_id) {
+      setIsInCall(true);
+      acceptCall(incomingCallData.offerData).catch((error) => {
+        toast({
+          title: "Call Failed",
+          description: "Could not accept call. Please check your permissions.",
+          variant: "destructive",
+        });
+        setIsInCall(false);
+      });
+      onCallHandled?.();
+    }
+  }, [incomingCallData, match.match_id]);
+
+  const handleVoiceCall = async () => {
+    try {
+      setIsInCall(true);
+      await initiateCall(false);
+    } catch (error) {
+      toast({
+        title: "Call Failed",
+        description: "Could not start call. Please check your microphone permissions.",
+        variant: "destructive",
+      });
+      setIsInCall(false);
+    }
+  };
+
+  const handleVideoCall = async () => {
+    try {
+      setIsInCall(true);
+      await initiateCall(true);
+    } catch (error) {
+      toast({
+        title: "Call Failed",
+        description: "Could not start call. Please check your camera and microphone permissions.",
+        variant: "destructive",
+      });
+      setIsInCall(false);
+    }
+  };
+
+  const handleEndCall = async () => {
+    await endCall();
+    setIsInCall(false);
+  };
 
   useEffect(() => {
     fetchMessages();
@@ -349,6 +425,11 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
           )}
         </div>
 
+        <CallButton
+          onVoiceCall={handleVoiceCall}
+          onVideoCall={handleVideoCall}
+        />
+
         <BlockUserDialog
           userId={match.match_id}
           userName={match.name}
@@ -357,6 +438,23 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
           onUnmatch={onBack}
         />
       </div>
+
+      {/* Video/Voice Call */}
+      {isInCall && (
+        <VideoCall
+          localStream={localStream}
+          remoteStream={remoteStream}
+          isConnecting={isConnecting}
+          isConnected={isConnected}
+          isMuted={isMuted}
+          isVideoOff={isVideoOff}
+          matchName={match.name}
+          matchPhoto={match.photo_urls?.[0]}
+          onEndCall={handleEndCall}
+          onToggleMute={toggleMute}
+          onToggleVideo={toggleVideo}
+        />
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto bg-muted/30 p-6">
