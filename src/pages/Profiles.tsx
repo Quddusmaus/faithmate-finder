@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Heart, ArrowLeft, User, LogOut, Settings, MessageCircle } from "lucide-react";
+import { Heart, ArrowLeft, LogOut, Settings, MessageCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ProfileCard } from "@/components/ProfileCard";
 import { ProfileFilters } from "@/components/ProfileFilters";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { NotificationBell } from "@/components/NotificationBell";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface Profile {
@@ -160,6 +161,7 @@ const Profiles = () => {
             </Link>
             {user ? (
               <>
+                <NotificationBell />
                 <Link to="/messages">
                   <Button variant="outline" className="relative">
                     <MessageCircle className="mr-2 h-4 w-4" />

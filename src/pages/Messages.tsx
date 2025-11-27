@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { MatchesList } from "@/components/MatchesList";
 import { ChatWindow } from "@/components/ChatWindow";
+import { NotificationBell } from "@/components/NotificationBell";
 import type { User } from "@supabase/supabase-js";
 
 interface Match {
@@ -103,6 +104,7 @@ const Messages = () => {
             <span className="text-2xl font-bold text-foreground">Unity Hearts</span>
           </Link>
           <div className="flex gap-3">
+            <NotificationBell />
             <Link to="/profiles">
               <Button variant="ghost">
                 <ArrowLeft className="mr-2 h-4 w-4" />
