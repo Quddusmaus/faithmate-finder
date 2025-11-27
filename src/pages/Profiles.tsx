@@ -35,6 +35,9 @@ const Profiles = () => {
     location: "",
     gender: "all",
     lookingFor: "all",
+    verifiedOnly: false,
+    minCompatibility: 0,
+    interests: [] as string[],
   });
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -131,8 +134,29 @@ const Profiles = () => {
       );
     }
 
+    // Verified only filter
+    if (filters.verifiedOnly) {
+      filtered = filtered.filter((profile) => profile.verified === true);
+    }
+
+    // Interests filter
+    if (filters.interests.length > 0) {
+      filtered = filtered.filter((profile) =>
+        filters.interests.some((interest) => profile.interests?.includes(interest))
+      );
+    }
+
     // Sort by compatibility score (highest first)
     const userInterests = currentUserProfile?.interests || [];
+    
+    // Min compatibility filter
+    if (filters.minCompatibility > 0) {
+      filtered = filtered.filter((profile) => {
+        const { score } = calculateCompatibility(userInterests, profile.interests || []);
+        return score >= filters.minCompatibility;
+      });
+    }
+
     filtered.sort((a, b) => {
       const scoreA = calculateCompatibility(userInterests, a.interests || []).score;
       const scoreB = calculateCompatibility(userInterests, b.interests || []).score;
@@ -148,6 +172,9 @@ const Profiles = () => {
       location: "",
       gender: "all",
       lookingFor: "all",
+      verifiedOnly: false,
+      minCompatibility: 0,
+      interests: [],
     });
   };
 
