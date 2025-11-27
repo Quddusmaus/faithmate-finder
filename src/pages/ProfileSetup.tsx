@@ -8,9 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { PhotoUpload } from "@/components/PhotoUpload";
-import { Loader2, BadgeCheck, Clock, ShieldCheck } from "lucide-react";
+import { Loader2, BadgeCheck, Clock, ShieldCheck, Eye, EyeOff } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 const ProfileSetup = () => {
@@ -26,6 +27,7 @@ const ProfileSetup = () => {
   const [lookingFor, setLookingFor] = useState("");
   const [bio, setBio] = useState("");
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [isVisible, setIsVisible] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -57,6 +59,7 @@ const ProfileSetup = () => {
       setLookingFor(profile.looking_for || "");
       setBio(profile.bio || "");
       setPhotoUrls(profile.photo_urls || []);
+      setIsVisible(profile.is_visible ?? true);
       
       // Check verification status
       if (profile.verified) {
@@ -136,6 +139,7 @@ const ProfileSetup = () => {
         looking_for: lookingFor || null,
         bio: bio || null,
         photo_urls: photoUrls,
+        is_visible: isVisible,
       };
 
       if (existingProfile) {
@@ -290,6 +294,34 @@ const ProfileSetup = () => {
                   onPhotosChange={setPhotoUrls}
                 />
               </div>
+
+              {/* Privacy Section */}
+              <Card className="border-muted">
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {isVisible ? (
+                        <Eye className="h-5 w-5 text-muted-foreground" />
+                      ) : (
+                        <EyeOff className="h-5 w-5 text-muted-foreground" />
+                      )}
+                      <div>
+                        <p className="font-medium">Profile Visibility</p>
+                        <p className="text-sm text-muted-foreground">
+                          {isVisible 
+                            ? "Your profile is visible to other users" 
+                            : "Your profile is hidden from other users"}
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={isVisible}
+                      onCheckedChange={setIsVisible}
+                      aria-label="Toggle profile visibility"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Verification Section */}
               {existingProfile && (
