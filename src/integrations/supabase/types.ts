@@ -95,6 +95,45 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_submissions: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          responded_at: string | null
+          status: string
+          subject: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          responded_at?: string | null
+          status?: string
+          subject: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          responded_at?: string | null
+          status?: string
+          subject?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       demo_profiles: {
         Row: {
           age: number | null

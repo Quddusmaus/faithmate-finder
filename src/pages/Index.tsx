@@ -135,6 +135,7 @@ const Index = () => {
           <div className="flex justify-center gap-6 mb-4">
             <Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
             <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+            <Link to="/contact" className="hover:text-primary transition-colors">Contact Us</Link>
           </div>
           <p>&copy; 2024 {t('common.appName')}.</p>
         </div>
