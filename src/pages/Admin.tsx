@@ -3,11 +3,12 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { VerificationRequestCard } from "@/components/VerificationRequestCard";
+import { AdminAnalytics } from "@/components/AdminAnalytics";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Shield, Users, CheckCircle, XCircle, Clock, ArrowLeft, Flag, AlertTriangle, Ban, Scale } from "lucide-react";
+import { Heart, Shield, Users, CheckCircle, XCircle, Clock, ArrowLeft, Flag, AlertTriangle, Ban, Scale, LayoutDashboard } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -87,7 +88,7 @@ const Admin = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState("pending");
-  const [activeSection, setActiveSection] = useState<"verifications" | "reports" | "appeals">("verifications");
+  const [activeSection, setActiveSection] = useState<"dashboard" | "verifications" | "reports" | "appeals">("dashboard");
   const [selectedReport, setSelectedReport] = useState<ProfileReport | null>(null);
   const [selectedAppeal, setSelectedAppeal] = useState<BanAppeal | null>(null);
   const [resolutionNotes, setResolutionNotes] = useState("");
@@ -505,7 +506,15 @@ const Admin = () => {
 
       <main className="container mx-auto px-6 py-8">
         {/* Section Tabs */}
-        <div className="flex gap-4 mb-8">
+        <div className="flex flex-wrap gap-4 mb-8">
+          <Button
+            variant={activeSection === "dashboard" ? "default" : "outline"}
+            onClick={() => setActiveSection("dashboard")}
+            className="gap-2"
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            Dashboard
+          </Button>
           <Button
             variant={activeSection === "verifications" ? "default" : "outline"}
             onClick={() => {
@@ -556,7 +565,15 @@ const Admin = () => {
           </Button>
         </div>
 
-        {activeSection === "verifications" ? (
+        {activeSection === "dashboard" ? (
+          <>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
+              <p className="text-muted-foreground">Overview of platform statistics and activity</p>
+            </div>
+            <AdminAnalytics />
+          </>
+        ) : activeSection === "verifications" ? (
           <>
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-foreground">Verification Requests</h1>
