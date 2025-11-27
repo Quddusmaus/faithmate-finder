@@ -61,7 +61,10 @@
     "uploadPhotos": "Upload Photos",
     "addPhoto": "Add Photo",
     "removePhoto": "Remove Photo",
-    "years": "years old"
+    "years": "years old",
+    "interests": "Interests & Activities",
+    "selectInterests": "Select the activities you're involved in",
+    "interestsAndActivities": "Interests & Activities"
   },
   "profiles": {
     "browseProfiles": "Browse Profiles",

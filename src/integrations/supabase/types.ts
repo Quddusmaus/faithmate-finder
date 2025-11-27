@@ -75,6 +75,7 @@ export type Database = {
           created_at: string
           gender: string | null
           id: string
+          interests: string[] | null
           location: string | null
           looking_for: string | null
           name: string
@@ -87,6 +88,7 @@ export type Database = {
           created_at?: string
           gender?: string | null
           id?: string
+          interests?: string[] | null
           location?: string | null
           looking_for?: string | null
           name: string
@@ -99,6 +101,7 @@ export type Database = {
           created_at?: string
           gender?: string | null
           id?: string
+          interests?: string[] | null
           location?: string | null
           looking_for?: string | null
           name?: string
@@ -272,6 +275,7 @@ export type Database = {
           created_at: string
           gender: string | null
           id: string
+          interests: string[] | null
           is_visible: boolean
           location: string | null
           looking_for: string | null
@@ -291,6 +295,7 @@ export type Database = {
           created_at?: string
           gender?: string | null
           id?: string
+          interests?: string[] | null
           is_visible?: boolean
           location?: string | null
           looking_for?: string | null
@@ -310,6 +315,7 @@ export type Database = {
           created_at?: string
           gender?: string | null
           id?: string
+          interests?: string[] | null
           is_visible?: boolean
           location?: string | null
           looking_for?: string | null

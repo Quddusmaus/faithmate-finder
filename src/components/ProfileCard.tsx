@@ -25,6 +25,7 @@ interface Profile {
   looking_for: string | null;
   user_id?: string;
   verified: boolean | null;
+  interests?: string[];
 }
 
 interface ProfileCardProps {
@@ -245,6 +246,19 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
               <div>
                 <h4 className="mb-2 font-semibold text-foreground">About</h4>
                 <p className="text-muted-foreground">{profile.bio}</p>
+              </div>
+            )}
+
+            {profile.interests && profile.interests.length > 0 && (
+              <div>
+                <h4 className="mb-2 font-semibold text-foreground">Interests & Activities</h4>
+                <div className="flex flex-wrap gap-2">
+                  {profile.interests.map((interest) => (
+                    <Badge key={interest} variant="secondary" className="bg-primary/10 text-primary">
+                      {interest}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             )}
 

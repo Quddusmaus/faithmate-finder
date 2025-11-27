@@ -20,6 +20,7 @@ interface Profile {
   gender: string | null;
   looking_for: string | null;
   verified: boolean | null;
+  interests?: string[];
 }
 
 const Profiles = () => {
