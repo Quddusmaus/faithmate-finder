@@ -188,5 +188,15 @@
     "privacy": "Datenschutz",
     "account": "Konto",
     "deleteAccount": "Konto löschen"
+  },
+  "block": {
+    "blockUser": "Benutzer blockieren",
+    "unblock": "Entsperren",
+    "unmatch": "Match aufheben",
+    "blockConfirmation": "Möchtest du {{name}} wirklich blockieren? Diese Person kann dein Profil nicht mehr sehen und dir keine Nachrichten senden.",
+    "unmatchConfirmation": "Möchtest du das Match mit {{name}} wirklich aufheben? Dies entfernt das Match und löscht eure Unterhaltung.",
+    "userBlocked": "Benutzer blockiert",
+    "userUnblocked": "Benutzer entsperrt",
+    "unmatched": "Match aufgehoben"
   }
 }

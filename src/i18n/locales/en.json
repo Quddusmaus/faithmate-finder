@@ -188,5 +188,15 @@
     "privacy": "Privacy",
     "account": "Account",
     "deleteAccount": "Delete Account"
+  },
+  "block": {
+    "blockUser": "Block User",
+    "unblock": "Unblock",
+    "unmatch": "Unmatch",
+    "blockConfirmation": "Are you sure you want to block {{name}}? They won't be able to see your profile or message you.",
+    "unmatchConfirmation": "Are you sure you want to unmatch with {{name}}? This will remove your match and delete your conversation.",
+    "userBlocked": "User blocked",
+    "userUnblocked": "User unblocked",
+    "unmatched": "Unmatched"
   }
 }

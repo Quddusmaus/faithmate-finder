@@ -188,5 +188,15 @@
     "privacy": "プライバシー",
     "account": "アカウント",
     "deleteAccount": "アカウント削除"
+  },
+  "block": {
+    "blockUser": "ブロック",
+    "unblock": "ブロック解除",
+    "unmatch": "マッチ解除",
+    "blockConfirmation": "{{name}}をブロックしてもよろしいですか？この人はあなたのプロフィールを見たり、メッセージを送ったりできなくなります。",
+    "unmatchConfirmation": "{{name}}とのマッチを解除してもよろしいですか？マッチと会話が削除されます。",
+    "userBlocked": "ユーザーをブロックしました",
+    "userUnblocked": "ブロックを解除しました",
+    "unmatched": "マッチを解除しました"
   }
 }

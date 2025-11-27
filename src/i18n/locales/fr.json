@@ -188,5 +188,15 @@
     "privacy": "Confidentialité",
     "account": "Compte",
     "deleteAccount": "Supprimer le Compte"
+  },
+  "block": {
+    "blockUser": "Bloquer l'utilisateur",
+    "unblock": "Débloquer",
+    "unmatch": "Annuler le match",
+    "blockConfirmation": "Êtes-vous sûr de vouloir bloquer {{name}} ? Cette personne ne pourra plus voir votre profil ni vous envoyer de messages.",
+    "unmatchConfirmation": "Êtes-vous sûr de vouloir annuler le match avec {{name}} ? Cela supprimera votre match et votre conversation.",
+    "userBlocked": "Utilisateur bloqué",
+    "userUnblocked": "Utilisateur débloqué",
+    "unmatched": "Match annulé"
   }
 }
