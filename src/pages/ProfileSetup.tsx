@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { PhotoUpload } from "@/components/PhotoUpload";
-import { Loader2, BadgeCheck, Clock, ShieldCheck, Eye, EyeOff } from "lucide-react";
+import { Loader2, BadgeCheck, Clock, ShieldCheck, Pause, Play } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 const ProfileSetup = () => {
@@ -295,29 +295,31 @@ const ProfileSetup = () => {
                 />
               </div>
 
-              {/* Privacy Section */}
-              <Card className="border-muted">
+              {/* Pause Account Section */}
+              <Card className={isVisible ? "border-muted" : "border-yellow-500/50 bg-yellow-500/5"}>
                 <CardContent className="pt-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       {isVisible ? (
-                        <Eye className="h-5 w-5 text-muted-foreground" />
+                        <Play className="h-5 w-5 text-green-500" />
                       ) : (
-                        <EyeOff className="h-5 w-5 text-muted-foreground" />
+                        <Pause className="h-5 w-5 text-yellow-500" />
                       )}
                       <div>
-                        <p className="font-medium">Profile Visibility</p>
+                        <p className="font-medium">
+                          {isVisible ? "Account Active" : "Account Paused"}
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {isVisible 
-                            ? "Your profile is visible to other users" 
-                            : "Your profile is hidden from other users"}
+                            ? "You're visible and can be matched with others" 
+                            : "You're hidden from matching - existing conversations remain"}
                         </p>
                       </div>
                     </div>
                     <Switch
-                      checked={isVisible}
-                      onCheckedChange={setIsVisible}
-                      aria-label="Toggle profile visibility"
+                      checked={!isVisible}
+                      onCheckedChange={(checked) => setIsVisible(!checked)}
+                      aria-label="Pause account"
                     />
                   </div>
                 </CardContent>
