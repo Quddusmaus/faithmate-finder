@@ -2,9 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Heart, Users, Shield, Sparkles, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const Index = () => {
   const { isAdmin } = useAdminStatus();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
@@ -13,22 +16,23 @@ const Index = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Heart className="h-8 w-8 text-primary" fill="currentColor" />
-            <span className="text-2xl font-bold text-foreground">Unity Hearts</span>
+            <span className="text-2xl font-bold text-foreground">{t('common.appName')}</span>
           </div>
-          <div className="flex gap-4">
+          <div className="flex items-center gap-4">
+            <LanguageSwitcher />
             {isAdmin && (
               <Link to="/admin">
                 <Button variant="ghost" className="gap-2">
                   <Settings className="h-4 w-4" />
-                  Admin
+                  {t('nav.admin')}
                 </Button>
               </Link>
             )}
             <Link to="/auth">
-              <Button variant="ghost">Sign In</Button>
+              <Button variant="ghost">{t('nav.login')}</Button>
             </Link>
             <Link to="/auth">
-              <Button className="bg-primary hover:bg-primary/90">Get Started</Button>
+              <Button className="bg-primary hover:bg-primary/90">{t('landing.getStarted')}</Button>
             </Link>
           </div>
         </div>
@@ -39,21 +43,21 @@ const Index = () => {
         <section className="py-20 text-center">
           <div className="mx-auto max-w-3xl space-y-6">
             <h1 className="text-5xl font-bold leading-tight text-foreground md:text-6xl">
-              Find Your Perfect Match in the{" "}
+              {t('landing.findYourPerfectMatch')}{" "}
               <span className="text-primary">Baháʼí Community</span>
             </h1>
             <p className="text-xl text-muted-foreground">
-              Connect with like-minded individuals who share your values of unity, equality, and spiritual growth.
+              {t('landing.connectWithPeople')}
             </p>
             <div className="flex justify-center gap-4 pt-4">
               <Link to="/profiles">
                 <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                  Browse Profiles
+                  {t('profiles.browseProfiles')}
                 </Button>
               </Link>
               <Link to="/auth">
                 <Button size="lg" variant="outline">
-                  Join Now
+                  {t('nav.signup')}
                 </Button>
               </Link>
             </div>
@@ -67,9 +71,11 @@ const Index = () => {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                 <Users className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="mb-2 text-xl font-semibold text-card-foreground">Faith-Based Matching</h3>
+              <h3 className="mb-2 text-xl font-semibold text-card-foreground">
+                {t('landing.smartMatching')}
+              </h3>
               <p className="text-muted-foreground">
-                Connect with members who share your Baháʼí values and commitment to unity.
+                {t('landing.smartMatchingDesc')}
               </p>
             </div>
 
@@ -77,9 +83,11 @@ const Index = () => {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10">
                 <Shield className="h-8 w-8 text-secondary" />
               </div>
-              <h3 className="mb-2 text-xl font-semibold text-card-foreground">Safe & Respectful</h3>
+              <h3 className="mb-2 text-xl font-semibold text-card-foreground">
+                {t('landing.verifiedProfiles')}
+              </h3>
               <p className="text-muted-foreground">
-                A trusted community built on principles of respect, dignity, and genuine connection.
+                {t('landing.verifiedProfilesDesc')}
               </p>
             </div>
 
@@ -87,9 +95,11 @@ const Index = () => {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-accent/10">
                 <Sparkles className="h-8 w-8 text-accent" />
               </div>
-              <h3 className="mb-2 text-xl font-semibold text-card-foreground">Meaningful Connections</h3>
+              <h3 className="mb-2 text-xl font-semibold text-card-foreground">
+                {t('landing.secureMessaging')}
+              </h3>
               <p className="text-muted-foreground">
-                Find partners who value spiritual growth, service, and building a better world together.
+                {t('landing.secureMessagingDesc')}
               </p>
             </div>
           </div>
@@ -99,14 +109,14 @@ const Index = () => {
         <section className="py-20 text-center">
           <div className="mx-auto max-w-2xl rounded-3xl bg-gradient-to-r from-primary to-primary/80 p-12 shadow-2xl">
             <h2 className="mb-4 text-3xl font-bold text-primary-foreground">
-              Ready to Begin Your Journey?
+              {t('landing.howItWorks')}
             </h2>
             <p className="mb-8 text-lg text-primary-foreground/90">
-              Join our community of Baháʼí singles seeking meaningful connections.
+              {t('landing.createProfileDesc')}
             </p>
             <Link to="/auth">
               <Button size="lg" variant="secondary" className="bg-background text-foreground hover:bg-background/90">
-                Create Your Profile
+                {t('landing.createProfile')}
               </Button>
             </Link>
           </div>
@@ -115,7 +125,7 @@ const Index = () => {
 
       <footer className="border-t border-border py-8">
         <div className="container mx-auto px-6 text-center text-muted-foreground">
-          <p>&copy; 2024 Unity Hearts. Built with love for the Baháʼí community.</p>
+          <p>&copy; 2024 {t('common.appName')}.</p>
         </div>
       </footer>
     </div>
