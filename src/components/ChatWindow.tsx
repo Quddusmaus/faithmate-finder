@@ -9,6 +9,14 @@ import { formatDistanceToNow } from "date-fns";
 import type { User } from "@supabase/supabase-js";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { BlockUserDialog } from "./BlockUserDialog";
+import { MessageReactions } from "./MessageReactions";
+
+interface Reaction {
+  id: string;
+  emoji: string;
+  user_id: string;
+  message_id: string;
+}
 
 interface Message {
   id: string;
@@ -35,6 +43,7 @@ interface ChatWindowProps {
 
 export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [reactions, setReactions] = useState<Reaction[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -42,13 +51,16 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const presenceChannelRef = useRef<RealtimeChannel | null>(null);
+  const reactionsChannelRef = useRef<RealtimeChannel | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchMessages();
+    fetchReactions();
     subscribeToMessages();
     subscribeToPresence();
+    subscribeToReactions();
     markMessagesAsRead();
 
     return () => {
@@ -57,6 +69,9 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
       }
       if (presenceChannelRef.current) {
         supabase.removeChannel(presenceChannelRef.current);
+      }
+      if (reactionsChannelRef.current) {
+        supabase.removeChannel(reactionsChannelRef.current);
       }
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
@@ -93,6 +108,27 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
       setLoading(false);
     }
   };
+
+  const fetchReactions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("message_reactions")
+        .select("*")
+        .in("message_id", messages.map(m => m.id));
+
+      if (error) throw error;
+      setReactions(data || []);
+    } catch (error: any) {
+      console.error("Error fetching reactions:", error);
+    }
+  };
+
+  // Refetch reactions when messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      fetchReactions();
+    }
+  }, [messages.length]);
 
   const subscribeToMessages = () => {
     channelRef.current = supabase
@@ -162,6 +198,36 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
           });
         }
       });
+  };
+
+  const subscribeToReactions = () => {
+    reactionsChannelRef.current = supabase
+      .channel(`reactions:${match.match_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'message_reactions'
+        },
+        (payload) => {
+          setReactions((current) => [...current, payload.new as Reaction]);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'message_reactions'
+        },
+        (payload) => {
+          setReactions((current) =>
+            current.filter((r) => r.id !== (payload.old as Reaction).id)
+          );
+        }
+      )
+      .subscribe();
   };
 
   const updateTypingStatus = useCallback(async (typing: boolean) => {
@@ -306,13 +372,16 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
           <div className="space-y-4">
             {messages.map((message) => {
               const isOwnMessage = message.sender_id === user.id;
+              const messageReactions = reactions.filter(
+                (r) => r.message_id === message.id
+              );
               return (
                 <div
                   key={message.id}
-                  className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                  className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'}`}
                 >
                   <div
-                    className={`max-w-[70%] rounded-2xl px-4 py-2 ${
+                    className={`group max-w-[70%] rounded-2xl px-4 py-2 ${
                       isOwnMessage
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-card text-card-foreground'
@@ -329,6 +398,12 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
                       </span>
                       {renderReadReceipt(message)}
                     </div>
+                    <MessageReactions
+                      messageId={message.id}
+                      reactions={messageReactions}
+                      currentUserId={user.id}
+                      isOwnMessage={isOwnMessage}
+                    />
                   </div>
                 </div>
               );
