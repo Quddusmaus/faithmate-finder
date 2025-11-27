@@ -42,12 +42,19 @@ const Index = () => {
         {/* Hero */}
         <section className="py-20 text-center">
           <div className="mx-auto max-w-3xl space-y-6">
-            <h1 className="text-5xl font-bold leading-tight text-foreground md:text-6xl">
-              {t('landing.findYourPerfectMatch')}{" "}
-              <span className="text-primary">Baháʼí Community</span>
+            <p className="text-2xl font-medium text-primary md:text-3xl">
+              {t('landing.greeting')}
+            </p>
+            <h1 className="text-4xl font-bold leading-tight text-foreground md:text-5xl">
+              {t('landing.welcomeTitle')}{" "}
+              <span className="text-primary">{t('common.appName')}</span>
+              {" – "}
+              <span className="text-muted-foreground font-normal text-3xl md:text-4xl">
+                {t('landing.welcomeSubtitle')}
+              </span>
             </h1>
-            <p className="text-xl text-muted-foreground">
-              {t('landing.connectWithPeople')}
+            <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+              {t('landing.description')}
             </p>
             <div className="flex justify-center gap-4 pt-4">
               <Link to="/profiles">
