@@ -1,10 +1,10 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Check, CheckCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { User } from "@supabase/supabase-js";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -38,18 +38,28 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
+  const presenceChannelRef = useRef<RealtimeChannel | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchMessages();
     subscribeToMessages();
+    subscribeToPresence();
     markMessagesAsRead();
 
     return () => {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
+      }
+      if (presenceChannelRef.current) {
+        supabase.removeChannel(presenceChannelRef.current);
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
       }
     };
   }, [match.match_id]);
@@ -112,7 +122,72 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
           setMessages((current) => [...current, payload.new as Message]);
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `sender_id=eq.${user.id},receiver_id=eq.${match.match_id}`
+        },
+        (payload) => {
+          // Update read receipt status
+          setMessages((current) =>
+            current.map((msg) =>
+              msg.id === payload.new.id ? { ...msg, read_at: (payload.new as Message).read_at } : msg
+            )
+          );
+        }
+      )
       .subscribe();
+  };
+
+  const subscribeToPresence = () => {
+    presenceChannelRef.current = supabase
+      .channel(`typing:${[user.id, match.match_id].sort().join('-')}`)
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannelRef.current?.presenceState();
+        if (state) {
+          const matchTyping = Object.values(state).flat().some(
+            (presence: any) => presence.user_id === match.match_id && presence.is_typing
+          );
+          setIsTyping(matchTyping);
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannelRef.current?.track({
+            user_id: user.id,
+            is_typing: false
+          });
+        }
+      });
+  };
+
+  const updateTypingStatus = useCallback(async (typing: boolean) => {
+    if (presenceChannelRef.current) {
+      await presenceChannelRef.current.track({
+        user_id: user.id,
+        is_typing: typing
+      });
+    }
+  }, [user.id]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+    
+    // Update typing status
+    updateTypingStatus(true);
+    
+    // Clear previous timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    // Set timeout to stop typing indicator after 2 seconds of inactivity
+    typingTimeoutRef.current = setTimeout(() => {
+      updateTypingStatus(false);
+    }, 2000);
   };
 
   const markMessagesAsRead = async () => {
@@ -133,6 +208,12 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
     
     const content = newMessage.trim();
     if (!content || sending) return;
+
+    // Stop typing indicator
+    updateTypingStatus(false);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
 
     setSending(true);
     try {
@@ -158,6 +239,19 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
     }
   };
 
+  const renderReadReceipt = (message: Message) => {
+    if (message.sender_id !== user.id) return null;
+    
+    if (message.read_at) {
+      return (
+        <CheckCheck className="h-3 w-3 text-primary-foreground/70" />
+      );
+    }
+    return (
+      <Check className="h-3 w-3 text-primary-foreground/50" />
+    );
+  };
+
   return (
     <div className="flex h-full flex-col">
       {/* Chat header */}
@@ -178,10 +272,14 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
 
         <div className="flex-1">
           <h2 className="font-semibold">{match.name}</h2>
-          {match.age && match.location && (
-            <p className="text-sm text-muted-foreground">
-              {match.age} • {match.location}
-            </p>
+          {isTyping ? (
+            <p className="text-sm text-primary animate-pulse">typing...</p>
+          ) : (
+            match.age && match.location && (
+              <p className="text-sm text-muted-foreground">
+                {match.age} • {match.location}
+              </p>
+            )
           )}
         </div>
 
@@ -221,17 +319,31 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
                     }`}
                   >
                     <p className="break-words">{message.content}</p>
-                    <p
-                      className={`mt-1 text-xs ${
-                        isOwnMessage ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                    <div
+                      className={`mt-1 flex items-center gap-1 text-xs ${
+                        isOwnMessage ? 'text-primary-foreground/70 justify-end' : 'text-muted-foreground'
                       }`}
                     >
-                      {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
-                    </p>
+                      <span>
+                        {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
+                      </span>
+                      {renderReadReceipt(message)}
+                    </div>
                   </div>
                 </div>
               );
             })}
+            {isTyping && (
+              <div className="flex justify-start">
+                <div className="bg-card text-card-foreground rounded-2xl px-4 py-2">
+                  <div className="flex items-center gap-1">
+                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
         )}
@@ -242,7 +354,7 @@ export const ChatWindow = ({ user, match, onBack }: ChatWindowProps) => {
         <div className="flex gap-2">
           <Input
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={handleInputChange}
             placeholder="Type a message..."
             maxLength={2000}
             disabled={sending}
