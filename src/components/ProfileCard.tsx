@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ReportProfileDialog } from "./ReportProfileDialog";
 
 interface Profile {
   id: string;
@@ -269,6 +270,16 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
                 <Heart className="mr-2 h-4 w-4" />
                 {!currentUser ? 'Sign in to like' : 'Demo profile'}
               </Button>
+            )}
+
+            {currentUser && profile.user_id && (
+              <div className="flex justify-end pt-2">
+                <ReportProfileDialog
+                  profileId={profile.id}
+                  profileName={profile.name}
+                  currentUserId={currentUser}
+                />
+              </div>
             )}
           </div>
         </DialogContent>

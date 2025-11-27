@@ -7,9 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Shield, Users, CheckCircle, XCircle, Clock, ArrowLeft } from "lucide-react";
+import { Heart, Shield, Users, CheckCircle, XCircle, Clock, ArrowLeft, Flag, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { formatDistanceToNow } from "date-fns";
 
 interface Profile {
   id: string;
@@ -30,13 +39,39 @@ interface VerificationRequest {
   profile?: Profile;
 }
 
+interface ProfileReport {
+  id: string;
+  reporter_id: string;
+  reported_profile_id: string;
+  reason: string;
+  details: string | null;
+  status: string;
+  created_at: string;
+  reviewed_at: string | null;
+  resolution_notes: string | null;
+  reported_profile?: Profile;
+}
+
+const REASON_LABELS: Record<string, string> = {
+  fake_profile: "Fake or misleading profile",
+  inappropriate_content: "Inappropriate photos or content",
+  harassment: "Harassment or abusive behavior",
+  spam: "Spam or scam",
+  underage: "User appears to be underage",
+  other: "Other",
+};
+
 const Admin = () => {
   const navigate = useNavigate();
   const { isAdmin, isLoading: isAdminLoading } = useAdminStatus();
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
+  const [reports, setReports] = useState<ProfileReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState("pending");
+  const [activeSection, setActiveSection] = useState<"verifications" | "reports">("verifications");
+  const [selectedReport, setSelectedReport] = useState<ProfileReport | null>(null);
+  const [resolutionNotes, setResolutionNotes] = useState("");
 
   useEffect(() => {
     if (!isAdminLoading && !isAdmin) {
@@ -48,6 +83,7 @@ const Admin = () => {
   useEffect(() => {
     if (isAdmin) {
       fetchVerificationRequests();
+      fetchReports();
     }
   }, [isAdmin]);
 
@@ -55,7 +91,6 @@ const Admin = () => {
     try {
       setIsLoading(true);
       
-      // Fetch verification requests
       const { data: requestsData, error: requestsError } = await supabase
         .from("verification_requests")
         .select("*")
@@ -63,7 +98,6 @@ const Admin = () => {
 
       if (requestsError) throw requestsError;
 
-      // Fetch profiles for each request
       const requestsWithProfiles: VerificationRequest[] = [];
       
       for (const request of requestsData || []) {
@@ -88,6 +122,37 @@ const Admin = () => {
     }
   };
 
+  const fetchReports = async () => {
+    try {
+      const { data: reportsData, error: reportsError } = await supabase
+        .from("profile_reports")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (reportsError) throw reportsError;
+
+      const reportsWithProfiles: ProfileReport[] = [];
+      
+      for (const report of reportsData || []) {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("id, name, age, location, photo_urls, bio")
+          .eq("id", report.reported_profile_id)
+          .maybeSingle();
+
+        reportsWithProfiles.push({
+          ...report,
+          reported_profile: profileData || undefined,
+        });
+      }
+
+      setReports(reportsWithProfiles);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+      toast.error("Failed to load reports");
+    }
+  };
+
   const handleApprove = async (requestId: string) => {
     try {
       setIsProcessing(true);
@@ -97,7 +162,6 @@ const Admin = () => {
 
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Update verification request
       const { error: requestError } = await supabase
         .from("verification_requests")
         .update({
@@ -109,7 +173,6 @@ const Admin = () => {
 
       if (requestError) throw requestError;
 
-      // Update profile to verified
       const { error: profileError } = await supabase
         .from("profiles")
         .update({ verified: true })
@@ -155,12 +218,49 @@ const Admin = () => {
     }
   };
 
-  const filteredRequests = requests.filter((r) => r.status === activeTab);
+  const handleReportAction = async (reportId: string, action: "resolved" | "dismissed") => {
+    try {
+      setIsProcessing(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
 
-  const stats = {
+      const { error } = await supabase
+        .from("profile_reports")
+        .update({
+          status: action,
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: user?.id,
+          resolution_notes: resolutionNotes || null,
+        })
+        .eq("id", reportId);
+
+      if (error) throw error;
+
+      toast.success(`Report ${action}`);
+      setSelectedReport(null);
+      setResolutionNotes("");
+      fetchReports();
+    } catch (error) {
+      console.error("Error updating report:", error);
+      toast.error("Failed to update report");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const filteredRequests = requests.filter((r) => r.status === activeTab);
+  const filteredReports = reports.filter((r) => r.status === activeTab);
+
+  const verificationStats = {
     pending: requests.filter((r) => r.status === "pending").length,
     approved: requests.filter((r) => r.status === "approved").length,
     rejected: requests.filter((r) => r.status === "rejected").length,
+  };
+
+  const reportStats = {
+    pending: reports.filter((r) => r.status === "pending").length,
+    resolved: reports.filter((r) => r.status === "resolved").length,
+    dismissed: reports.filter((r) => r.status === "dismissed").length,
   };
 
   if (isAdminLoading) {
@@ -210,139 +310,423 @@ const Admin = () => {
       </nav>
 
       <main className="container mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Verification Requests</h1>
-          <p className="text-muted-foreground">Review and manage profile verification requests</p>
+        {/* Section Tabs */}
+        <div className="flex gap-4 mb-8">
+          <Button
+            variant={activeSection === "verifications" ? "default" : "outline"}
+            onClick={() => {
+              setActiveSection("verifications");
+              setActiveTab("pending");
+            }}
+            className="gap-2"
+          >
+            <CheckCircle className="h-4 w-4" />
+            Verifications
+            {verificationStats.pending > 0 && (
+              <Badge variant="secondary" className="ml-1">
+                {verificationStats.pending}
+              </Badge>
+            )}
+          </Button>
+          <Button
+            variant={activeSection === "reports" ? "default" : "outline"}
+            onClick={() => {
+              setActiveSection("reports");
+              setActiveTab("pending");
+            }}
+            className="gap-2"
+          >
+            <Flag className="h-4 w-4" />
+            Reports
+            {reportStats.pending > 0 && (
+              <Badge variant="destructive" className="ml-1">
+                {reportStats.pending}
+              </Badge>
+            )}
+          </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-6 md:grid-cols-3 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Pending</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.pending}</div>
-              <p className="text-xs text-muted-foreground">Awaiting review</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Approved</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.approved}</div>
-              <p className="text-xs text-muted-foreground">Verified profiles</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-              <XCircle className="h-4 w-4 text-red-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.rejected}</div>
-              <p className="text-xs text-muted-foreground">Declined requests</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Requests Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="pending" className="gap-2">
-              <Clock className="h-4 w-4" />
-              Pending ({stats.pending})
-            </TabsTrigger>
-            <TabsTrigger value="approved" className="gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Approved ({stats.approved})
-            </TabsTrigger>
-            <TabsTrigger value="rejected" className="gap-2">
-              <XCircle className="h-4 w-4" />
-              Rejected ({stats.rejected})
-            </TabsTrigger>
-          </TabsList>
-
-          {isLoading ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-48" />
-              ))}
+        {activeSection === "verifications" ? (
+          <>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-foreground">Verification Requests</h1>
+              <p className="text-muted-foreground">Review and manage profile verification requests</p>
             </div>
-          ) : (
-            <>
-              <TabsContent value="pending">
-                {filteredRequests.length === 0 ? (
-                  <Card className="p-12 text-center">
-                    <Users className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                    <h3 className="text-lg font-medium">No pending requests</h3>
-                    <p className="text-muted-foreground">All verification requests have been reviewed.</p>
-                  </Card>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {filteredRequests.map((request) => (
-                      <VerificationRequestCard
-                        key={request.id}
-                        request={request}
-                        onApprove={handleApprove}
-                        onReject={handleReject}
-                        isProcessing={isProcessing}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
 
-              <TabsContent value="approved">
-                {filteredRequests.length === 0 ? (
-                  <Card className="p-12 text-center">
-                    <CheckCircle className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                    <h3 className="text-lg font-medium">No approved requests</h3>
-                    <p className="text-muted-foreground">No verification requests have been approved yet.</p>
-                  </Card>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {filteredRequests.map((request) => (
-                      <VerificationRequestCard
-                        key={request.id}
-                        request={request}
-                        onApprove={handleApprove}
-                        onReject={handleReject}
-                        isProcessing={isProcessing}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
+            {/* Stats Cards */}
+            <div className="grid gap-6 md:grid-cols-3 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Pending</CardTitle>
+                  <Clock className="h-4 w-4 text-yellow-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{verificationStats.pending}</div>
+                  <p className="text-xs text-muted-foreground">Awaiting review</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Approved</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{verificationStats.approved}</div>
+                  <p className="text-xs text-muted-foreground">Verified profiles</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Rejected</CardTitle>
+                  <XCircle className="h-4 w-4 text-red-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{verificationStats.rejected}</div>
+                  <p className="text-xs text-muted-foreground">Declined requests</p>
+                </CardContent>
+              </Card>
+            </div>
 
-              <TabsContent value="rejected">
-                {filteredRequests.length === 0 ? (
-                  <Card className="p-12 text-center">
-                    <XCircle className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                    <h3 className="text-lg font-medium">No rejected requests</h3>
-                    <p className="text-muted-foreground">No verification requests have been rejected.</p>
-                  </Card>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {filteredRequests.map((request) => (
-                      <VerificationRequestCard
-                        key={request.id}
-                        request={request}
-                        onApprove={handleApprove}
-                        onReject={handleReject}
-                        isProcessing={isProcessing}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            </>
-          )}
-        </Tabs>
+            {/* Requests Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsTrigger value="pending" className="gap-2">
+                  <Clock className="h-4 w-4" />
+                  Pending ({verificationStats.pending})
+                </TabsTrigger>
+                <TabsTrigger value="approved" className="gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Approved ({verificationStats.approved})
+                </TabsTrigger>
+                <TabsTrigger value="rejected" className="gap-2">
+                  <XCircle className="h-4 w-4" />
+                  Rejected ({verificationStats.rejected})
+                </TabsTrigger>
+              </TabsList>
+
+              {isLoading ? (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-48" />
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <TabsContent value="pending">
+                    {filteredRequests.length === 0 ? (
+                      <Card className="p-12 text-center">
+                        <Users className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                        <h3 className="text-lg font-medium">No pending requests</h3>
+                        <p className="text-muted-foreground">All verification requests have been reviewed.</p>
+                      </Card>
+                    ) : (
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {filteredRequests.map((request) => (
+                          <VerificationRequestCard
+                            key={request.id}
+                            request={request}
+                            onApprove={handleApprove}
+                            onReject={handleReject}
+                            isProcessing={isProcessing}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="approved">
+                    {filteredRequests.length === 0 ? (
+                      <Card className="p-12 text-center">
+                        <CheckCircle className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                        <h3 className="text-lg font-medium">No approved requests</h3>
+                        <p className="text-muted-foreground">No verification requests have been approved yet.</p>
+                      </Card>
+                    ) : (
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {filteredRequests.map((request) => (
+                          <VerificationRequestCard
+                            key={request.id}
+                            request={request}
+                            onApprove={handleApprove}
+                            onReject={handleReject}
+                            isProcessing={isProcessing}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="rejected">
+                    {filteredRequests.length === 0 ? (
+                      <Card className="p-12 text-center">
+                        <XCircle className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                        <h3 className="text-lg font-medium">No rejected requests</h3>
+                        <p className="text-muted-foreground">No verification requests have been rejected.</p>
+                      </Card>
+                    ) : (
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {filteredRequests.map((request) => (
+                          <VerificationRequestCard
+                            key={request.id}
+                            request={request}
+                            onApprove={handleApprove}
+                            onReject={handleReject}
+                            isProcessing={isProcessing}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+                </>
+              )}
+            </Tabs>
+          </>
+        ) : (
+          <>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-foreground">Profile Reports</h1>
+              <p className="text-muted-foreground">Review and manage user-submitted profile reports</p>
+            </div>
+
+            {/* Report Stats */}
+            <div className="grid gap-6 md:grid-cols-3 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Pending</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{reportStats.pending}</div>
+                  <p className="text-xs text-muted-foreground">Needs review</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Resolved</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{reportStats.resolved}</div>
+                  <p className="text-xs text-muted-foreground">Action taken</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Dismissed</CardTitle>
+                  <XCircle className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{reportStats.dismissed}</div>
+                  <p className="text-xs text-muted-foreground">No action needed</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Reports Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsTrigger value="pending" className="gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  Pending ({reportStats.pending})
+                </TabsTrigger>
+                <TabsTrigger value="resolved" className="gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Resolved ({reportStats.resolved})
+                </TabsTrigger>
+                <TabsTrigger value="dismissed" className="gap-2">
+                  <XCircle className="h-4 w-4" />
+                  Dismissed ({reportStats.dismissed})
+                </TabsTrigger>
+              </TabsList>
+
+              {isLoading ? (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-48" />
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {["pending", "resolved", "dismissed"].map((status) => (
+                    <TabsContent key={status} value={status}>
+                      {filteredReports.length === 0 ? (
+                        <Card className="p-12 text-center">
+                          <Flag className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                          <h3 className="text-lg font-medium">No {status} reports</h3>
+                          <p className="text-muted-foreground">
+                            {status === "pending" 
+                              ? "All reports have been reviewed." 
+                              : `No reports have been ${status} yet.`}
+                          </p>
+                        </Card>
+                      ) : (
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          {filteredReports.map((report) => (
+                            <Card key={report.id} className="overflow-hidden">
+                              <CardHeader className="pb-2">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex items-center gap-3">
+                                    {report.reported_profile?.photo_urls?.[0] ? (
+                                      <img
+                                        src={report.reported_profile.photo_urls[0]}
+                                        alt={report.reported_profile.name}
+                                        className="h-12 w-12 rounded-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                                        <Users className="h-6 w-6 text-muted-foreground" />
+                                      </div>
+                                    )}
+                                    <div>
+                                      <CardTitle className="text-base">
+                                        {report.reported_profile?.name || "Unknown"}
+                                      </CardTitle>
+                                      <p className="text-xs text-muted-foreground">
+                                        {formatDistanceToNow(new Date(report.created_at), { addSuffix: true })}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Badge 
+                                    variant={
+                                      report.status === "pending" ? "outline" :
+                                      report.status === "resolved" ? "default" : "secondary"
+                                    }
+                                    className={
+                                      report.status === "pending" ? "border-yellow-500 text-yellow-600" : ""
+                                    }
+                                  >
+                                    {report.status}
+                                  </Badge>
+                                </div>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="space-y-2">
+                                  <div>
+                                    <p className="text-sm font-medium">Reason</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {REASON_LABELS[report.reason] || report.reason}
+                                    </p>
+                                  </div>
+                                  {report.details && (
+                                    <div>
+                                      <p className="text-sm font-medium">Details</p>
+                                      <p className="text-sm text-muted-foreground line-clamp-2">
+                                        {report.details}
+                                      </p>
+                                    </div>
+                                  )}
+                                  {report.status === "pending" && (
+                                    <Button
+                                      className="w-full mt-4"
+                                      onClick={() => setSelectedReport(report)}
+                                    >
+                                      Review Report
+                                    </Button>
+                                  )}
+                                  {report.resolution_notes && (
+                                    <div className="mt-2 p-2 bg-muted rounded text-xs">
+                                      <span className="font-medium">Notes: </span>
+                                      {report.resolution_notes}
+                                    </div>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </TabsContent>
+                  ))}
+                </>
+              )}
+            </Tabs>
+          </>
+        )}
       </main>
+
+      {/* Report Review Dialog */}
+      <Dialog open={!!selectedReport} onOpenChange={() => setSelectedReport(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Flag className="h-5 w-5 text-destructive" />
+              Review Report
+            </DialogTitle>
+            <DialogDescription>
+              Review this report and take appropriate action.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedReport && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                {selectedReport.reported_profile?.photo_urls?.[0] ? (
+                  <img
+                    src={selectedReport.reported_profile.photo_urls[0]}
+                    alt={selectedReport.reported_profile.name}
+                    className="h-16 w-16 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-16 w-16 rounded-full bg-background flex items-center justify-center">
+                    <Users className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
+                <div>
+                  <p className="font-medium">{selectedReport.reported_profile?.name || "Unknown"}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedReport.reported_profile?.location || "No location"}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium mb-1">Report Reason</p>
+                <p className="text-sm text-muted-foreground">
+                  {REASON_LABELS[selectedReport.reason] || selectedReport.reason}
+                </p>
+              </div>
+
+              {selectedReport.details && (
+                <div>
+                  <p className="text-sm font-medium mb-1">Additional Details</p>
+                  <p className="text-sm text-muted-foreground bg-muted p-3 rounded">
+                    {selectedReport.details}
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <p className="text-sm font-medium mb-2">Resolution Notes (optional)</p>
+                <Textarea
+                  placeholder="Add notes about this report..."
+                  value={resolutionNotes}
+                  onChange={(e) => setResolutionNotes(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => handleReportAction(selectedReport.id, "dismissed")}
+                  disabled={isProcessing}
+                >
+                  Dismiss
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="flex-1"
+                  onClick={() => handleReportAction(selectedReport.id, "resolved")}
+                  disabled={isProcessing}
+                >
+                  Take Action
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
