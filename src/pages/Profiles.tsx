@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Heart, ArrowLeft, User, LogOut, Settings, MessageCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ProfileCard } from "@/components/ProfileCard";
+import { ProfileFilters } from "@/components/ProfileFilters";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -21,9 +22,16 @@ interface Profile {
 
 const Profiles = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [matchCount, setMatchCount] = useState(0);
+  const [filters, setFilters] = useState({
+    ageRange: [18, 80] as [number, number],
+    location: "",
+    gender: "all",
+    lookingFor: "all",
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -73,6 +81,7 @@ const Profiles = () => {
       ];
 
       setProfiles(allProfiles);
+      setFilteredProfiles(allProfiles);
     } catch (error) {
       console.error("Error fetching profiles:", error);
       toast({
@@ -84,6 +93,54 @@ const Profiles = () => {
       setLoading(false);
     }
   };
+
+  const applyFilters = () => {
+    let filtered = [...profiles];
+
+    // Age filter
+    filtered = filtered.filter(
+      (profile) =>
+        profile.age !== null &&
+        profile.age >= filters.ageRange[0] &&
+        profile.age <= filters.ageRange[1]
+    );
+
+    // Location filter
+    if (filters.location.trim()) {
+      filtered = filtered.filter((profile) =>
+        profile.location?.toLowerCase().includes(filters.location.toLowerCase())
+      );
+    }
+
+    // Gender filter
+    if (filters.gender !== "all") {
+      filtered = filtered.filter(
+        (profile) => profile.gender?.toLowerCase() === filters.gender.toLowerCase()
+      );
+    }
+
+    // Looking for filter
+    if (filters.lookingFor !== "all") {
+      filtered = filtered.filter(
+        (profile) => profile.looking_for?.toLowerCase() === filters.lookingFor.toLowerCase()
+      );
+    }
+
+    setFilteredProfiles(filtered);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      ageRange: [18, 80],
+      location: "",
+      gender: "all",
+      lookingFor: "all",
+    });
+  };
+
+  useEffect(() => {
+    applyFilters();
+  }, [filters, profiles]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
@@ -141,15 +198,36 @@ const Profiles = () => {
           </p>
         </div>
 
+        <div className="mb-8">
+          <ProfileFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            onClear={handleClearFilters}
+          />
+        </div>
+
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="text-muted-foreground">Loading profiles...</div>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {profiles.map((profile) => (
-              <ProfileCard key={profile.id} profile={profile} />
-            ))}
+          <>
+            <div className="mb-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                Showing {filteredProfiles.length} of {profiles.length} profiles
+              </p>
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filteredProfiles.map((profile) => (
+                <ProfileCard key={profile.id} profile={profile} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {!loading && filteredProfiles.length === 0 && profiles.length > 0 && (
+          <div className="py-20 text-center">
+            <p className="text-muted-foreground">No profiles match your filters. Try adjusting them!</p>
           </div>
         )}
 
