@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Heart, Users, Shield, Sparkles } from "lucide-react";
+import { Heart, Users, Shield, Sparkles, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 
 const Index = () => {
+  const { isAdmin } = useAdminStatus();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
       {/* Hero Section */}
@@ -13,6 +16,14 @@ const Index = () => {
             <span className="text-2xl font-bold text-foreground">Unity Hearts</span>
           </div>
           <div className="flex gap-4">
+            {isAdmin && (
+              <Link to="/admin">
+                <Button variant="ghost" className="gap-2">
+                  <Settings className="h-4 w-4" />
+                  Admin
+                </Button>
+              </Link>
+            )}
             <Link to="/auth">
               <Button variant="ghost">Sign In</Button>
             </Link>
