@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { PhotoUpload } from "@/components/PhotoUpload";
+import { InterestsSelector } from "@/components/InterestsSelector";
 import { Loader2, BadgeCheck, Clock, ShieldCheck, Pause, Play } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
@@ -27,6 +28,7 @@ const ProfileSetup = () => {
   const [lookingFor, setLookingFor] = useState("");
   const [bio, setBio] = useState("");
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [interests, setInterests] = useState<string[]>([]);
   const [isVisible, setIsVisible] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -59,6 +61,7 @@ const ProfileSetup = () => {
       setLookingFor(profile.looking_for || "");
       setBio(profile.bio || "");
       setPhotoUrls(profile.photo_urls || []);
+      setInterests(profile.interests || []);
       setIsVisible(profile.is_visible ?? true);
       
       // Check verification status
@@ -139,6 +142,7 @@ const ProfileSetup = () => {
         looking_for: lookingFor || null,
         bio: bio || null,
         photo_urls: photoUrls,
+        interests,
         is_visible: isVisible,
       };
 
@@ -294,6 +298,11 @@ const ProfileSetup = () => {
                   onPhotosChange={setPhotoUrls}
                 />
               </div>
+
+              <InterestsSelector
+                selectedInterests={interests}
+                onInterestsChange={setInterests}
+              />
 
               {/* Pause Account Section */}
               <Card className={isVisible ? "border-muted" : "border-yellow-500/50 bg-yellow-500/5"}>
