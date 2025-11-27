@@ -25,6 +25,7 @@ export type Database = {
           looking_for: string | null
           name: string
           photo_urls: string[] | null
+          verified: boolean
         }
         Insert: {
           age?: number | null
@@ -36,6 +37,7 @@ export type Database = {
           looking_for?: string | null
           name: string
           photo_urls?: string[] | null
+          verified?: boolean
         }
         Update: {
           age?: number | null
@@ -47,6 +49,7 @@ export type Database = {
           looking_for?: string | null
           name?: string
           photo_urls?: string[] | null
+          verified?: boolean
         }
         Relationships: []
       }
@@ -141,6 +144,7 @@ export type Database = {
           photo_urls: string[] | null
           updated_at: string
           user_id: string
+          verified: boolean
         }
         Insert: {
           age?: number | null
@@ -154,6 +158,7 @@ export type Database = {
           photo_urls?: string[] | null
           updated_at?: string
           user_id: string
+          verified?: boolean
         }
         Update: {
           age?: number | null
@@ -167,6 +172,7 @@ export type Database = {
           photo_urls?: string[] | null
           updated_at?: string
           user_id?: string
+          verified?: boolean
         }
         Relationships: []
       }

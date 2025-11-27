@@ -18,6 +18,7 @@ interface Profile {
   photo_urls: string[];
   gender: string | null;
   looking_for: string | null;
+  verified: boolean | null;
 }
 
 const Profiles = () => {

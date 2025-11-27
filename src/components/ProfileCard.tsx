@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Heart } from "lucide-react";
+import { MapPin, Heart, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import {
@@ -22,6 +22,7 @@ interface Profile {
   gender: string | null;
   looking_for: string | null;
   user_id?: string;
+  verified: boolean | null;
 }
 
 interface ProfileCardProps {
@@ -157,10 +158,18 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           
           <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-            <h3 className="mb-1 text-2xl font-bold">
-              {profile.name}
-              {profile.age && `, ${profile.age}`}
-            </h3>
+            <div className="mb-1 flex items-center gap-2">
+              <h3 className="text-2xl font-bold">
+                {profile.name}
+                {profile.age && `, ${profile.age}`}
+              </h3>
+              {profile.verified && (
+                <Badge variant="secondary" className="gap-1 bg-primary/90 text-primary-foreground">
+                  <BadgeCheck className="h-3 w-3" />
+                  Verified
+                </Badge>
+              )}
+            </div>
             {profile.location && (
               <div className="flex items-center gap-1 text-sm text-white/90">
                 <MapPin className="h-4 w-4" />
@@ -200,9 +209,17 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-2xl">
-              {profile.name}
-              {profile.age && `, ${profile.age}`}
+            <DialogTitle className="flex items-center gap-2 text-2xl">
+              <span>
+                {profile.name}
+                {profile.age && `, ${profile.age}`}
+              </span>
+              {profile.verified && (
+                <Badge variant="secondary" className="gap-1">
+                  <BadgeCheck className="h-4 w-4" />
+                  Verified
+                </Badge>
+              )}
             </DialogTitle>
           </DialogHeader>
 
