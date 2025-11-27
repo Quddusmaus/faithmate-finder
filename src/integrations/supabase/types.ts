@@ -256,6 +256,7 @@ export type Database = {
           looking_for: string | null
           name: string
           photo_urls: string[] | null
+          preferred_language: string | null
           status: string
           suspended_until: string | null
           suspension_reason: string | null
@@ -274,6 +275,7 @@ export type Database = {
           looking_for?: string | null
           name: string
           photo_urls?: string[] | null
+          preferred_language?: string | null
           status?: string
           suspended_until?: string | null
           suspension_reason?: string | null
@@ -292,6 +294,7 @@ export type Database = {
           looking_for?: string | null
           name?: string
           photo_urls?: string[] | null
+          preferred_language?: string | null
           status?: string
           suspended_until?: string | null
           suspension_reason?: string | null
