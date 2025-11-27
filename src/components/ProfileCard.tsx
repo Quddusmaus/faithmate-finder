@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Heart, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ReportProfileDialog } from "./ReportProfileDialog";
 import { BlockUserDialog } from "./BlockUserDialog";
+import { CompatibilityBadge } from "./CompatibilityBadge";
+import { calculateCompatibility } from "@/hooks/useCurrentUserProfile";
 
 interface Profile {
   id: string;
@@ -30,15 +32,20 @@ interface Profile {
 
 interface ProfileCardProps {
   profile: Profile;
+  userInterests?: string[];
 }
 
-export const ProfileCard = ({ profile }: ProfileCardProps) => {
+export const ProfileCard = ({ profile, userInterests = [] }: ProfileCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
   const [liked, setLiked] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [liking, setLiking] = useState(false);
   const { toast } = useToast();
   const imageUrl = profile.photo_urls[0] || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400";
+
+  const compatibility = useMemo(() => {
+    return calculateCompatibility(userInterests, profile.interests || []);
+  }, [userInterests, profile.interests]);
 
   useEffect(() => {
     checkAuth();
@@ -160,6 +167,15 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           
+          {compatibility.score > 0 && (
+            <div className="absolute top-4 right-4">
+              <CompatibilityBadge 
+                score={compatibility.score} 
+                sharedInterests={compatibility.shared} 
+              />
+            </div>
+          )}
+          
           <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
             <div className="mb-1 flex items-center gap-2">
               <h3 className="text-2xl font-bold">
@@ -234,6 +250,14 @@ export const ProfileCard = ({ profile }: ProfileCardProps) => {
                 className="h-full w-full object-cover"
               />
             </div>
+
+            {compatibility.score > 0 && (
+              <CompatibilityBadge 
+                score={compatibility.score} 
+                sharedInterests={compatibility.shared}
+                variant="detail"
+              />
+            )}
 
             {profile.location && (
               <div className="flex items-center gap-2 text-muted-foreground">

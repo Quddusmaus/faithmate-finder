@@ -8,6 +8,7 @@ import { ProfileFilters } from "@/components/ProfileFilters";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { NotificationBell } from "@/components/NotificationBell";
+import { useCurrentUserProfile } from "@/hooks/useCurrentUserProfile";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface Profile {
@@ -37,6 +38,7 @@ const Profiles = () => {
   });
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { profile: currentUserProfile } = useCurrentUserProfile();
 
   useEffect(() => {
     checkAuth();
@@ -223,7 +225,11 @@ const Profiles = () => {
             </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredProfiles.map((profile) => (
-                <ProfileCard key={profile.id} profile={profile} />
+                <ProfileCard 
+                  key={profile.id} 
+                  profile={profile} 
+                  userInterests={currentUserProfile?.interests || []}
+                />
               ))}
             </div>
           </>
