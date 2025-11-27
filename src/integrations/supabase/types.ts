@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      ban_appeals: {
+        Row: {
+          admin_response: string | null
+          appeal_reason: string
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_response?: string | null
+          appeal_reason: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_response?: string | null
+          appeal_reason?: string
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       demo_profiles: {
         Row: {
           age: number | null
