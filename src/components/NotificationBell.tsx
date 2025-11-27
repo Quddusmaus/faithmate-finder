@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Bell, Heart, X } from "lucide-react";
+import { Bell, Heart, X, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 import {
   Popover,
   PopoverContent,
@@ -25,6 +26,7 @@ export const NotificationBell = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchNotifications();
@@ -122,8 +124,21 @@ export const NotificationBell = () => {
     switch (type) {
       case 'like':
         return <Heart className="h-4 w-4 text-pink-500" fill="currentColor" />;
+      case 'match':
+        return <Sparkles className="h-4 w-4 text-yellow-500" />;
       default:
         return <Bell className="h-4 w-4 text-primary" />;
+    }
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    if (!notification.read) {
+      markAsRead(notification.id);
+    }
+    // Navigate to messages if it's a match notification
+    if (notification.type === 'match' && notification.related_user_id) {
+      setOpen(false);
+      navigate(`/messages?match=${notification.related_user_id}`);
     }
   };
 
@@ -168,8 +183,8 @@ export const NotificationBell = () => {
                   key={notification.id}
                   className={`flex items-start gap-3 p-3 cursor-pointer hover:bg-muted/50 transition-colors ${
                     !notification.read ? 'bg-primary/5' : ''
-                  }`}
-                  onClick={() => !notification.read && markAsRead(notification.id)}
+                  } ${notification.type === 'match' ? 'bg-yellow-500/5' : ''}`}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <div className="mt-1">
                     {getIcon(notification.type)}
