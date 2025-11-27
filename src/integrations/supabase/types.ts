@@ -138,6 +138,7 @@ export type Database = {
           created_at: string
           gender: string | null
           id: string
+          is_visible: boolean
           location: string | null
           looking_for: string | null
           name: string
@@ -152,6 +153,7 @@ export type Database = {
           created_at?: string
           gender?: string | null
           id?: string
+          is_visible?: boolean
           location?: string | null
           looking_for?: string | null
           name: string
@@ -166,6 +168,7 @@ export type Database = {
           created_at?: string
           gender?: string | null
           id?: string
+          is_visible?: boolean
           location?: string | null
           looking_for?: string | null
           name?: string
