@@ -8,7 +8,7 @@ import { ProfileFilters } from "@/components/ProfileFilters";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { NotificationBell } from "@/components/NotificationBell";
-import { useCurrentUserProfile } from "@/hooks/useCurrentUserProfile";
+import { useCurrentUserProfile, calculateCompatibility } from "@/hooks/useCurrentUserProfile";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface Profile {
@@ -131,6 +131,14 @@ const Profiles = () => {
       );
     }
 
+    // Sort by compatibility score (highest first)
+    const userInterests = currentUserProfile?.interests || [];
+    filtered.sort((a, b) => {
+      const scoreA = calculateCompatibility(userInterests, a.interests || []).score;
+      const scoreB = calculateCompatibility(userInterests, b.interests || []).score;
+      return scoreB - scoreA;
+    });
+
     setFilteredProfiles(filtered);
   };
 
@@ -145,7 +153,7 @@ const Profiles = () => {
 
   useEffect(() => {
     applyFilters();
-  }, [filters, profiles]);
+  }, [filters, profiles, currentUserProfile]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
