@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +47,7 @@ export const VerificationRequestCard = ({
   onReject,
   isProcessing,
 }: VerificationRequestCardProps) => {
+  const { t } = useTranslation();
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
 
@@ -61,21 +63,21 @@ export const VerificationRequestCard = ({
         return (
           <Badge variant="outline" className="gap-1 border-yellow-500 text-yellow-600">
             <Clock className="h-3 w-3" />
-            Pending
+            {t("admin.pending")}
           </Badge>
         );
       case "approved":
         return (
           <Badge variant="default" className="gap-1 bg-green-500">
             <Check className="h-3 w-3" />
-            Approved
+            {t("admin.approved")}
           </Badge>
         );
       case "rejected":
         return (
           <Badge variant="destructive" className="gap-1">
             <X className="h-3 w-3" />
-            Rejected
+            {t("admin.rejected")}
           </Badge>
         );
       default:
@@ -97,7 +99,7 @@ export const VerificationRequestCard = ({
               </Avatar>
               <div>
                 <CardTitle className="text-lg">
-                  {profile?.name || "Unknown User"}
+                  {profile?.name || t("common.noResults")}
                   {profile?.age && `, ${profile.age}`}
                 </CardTitle>
                 {profile?.location && (
@@ -117,12 +119,12 @@ export const VerificationRequestCard = ({
           )}
           
           <div className="text-xs text-muted-foreground">
-            Submitted: {new Date(request.submitted_at).toLocaleDateString()}
+            {new Date(request.submitted_at).toLocaleDateString()}
           </div>
 
           {request.status === "rejected" && request.rejection_reason && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              <strong>Rejection reason:</strong> {request.rejection_reason}
+              <strong>{t("appeal.reason")}:</strong> {request.rejection_reason}
             </div>
           )}
 
@@ -134,7 +136,7 @@ export const VerificationRequestCard = ({
                 className="flex-1 gap-1"
               >
                 <Check className="h-4 w-4" />
-                Approve
+                {t("admin.approve")}
               </Button>
               <Button
                 variant="destructive"
@@ -143,7 +145,7 @@ export const VerificationRequestCard = ({
                 className="flex-1 gap-1"
               >
                 <X className="h-4 w-4" />
-                Reject
+                {t("admin.reject")}
               </Button>
             </div>
           )}
@@ -153,27 +155,27 @@ export const VerificationRequestCard = ({
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject Verification Request</DialogTitle>
+            <DialogTitle>{t("admin.reject")}</DialogTitle>
             <DialogDescription>
-              Please provide a reason for rejecting this verification request.
+              {t("admin.resolutionNotes")}
             </DialogDescription>
           </DialogHeader>
           <Textarea
-            placeholder="Enter rejection reason..."
+            placeholder={t("admin.resolutionNotes")}
             value={rejectionReason}
             onChange={(e) => setRejectionReason(e.target.value)}
             className="min-h-[100px]"
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant="destructive"
               onClick={handleReject}
               disabled={!rejectionReason.trim() || isProcessing}
             >
-              Reject Request
+              {t("admin.reject")}
             </Button>
           </DialogFooter>
         </DialogContent>

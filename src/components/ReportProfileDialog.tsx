@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,12 +23,12 @@ interface ReportProfileDialogProps {
 }
 
 const REPORT_REASONS = [
-  { value: "fake_profile", label: "Fake or misleading profile" },
-  { value: "inappropriate_content", label: "Inappropriate photos or content" },
-  { value: "harassment", label: "Harassment or abusive behavior" },
-  { value: "spam", label: "Spam or scam" },
-  { value: "underage", label: "User appears to be underage" },
-  { value: "other", label: "Other" },
+  { value: "fake_profile", labelKey: "report.fakeProfile" },
+  { value: "inappropriate_content", labelKey: "report.inappropriateContent" },
+  { value: "harassment", labelKey: "report.harassment" },
+  { value: "spam", labelKey: "report.spam" },
+  { value: "underage", labelKey: "report.underage" },
+  { value: "other", labelKey: "report.other" },
 ];
 
 export const ReportProfileDialog = ({
@@ -35,6 +36,7 @@ export const ReportProfileDialog = ({
   profileName,
   currentUserId,
 }: ReportProfileDialogProps) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [details, setDetails] = useState("");
@@ -44,8 +46,8 @@ export const ReportProfileDialog = ({
   const handleSubmit = async () => {
     if (!currentUserId) {
       toast({
-        title: "Sign in required",
-        description: "Please sign in to report profiles.",
+        title: t("auth.signIn"),
+        description: t("auth.signInToContinue"),
         variant: "destructive",
       });
       return;
@@ -53,8 +55,8 @@ export const ReportProfileDialog = ({
 
     if (!reason) {
       toast({
-        title: "Select a reason",
-        description: "Please select a reason for your report.",
+        title: t("report.whyReporting"),
+        description: t("report.whyReporting"),
         variant: "destructive",
       });
       return;
@@ -72,8 +74,8 @@ export const ReportProfileDialog = ({
       if (error) throw error;
 
       toast({
-        title: "Report submitted",
-        description: "Thank you for helping keep our community safe. We'll review this report.",
+        title: t("report.reportSubmitted"),
+        description: t("report.reportSubmitted"),
       });
       setOpen(false);
       setReason("");
@@ -81,8 +83,8 @@ export const ReportProfileDialog = ({
     } catch (error: any) {
       console.error("Error submitting report:", error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to submit report. Please try again.",
+        title: t("common.error"),
+        description: error.message || t("common.error"),
         variant: "destructive",
       });
     } finally {
@@ -101,7 +103,7 @@ export const ReportProfileDialog = ({
           variant="ghost"
           size="icon"
           className="h-8 w-8 text-muted-foreground hover:text-destructive"
-          title="Report profile"
+          title={t("report.reportProfile")}
         >
           <Flag className="h-4 w-4" />
         </Button>
@@ -110,22 +112,22 @@ export const ReportProfileDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Flag className="h-5 w-5 text-destructive" />
-            Report Profile
+            {t("report.reportProfile")}
           </DialogTitle>
           <DialogDescription>
-            Report {profileName}'s profile for violating our community guidelines.
+            {t("report.reportProfile")} - {profileName}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           <div className="space-y-3">
-            <Label className="text-base">Why are you reporting this profile?</Label>
+            <Label className="text-base">{t("report.whyReporting")}</Label>
             <RadioGroup value={reason} onValueChange={setReason}>
               {REPORT_REASONS.map((item) => (
                 <div key={item.value} className="flex items-center space-x-3">
                   <RadioGroupItem value={item.value} id={item.value} />
                   <Label htmlFor={item.value} className="font-normal cursor-pointer">
-                    {item.label}
+                    {t(item.labelKey)}
                   </Label>
                 </div>
               ))}
@@ -133,16 +135,16 @@ export const ReportProfileDialog = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="details">Additional details (optional)</Label>
+            <Label htmlFor="details">{t("report.additionalDetails")}</Label>
             <Textarea
               id="details"
-              placeholder="Provide any additional information that might help us review this report..."
+              placeholder={t("report.additionalDetails")}
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               maxLength={1000}
               rows={4}
             />
-            <p className="text-xs text-muted-foreground">{details.length}/1000 characters</p>
+            <p className="text-xs text-muted-foreground">{details.length}/1000</p>
           </div>
         </div>
 
@@ -153,7 +155,7 @@ export const ReportProfileDialog = ({
             onClick={() => setOpen(false)}
             disabled={submitting}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             variant="destructive"
@@ -164,10 +166,10 @@ export const ReportProfileDialog = ({
             {submitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Submitting...
+                {t("common.loading")}
               </>
             ) : (
-              "Submit Report"
+              t("report.submitReport")
             )}
           </Button>
         </div>
