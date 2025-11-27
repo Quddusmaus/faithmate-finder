@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Shield, Users, CheckCircle, XCircle, Clock, ArrowLeft, Flag, AlertTriangle } from "lucide-react";
+import { Heart, Shield, Users, CheckCircle, XCircle, Clock, ArrowLeft, Flag, AlertTriangle, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -22,11 +24,15 @@ import { formatDistanceToNow } from "date-fns";
 
 interface Profile {
   id: string;
+  user_id: string;
   name: string;
   age: number | null;
   location: string | null;
   photo_urls: string[] | null;
   bio: string | null;
+  status?: string;
+  suspended_until?: string | null;
+  suspension_reason?: string | null;
 }
 
 interface VerificationRequest {
@@ -72,6 +78,8 @@ const Admin = () => {
   const [activeSection, setActiveSection] = useState<"verifications" | "reports">("verifications");
   const [selectedReport, setSelectedReport] = useState<ProfileReport | null>(null);
   const [resolutionNotes, setResolutionNotes] = useState("");
+  const [actionType, setActionType] = useState<"none" | "suspend" | "ban">("none");
+  const [suspensionDuration, setSuspensionDuration] = useState<string>("7");
 
   useEffect(() => {
     if (!isAdminLoading && !isAdmin) {
@@ -103,7 +111,7 @@ const Admin = () => {
       for (const request of requestsData || []) {
         const { data: profileData } = await supabase
           .from("profiles")
-          .select("id, name, age, location, photo_urls, bio")
+          .select("id, user_id, name, age, location, photo_urls, bio, status, suspended_until, suspension_reason")
           .eq("user_id", request.user_id)
           .maybeSingle();
 
@@ -136,7 +144,7 @@ const Admin = () => {
       for (const report of reportsData || []) {
         const { data: profileData } = await supabase
           .from("profiles")
-          .select("id, name, age, location, photo_urls, bio")
+          .select("id, user_id, name, age, location, photo_urls, bio, status, suspended_until, suspension_reason")
           .eq("id", report.reported_profile_id)
           .maybeSingle();
 
@@ -224,6 +232,33 @@ const Admin = () => {
       
       const { data: { user } } = await supabase.auth.getUser();
 
+      // If taking action and a profile action is selected, update the profile
+      if (action === "resolved" && actionType !== "none" && selectedReport?.reported_profile) {
+        let suspendedUntil: string | null = null;
+        let profileStatus = "active";
+
+        if (actionType === "suspend") {
+          const days = parseInt(suspensionDuration);
+          const suspendDate = new Date();
+          suspendDate.setDate(suspendDate.getDate() + days);
+          suspendedUntil = suspendDate.toISOString();
+          profileStatus = "suspended";
+        } else if (actionType === "ban") {
+          profileStatus = "banned";
+        }
+
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({
+            status: profileStatus,
+            suspended_until: suspendedUntil,
+            suspension_reason: resolutionNotes || `Account ${actionType === "ban" ? "banned" : "suspended"} due to report`,
+          })
+          .eq("id", selectedReport.reported_profile.id);
+
+        if (profileError) throw profileError;
+      }
+
       const { error } = await supabase
         .from("profile_reports")
         .update({
@@ -236,13 +271,48 @@ const Admin = () => {
 
       if (error) throw error;
 
-      toast.success(`Report ${action}`);
+      const actionMessage = action === "dismissed" 
+        ? "Report dismissed" 
+        : actionType === "ban" 
+          ? "Profile banned" 
+          : actionType === "suspend" 
+            ? `Profile suspended for ${suspensionDuration} days`
+            : "Report resolved";
+
+      toast.success(actionMessage);
       setSelectedReport(null);
       setResolutionNotes("");
+      setActionType("none");
+      setSuspensionDuration("7");
       fetchReports();
     } catch (error) {
       console.error("Error updating report:", error);
       toast.error("Failed to update report");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleUnbanProfile = async (profile: Profile) => {
+    try {
+      setIsProcessing(true);
+      
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          status: "active",
+          suspended_until: null,
+          suspension_reason: null,
+        })
+        .eq("id", profile.id);
+
+      if (error) throw error;
+
+      toast.success(`${profile.name}'s profile has been reactivated`);
+      fetchReports();
+    } catch (error) {
+      console.error("Error unbanning profile:", error);
+      toast.error("Failed to unban profile");
     } finally {
       setIsProcessing(false);
     }
@@ -578,9 +648,17 @@ const Admin = () => {
                                       </div>
                                     )}
                                     <div>
-                                      <CardTitle className="text-base">
-                                        {report.reported_profile?.name || "Unknown"}
-                                      </CardTitle>
+                                      <div className="flex items-center gap-2">
+                                        <CardTitle className="text-base">
+                                          {report.reported_profile?.name || "Unknown"}
+                                        </CardTitle>
+                                        {report.reported_profile?.status && report.reported_profile.status !== "active" && (
+                                          <Badge variant="destructive" className="text-xs gap-1">
+                                            <Ban className="h-3 w-3" />
+                                            {report.reported_profile.status === "banned" ? "Banned" : "Suspended"}
+                                          </Badge>
+                                        )}
+                                      </div>
                                       <p className="text-xs text-muted-foreground">
                                         {formatDistanceToNow(new Date(report.created_at), { addSuffix: true })}
                                       </p>
@@ -615,12 +693,20 @@ const Admin = () => {
                                       </p>
                                     </div>
                                   )}
-                                  {report.status === "pending" && (
+                                  {report.status === "pending" ? (
                                     <Button
                                       className="w-full mt-4"
                                       onClick={() => setSelectedReport(report)}
                                     >
                                       Review Report
+                                    </Button>
+                                  ) : report.reported_profile?.status && report.reported_profile.status !== "active" && (
+                                    <Button
+                                      variant="outline"
+                                      className="w-full mt-4"
+                                      onClick={() => setSelectedReport(report)}
+                                    >
+                                      Manage Profile Status
                                     </Button>
                                   )}
                                   {report.resolution_notes && (
@@ -645,7 +731,14 @@ const Admin = () => {
       </main>
 
       {/* Report Review Dialog */}
-      <Dialog open={!!selectedReport} onOpenChange={() => setSelectedReport(null)}>
+      <Dialog open={!!selectedReport} onOpenChange={(open) => {
+        if (!open) {
+          setSelectedReport(null);
+          setResolutionNotes("");
+          setActionType("none");
+          setSuspensionDuration("7");
+        }
+      }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -671,13 +764,54 @@ const Admin = () => {
                     <Users className="h-8 w-8 text-muted-foreground" />
                   </div>
                 )}
-                <div>
+                <div className="flex-1">
                   <p className="font-medium">{selectedReport.reported_profile?.name || "Unknown"}</p>
                   <p className="text-sm text-muted-foreground">
                     {selectedReport.reported_profile?.location || "No location"}
                   </p>
                 </div>
+                {selectedReport.reported_profile?.status && selectedReport.reported_profile.status !== "active" && (
+                  <Badge variant="destructive" className="gap-1">
+                    <Ban className="h-3 w-3" />
+                    {selectedReport.reported_profile.status === "banned" ? "Banned" : "Suspended"}
+                  </Badge>
+                )}
               </div>
+
+              {selectedReport.reported_profile?.status === "suspended" && selectedReport.reported_profile.suspended_until && (
+                <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                  <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                    <strong>Currently suspended</strong> until {new Date(selectedReport.reported_profile.suspended_until).toLocaleDateString()}
+                  </p>
+                  {selectedReport.reported_profile.suspension_reason && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Reason: {selectedReport.reported_profile.suspension_reason}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {selectedReport.reported_profile?.status === "banned" && (
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <p className="text-sm text-destructive">
+                    <strong>This profile is permanently banned</strong>
+                  </p>
+                  {selectedReport.reported_profile.suspension_reason && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Reason: {selectedReport.reported_profile.suspension_reason}
+                    </p>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => selectedReport.reported_profile && handleUnbanProfile(selectedReport.reported_profile)}
+                    disabled={isProcessing}
+                  >
+                    Unban Profile
+                  </Button>
+                </div>
+              )}
 
               <div>
                 <p className="text-sm font-medium mb-1">Report Reason</p>
@@ -696,12 +830,46 @@ const Admin = () => {
               )}
 
               <div>
-                <p className="text-sm font-medium mb-2">Resolution Notes (optional)</p>
+                <Label className="text-sm font-medium">Action on Profile</Label>
+                <Select value={actionType} onValueChange={(v) => setActionType(v as "none" | "suspend" | "ban")}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select action" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No action on profile</SelectItem>
+                    <SelectItem value="suspend">Suspend profile temporarily</SelectItem>
+                    <SelectItem value="ban">Ban profile permanently</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {actionType === "suspend" && (
+                <div>
+                  <Label className="text-sm font-medium">Suspension Duration</Label>
+                  <Select value={suspensionDuration} onValueChange={setSuspensionDuration}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 day</SelectItem>
+                      <SelectItem value="3">3 days</SelectItem>
+                      <SelectItem value="7">7 days</SelectItem>
+                      <SelectItem value="14">14 days</SelectItem>
+                      <SelectItem value="30">30 days</SelectItem>
+                      <SelectItem value="90">90 days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div>
+                <Label className="text-sm font-medium">Resolution Notes {actionType !== "none" ? "(reason for action)" : "(optional)"}</Label>
                 <Textarea
-                  placeholder="Add notes about this report..."
+                  placeholder={actionType !== "none" ? "Explain why this action is being taken..." : "Add notes about this report..."}
                   value={resolutionNotes}
                   onChange={(e) => setResolutionNotes(e.target.value)}
                   rows={3}
+                  className="mt-1"
                 />
               </div>
 
@@ -715,12 +883,12 @@ const Admin = () => {
                   Dismiss
                 </Button>
                 <Button
-                  variant="destructive"
+                  variant={actionType !== "none" ? "destructive" : "default"}
                   className="flex-1"
                   onClick={() => handleReportAction(selectedReport.id, "resolved")}
                   disabled={isProcessing}
                 >
-                  Take Action
+                  {actionType === "ban" ? "Ban & Resolve" : actionType === "suspend" ? "Suspend & Resolve" : "Resolve"}
                 </Button>
               </div>
             </div>
