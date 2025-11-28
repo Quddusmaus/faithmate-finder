@@ -231,7 +231,14 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
           filter: `sender_id=eq.${user.id},receiver_id=eq.${match.match_id}`
         },
         (payload) => {
-          setMessages((current) => [...current, payload.new as Message]);
+          // Only add if not already present (handles optimistic updates)
+          const newMsg = payload.new as Message;
+          setMessages((current) => {
+            if (current.some((msg) => msg.id === newMsg.id)) {
+              return current;
+            }
+            return [...current, newMsg];
+          });
         }
       )
       .on(
@@ -357,20 +364,44 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
       clearTimeout(typingTimeoutRef.current);
     }
 
+    // Optimistic update - add message to UI immediately
+    const optimisticId = `optimistic-${Date.now()}`;
+    const optimisticMessage: Message = {
+      id: optimisticId,
+      sender_id: user.id,
+      receiver_id: match.match_id,
+      content,
+      created_at: new Date().toISOString(),
+      read_at: null,
+    };
+    
+    setMessages((current) => [...current, optimisticMessage]);
+    setNewMessage("");
     setSending(true);
+
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("messages")
         .insert([{
           sender_id: user.id,
           receiver_id: match.match_id,
           content
-        }]);
+        }])
+        .select()
+        .single();
 
       if (error) throw error;
-      setNewMessage("");
+      
+      // Replace optimistic message with real one
+      setMessages((current) =>
+        current.map((msg) =>
+          msg.id === optimisticId ? data : msg
+        )
+      );
     } catch (error: any) {
       console.error("Error sending message:", error);
+      // Remove optimistic message on error
+      setMessages((current) => current.filter((msg) => msg.id !== optimisticId));
       toast({
         title: "Error",
         description: error.message || "Failed to send message.",
