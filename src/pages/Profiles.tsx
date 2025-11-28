@@ -30,7 +30,7 @@ const Profiles = () => {
   const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [matchCount, setMatchCount] = useState(0);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const { isAdmin } = useAdminStatus();
   const [filters, setFilters] = useState({
     ageRange: [18, 100] as [number, number],
@@ -55,11 +55,12 @@ const Profiles = () => {
     setUser(user);
     
     if (user) {
-      // Get match count
+      // Get total unread message count
       const { data } = await supabase.rpc('get_user_matches', {
         user_uuid: user.id
       });
-      setMatchCount(data?.length || 0);
+      const totalUnread = data?.reduce((sum: number, match: any) => sum + (match.unread_count || 0), 0) || 0;
+      setUnreadMessageCount(totalUnread);
     }
   };
 
@@ -234,9 +235,9 @@ const Profiles = () => {
                   <Button variant="outline" className="relative">
                     <MessageCircle className="mr-2 h-4 w-4" />
                     Messages
-                    {matchCount > 0 && (
-                      <Badge className="ml-2 bg-primary text-primary-foreground">
-                        {matchCount}
+                    {unreadMessageCount > 0 && (
+                      <Badge className="ml-2 bg-destructive text-destructive-foreground">
+                        {unreadMessageCount}
                       </Badge>
                     )}
                   </Button>
