@@ -31,7 +31,7 @@ const Index = () => {
             <Link to="/auth">
               <Button variant="ghost">{t('nav.login')}</Button>
             </Link>
-            <Link to="/auth">
+            <Link to="/auth?mode=signup">
               <Button className="bg-primary hover:bg-primary/90">{t('landing.getStarted')}</Button>
             </Link>
           </div>
@@ -62,7 +62,7 @@ const Index = () => {
                   {t('profiles.browseProfiles')}
                 </Button>
               </Link>
-              <Link to="/auth">
+              <Link to="/auth?mode=signup">
                 <Button size="lg" variant="outline">
                   {t('nav.signup')}
                 </Button>
@@ -121,7 +121,7 @@ const Index = () => {
             <p className="mb-8 text-lg text-primary-foreground/90">
               {t('landing.createProfileDesc')}
             </p>
-            <Link to="/auth">
+          <Link to="/auth?mode=signup">
               <Button size="lg" variant="secondary" className="bg-background text-foreground hover:bg-background/90">
                 {t('landing.createProfile')}
               </Button>
