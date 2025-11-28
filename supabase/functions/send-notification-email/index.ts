@@ -9,7 +9,7 @@ const corsHeaders = {
 };
 
 interface NotificationEmailRequest {
-  type: "like" | "match";
+  type: "like" | "match" | "message";
   recipient_user_id: string;
   sender_name: string;
   sender_user_id: string;
@@ -83,7 +83,7 @@ const handler = async (req: Request): Promise<Response> => {
         </body>
         </html>
       `;
-    } else {
+    } else if (type === "match") {
       subject = `🎉 You have a new match on Unity Hearts!`;
       htmlContent = `
         <!DOCTYPE html>
@@ -107,6 +107,40 @@ const handler = async (req: Request): Promise<Response> => {
             <div style="text-align: center; margin-top: 32px;">
               <a href="https://unity-hearts.lovable.app/messages?match=${sender_user_id}" style="display: inline-block; background: linear-gradient(135deg, #f59e0b, #eab308); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
                 Send a Message
+              </a>
+            </div>
+            <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 32px;">
+              Unity Hearts - Find your perfect match in the Baháʼí community
+            </p>
+          </div>
+        </body>
+        </html>
+      `;
+    } else {
+      // message type
+      subject = `💬 ${sender_name} sent you a message on Unity Hearts!`;
+      htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f9fafb; padding: 40px 20px;">
+          <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <div style="text-align: center; margin-bottom: 24px;">
+              <span style="font-size: 48px;">💬</span>
+            </div>
+            <h1 style="color: #1f2937; font-size: 24px; text-align: center; margin-bottom: 16px;">New message!</h1>
+            <p style="color: #4b5563; font-size: 16px; line-height: 1.6; text-align: center;">
+              <strong>${sender_name}</strong> sent you a message on Unity Hearts.
+            </p>
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6; text-align: center; margin-top: 16px;">
+              Don't keep them waiting - reply now!
+            </p>
+            <div style="text-align: center; margin-top: 32px;">
+              <a href="https://unity-hearts.lovable.app/messages?match=${sender_user_id}" style="display: inline-block; background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                View Message
               </a>
             </div>
             <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 32px;">
