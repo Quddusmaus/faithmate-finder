@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useCurrentUserProfile, calculateCompatibility } from "@/hooks/useCurrentUserProfile";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
+import { useUnreadMessageCount } from "@/hooks/useUnreadMessageCount";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface Profile {
@@ -30,7 +31,7 @@ const Profiles = () => {
   const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const { unreadCount: unreadMessageCount } = useUnreadMessageCount();
   const { isAdmin } = useAdminStatus();
   const [filters, setFilters] = useState({
     ageRange: [18, 100] as [number, number],
@@ -53,15 +54,6 @@ const Profiles = () => {
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
-    
-    if (user) {
-      // Get total unread message count
-      const { data } = await supabase.rpc('get_user_matches', {
-        user_uuid: user.id
-      });
-      const totalUnread = data?.reduce((sum: number, match: any) => sum + (match.unread_count || 0), 0) || 0;
-      setUnreadMessageCount(totalUnread);
-    }
   };
 
   const handleSignOut = async () => {
