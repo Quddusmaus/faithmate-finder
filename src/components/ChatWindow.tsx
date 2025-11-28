@@ -135,13 +135,21 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
     setIsInCall(false);
   };
 
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
-    fetchMessages();
+    fetchMessages(true); // Show loading on initial fetch
     fetchReactions();
     subscribeToMessages();
     subscribeToPresence();
     subscribeToReactions();
     markMessagesAsRead();
+
+    // Polling fallback - check for new messages every 3 seconds
+    // This ensures messages sync even if realtime fails
+    pollingIntervalRef.current = setInterval(() => {
+      fetchMessages();
+    }, 3000);
 
     // Refresh messages when tab becomes visible (recover from lost subscription)
     const handleVisibilityChange = () => {
@@ -154,6 +162,9 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
       }
@@ -177,8 +188,9 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const fetchMessages = async () => {
+  const fetchMessages = async (showLoading = false) => {
     try {
+      if (showLoading) setLoading(true);
       const { data, error } = await supabase
         .from("messages")
         .select("*")
@@ -186,16 +198,31 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+      
+      // Only update if there are new messages to avoid unnecessary rerenders
+      setMessages(current => {
+        if (JSON.stringify(current.filter(m => !m.id.startsWith('optimistic-'))) === JSON.stringify(data)) {
+          return current;
+        }
+        // Preserve optimistic messages that haven't been confirmed yet
+        const optimisticMessages = current.filter(m => m.id.startsWith('optimistic-'));
+        const confirmedIds = new Set((data || []).map(m => m.id));
+        const unconfirmedOptimistic = optimisticMessages.filter(
+          opt => !data?.some(d => d.content === opt.content && d.sender_id === opt.sender_id)
+        );
+        return [...(data || []), ...unconfirmedOptimistic];
+      });
     } catch (error: any) {
       console.error("Error fetching messages:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load messages.",
-        variant: "destructive",
-      });
+      if (showLoading) {
+        toast({
+          title: "Error",
+          description: "Failed to load messages.",
+          variant: "destructive",
+        });
+      }
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
