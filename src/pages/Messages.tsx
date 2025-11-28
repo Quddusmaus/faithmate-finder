@@ -70,11 +70,19 @@ const Messages = () => {
     try {
       if (!user) return;
 
+      console.log('Messages: Fetching matches for user', user.id);
+      
       const { data, error } = await supabase.rpc('get_user_matches', {
         user_uuid: user.id
       });
 
       if (error) throw error;
+      
+      console.log('Messages: Received matches', data?.map(m => ({ 
+        name: m.name, 
+        unread_count: m.unread_count 
+      })));
+      
       setMatches(data || []);
     } catch (error: any) {
       console.error("Error fetching matches:", error);
