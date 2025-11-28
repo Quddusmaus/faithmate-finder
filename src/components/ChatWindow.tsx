@@ -187,10 +187,17 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
 
   const fetchReactions = async () => {
     try {
+      // Filter out optimistic message IDs (they start with "optimistic-")
+      const validMessageIds = messages
+        .filter(m => !m.id.startsWith('optimistic-'))
+        .map(m => m.id);
+      
+      if (validMessageIds.length === 0) return;
+
       const { data, error } = await supabase
         .from("message_reactions")
         .select("*")
-        .in("message_id", messages.map(m => m.id));
+        .in("message_id", validMessageIds);
 
       if (error) throw error;
       setReactions(data || []);
@@ -208,37 +215,35 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
 
   const subscribeToMessages = () => {
     channelRef.current = supabase
-      .channel(`messages:${match.match_id}`)
+      .channel(`messages:${match.match_id}:${user.id}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'messages',
-          filter: `sender_id=eq.${match.match_id},receiver_id=eq.${user.id}`
+          table: 'messages'
         },
         (payload) => {
-          setMessages((current) => [...current, payload.new as Message]);
-          markMessagesAsRead();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `sender_id=eq.${user.id},receiver_id=eq.${match.match_id}`
-        },
-        (payload) => {
-          // Only add if not already present (handles optimistic updates)
           const newMsg = payload.new as Message;
+          // Check if this message is relevant to this conversation
+          const isRelevant = 
+            (newMsg.sender_id === match.match_id && newMsg.receiver_id === user.id) ||
+            (newMsg.sender_id === user.id && newMsg.receiver_id === match.match_id);
+          
+          if (!isRelevant) return;
+          
+          // Only add if not already present (handles optimistic updates)
           setMessages((current) => {
             if (current.some((msg) => msg.id === newMsg.id)) {
               return current;
             }
             return [...current, newMsg];
           });
+          
+          // Mark as read if it's from the other person
+          if (newMsg.sender_id === match.match_id) {
+            markMessagesAsRead();
+          }
         }
       )
       .on(
@@ -246,14 +251,20 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'messages',
-          filter: `sender_id=eq.${user.id},receiver_id=eq.${match.match_id}`
+          table: 'messages'
         },
         (payload) => {
+          const updatedMsg = payload.new as Message;
+          // Check if this message is relevant to this conversation
+          const isRelevant = 
+            (updatedMsg.sender_id === user.id && updatedMsg.receiver_id === match.match_id);
+          
+          if (!isRelevant) return;
+          
           // Update read receipt status
           setMessages((current) =>
             current.map((msg) =>
-              msg.id === payload.new.id ? { ...msg, read_at: (payload.new as Message).read_at } : msg
+              msg.id === updatedMsg.id ? { ...msg, read_at: updatedMsg.read_at } : msg
             )
           );
         }
