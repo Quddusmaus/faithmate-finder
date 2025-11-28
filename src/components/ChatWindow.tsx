@@ -47,9 +47,10 @@ interface ChatWindowProps {
     offerData: any;
   } | null;
   onCallHandled?: () => void;
+  onMessagesRead?: () => void;
 }
 
-export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandled }: ChatWindowProps) => {
+export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandled, onMessagesRead }: ChatWindowProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -427,12 +428,18 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
 
   const markMessagesAsRead = async () => {
     try {
-      await supabase
+      const { data } = await supabase
         .from("messages")
         .update({ read_at: new Date().toISOString() })
         .eq("receiver_id", user.id)
         .eq("sender_id", match.match_id)
-        .is("read_at", null);
+        .is("read_at", null)
+        .select();
+      
+      // If messages were marked as read, notify parent to refresh unread counts
+      if (data && data.length > 0) {
+        onMessagesRead?.();
+      }
     } catch (error) {
       console.error("Error marking messages as read:", error);
     }

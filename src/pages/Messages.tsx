@@ -91,6 +91,17 @@ const Messages = () => {
   const handleSelectMatch = (match: Match) => {
     setSelectedMatch(match);
     setSearchParams({ match: match.match_id });
+    // Clear unread count optimistically when selecting a match
+    setMatches(current =>
+      current.map(m =>
+        m.match_id === match.match_id ? { ...m, unread_count: 0 } : m
+      )
+    );
+  };
+
+  const handleMessagesRead = () => {
+    // Refresh matches to get updated unread counts
+    fetchMatches();
   };
 
   const handleBackToList = () => {
@@ -171,6 +182,7 @@ const Messages = () => {
               onBack={handleBackToList}
               incomingCallData={incomingCallData}
               onCallHandled={() => setIncomingCallData(null)}
+              onMessagesRead={handleMessagesRead}
             />
           ) : (
             <div className="flex h-full items-center justify-center">
