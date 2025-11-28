@@ -232,11 +232,27 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
           
           if (!isRelevant) return;
           
-          // Only add if not already present (handles optimistic updates)
           setMessages((current) => {
+            // Check if already present by ID
             if (current.some((msg) => msg.id === newMsg.id)) {
               return current;
             }
+            
+            // Check for optimistic message with same content (sent by current user)
+            // and replace it with the real message
+            if (newMsg.sender_id === user.id) {
+              const optimisticIndex = current.findIndex(
+                (msg) => msg.id.startsWith('optimistic-') && 
+                         msg.content === newMsg.content &&
+                         msg.sender_id === newMsg.sender_id
+              );
+              if (optimisticIndex !== -1) {
+                const updated = [...current];
+                updated[optimisticIndex] = newMsg;
+                return updated;
+              }
+            }
+            
             return [...current, newMsg];
           });
           
@@ -403,12 +419,17 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
 
       if (error) throw error;
       
-      // Replace optimistic message with real one
-      setMessages((current) =>
-        current.map((msg) =>
+      // Replace optimistic message with real one, or ensure it exists
+      setMessages((current) => {
+        // If realtime already added this message, just remove optimistic if still there
+        if (current.some((msg) => msg.id === data.id)) {
+          return current.filter((msg) => msg.id !== optimisticId);
+        }
+        // Otherwise replace optimistic with real
+        return current.map((msg) =>
           msg.id === optimisticId ? data : msg
-        )
-      );
+        );
+      });
     } catch (error: any) {
       console.error("Error sending message:", error);
       // Remove optimistic message on error
