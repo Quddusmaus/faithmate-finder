@@ -106,10 +106,13 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
     try {
       setIsInCall(true);
       await initiateCall(false);
-    } catch (error) {
+    } catch (error: any) {
+      const isRLSError = error?.message?.includes("row-level security") || error?.message?.includes("42501");
       toast({
         title: "Call Failed",
-        description: "Could not start call. Please check your microphone permissions.",
+        description: isRLSError 
+          ? "Unable to connect. Please try logging out and back in."
+          : "Could not start call. Please check your microphone permissions.",
         variant: "destructive",
       });
       setIsInCall(false);
@@ -120,10 +123,13 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
     try {
       setIsInCall(true);
       await initiateCall(true);
-    } catch (error) {
+    } catch (error: any) {
+      const isRLSError = error?.message?.includes("row-level security") || error?.message?.includes("42501");
       toast({
         title: "Call Failed",
-        description: "Could not start call. Please check your camera and microphone permissions.",
+        description: isRLSError 
+          ? "Unable to connect. Please try logging out and back in."
+          : "Could not start call. Please check your camera and microphone permissions.",
         variant: "destructive",
       });
       setIsInCall(false);
