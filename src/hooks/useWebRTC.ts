@@ -9,46 +9,32 @@ interface UseWebRTCProps {
 }
 
 // Multiple TURN server providers for reliability
+// Using OpenRelay free TURN servers - no authentication required
 const ICE_SERVERS = [
+  // Google STUN servers
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
-  { urls: "stun:stun2.l.google.com:19302" },
-  // Metered TURN servers
+  // OpenRelay free TURN servers (no auth required)
   {
-    urls: "turn:a.relay.metered.ca:80",
-    username: "e8dd65f92ae757e01691c074",
-    credential: "3DLNmU9TpLVaCZdU",
+    urls: "turn:openrelay.metered.ca:80",
+    username: "openrelayproject",
+    credential: "openrelayproject",
   },
   {
-    urls: "turn:a.relay.metered.ca:80?transport=tcp",
-    username: "e8dd65f92ae757e01691c074",
-    credential: "3DLNmU9TpLVaCZdU",
+    urls: "turn:openrelay.metered.ca:443",
+    username: "openrelayproject",
+    credential: "openrelayproject",
   },
   {
-    urls: "turn:a.relay.metered.ca:443",
-    username: "e8dd65f92ae757e01691c074",
-    credential: "3DLNmU9TpLVaCZdU",
+    urls: "turn:openrelay.metered.ca:443?transport=tcp",
+    username: "openrelayproject",
+    credential: "openrelayproject",
   },
+  // ExpressTURN free servers
   {
-    urls: "turns:a.relay.metered.ca:443?transport=tcp",
-    username: "e8dd65f92ae757e01691c074",
-    credential: "3DLNmU9TpLVaCZdU",
-  },
-  // Twilio TURN servers (public test credentials)
-  {
-    urls: "turn:global.turn.twilio.com:3478?transport=udp",
-    username: "f4b4035eaa76f4a55de5f4351567653ee4ff6fa97b50b6b334fcc1be9c27212d",
-    credential: "w1uxM55V9yVoqyVFjt+mxDBV0F5nkcNdDXqvWLlXhII=",
-  },
-  {
-    urls: "turn:global.turn.twilio.com:3478?transport=tcp",
-    username: "f4b4035eaa76f4a55de5f4351567653ee4ff6fa97b50b6b334fcc1be9c27212d",
-    credential: "w1uxM55V9yVoqyVFjt+mxDBV0F5nkcNdDXqvWLlXhII=",
-  },
-  {
-    urls: "turn:global.turn.twilio.com:443?transport=tcp",
-    username: "f4b4035eaa76f4a55de5f4351567653ee4ff6fa97b50b6b334fcc1be9c27212d",
-    credential: "w1uxM55V9yVoqyVFjt+mxDBV0F5nkcNdDXqvWLlXhII=",
+    urls: "turn:relay.webrtc.org:3478",
+    username: "user",
+    credential: "root",
   },
 ];
 
