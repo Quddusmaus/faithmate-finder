@@ -72,21 +72,41 @@ const Profiles = () => {
 
   const fetchProfiles = async () => {
     try {
-      // Fetch both demo profiles and real user profiles
-      const [demoResult, profilesResult] = await Promise.all([
-        supabase.from("demo_profiles").select("*").order("created_at", { ascending: false }),
-        supabase.from("profiles").select("*").order("created_at", { ascending: false })
-      ]);
+      const currentUser = (await supabase.auth.getUser()).data.user;
+      
+      // Fetch demo profiles (public)
+      const demoResult = await supabase
+        .from("demo_profiles")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-      if (demoResult.error) throw demoResult.error;
-      if (profilesResult.error) throw profilesResult.error;
+      if (demoResult.error) {
+        console.error("Error fetching demo profiles:", demoResult.error);
+      }
+
+      // Fetch real profiles (requires authentication due to RLS)
+      const profilesResult = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (profilesResult.error) {
+        console.error("Error fetching profiles:", profilesResult.error);
+        // Don't throw - just use demo profiles if real profiles fail
+      }
 
       // Combine and filter out current user's profile from the list
-      const currentUser = (await supabase.auth.getUser()).data.user;
+      const realProfiles = (profilesResult.data || []).filter(p => p.user_id !== currentUser?.id);
       const allProfiles = [
         ...(demoResult.data || []),
-        ...(profilesResult.data || []).filter(p => p.user_id !== currentUser?.id)
+        ...realProfiles
       ];
+
+      console.log("Fetched profiles:", { 
+        demoCount: demoResult.data?.length || 0, 
+        realCount: realProfiles.length,
+        isAuthenticated: !!currentUser 
+      });
 
       setProfiles(allProfiles);
       setFilteredProfiles(allProfiles);
