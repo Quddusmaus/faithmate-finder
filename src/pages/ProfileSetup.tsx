@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { PhotoUpload } from "@/components/PhotoUpload";
 import { InterestsSelector } from "@/components/InterestsSelector";
-import { Loader2, BadgeCheck, Clock, ShieldCheck, Pause, Play } from "lucide-react";
+import { Loader2, BadgeCheck, Clock, ShieldCheck, Pause, Play, Heart, Users, MessageCircle, Shield, LogOut } from "lucide-react";
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 import type { User } from "@supabase/supabase-js";
 
 const ProfileSetup = () => {
@@ -32,6 +33,12 @@ const ProfileSetup = () => {
   const [isVisible, setIsVisible] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isAdmin } = useAdminStatus();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
 
   useEffect(() => {
     checkAuth();
@@ -192,8 +199,45 @@ const ProfileSetup = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background p-6">
-      <div className="mx-auto max-w-2xl py-12">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
+      {/* Navigation */}
+      <nav className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-primary">
+            <Heart className="h-7 w-7" />
+            <span>HeartLink</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/profiles">
+                <Users className="h-4 w-4 mr-1" />
+                Profiles
+              </Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/messages">
+                <MessageCircle className="h-4 w-4 mr-1" />
+                Messages
+              </Link>
+            </Button>
+            {isAdmin && (
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/admin">
+                  <Shield className="h-4 w-4 mr-1" />
+                  Admin
+                </Link>
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4 mr-1" />
+              Sign Out
+            </Button>
+          </div>
+        </div>
+      </nav>
+
+      <div className="p-6">
+        <div className="mx-auto max-w-2xl py-12">
         <Card className="shadow-2xl">
           <CardHeader>
             <CardTitle className="text-3xl">
@@ -420,6 +464,7 @@ const ProfileSetup = () => {
             </form>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );
