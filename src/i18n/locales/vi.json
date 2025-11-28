@@ -24,7 +24,10 @@
     "login": "Đăng nhập",
     "signup": "Đăng ký",
     "logout": "Đăng xuất",
-    "backToSite": "Quay lại trang"
+    "backToSite": "Quay lại trang",
+    "termsOfService": "Điều khoản dịch vụ",
+    "privacyPolicy": "Chính sách bảo mật",
+    "contactUs": "Liên hệ"
   },
   "auth": {
     "welcomeBack": "Chào mừng trở lại",
@@ -161,6 +164,10 @@
     "profileReinstated": "Hồ sơ đã được khôi phục"
   },
   "landing": {
+    "greeting": "Alláh'u'Abhá các bạn!",
+    "welcomeTitle": "Chào mừng đến với",
+    "welcomeSubtitle": "ứng dụng hẹn hò hàng đầu dành cho tín đồ Bahá'í tìm kiếm kết nối ý nghĩa!",
+    "description": "Tại Unity Hearts, chúng tôi kết nối những người độc thân có tâm linh từ khắp nơi trên thế giới. Dù bạn đang tìm kiếm tình bạn, bạn đồng hành hay mối quan hệ lãng mạn sâu sắc, chúng tôi ở đây để giúp bạn tìm được người phù hợp.",
     "findYourPerfectMatch": "Tìm người phù hợp hoàn hảo",
     "connectWithPeople": "Kết nối với những người chia sẻ sở thích và giá trị của bạn",
     "getStarted": "Bắt đầu",
@@ -178,7 +185,9 @@
     "secureMessaging": "Tin nhắn an toàn",
     "secureMessagingDesc": "Cuộc trò chuyện của bạn được bảo mật và mã hóa",
     "smartMatching": "Ghép đôi thông minh",
-    "smartMatchingDesc": "Thuật toán của chúng tôi tìm ghép đôi tương thích cho bạn"
+    "smartMatchingDesc": "Thuật toán của chúng tôi tìm ghép đôi tương thích cho bạn",
+    "coreCompatibility": "Tương thích chương trình cốt lõi",
+    "coreCompatibilityDesc": "Tìm kết nối ý nghĩa dựa trên các hoạt động và sở thích chương trình cốt lõi chung."
   },
   "settings": {
     "settings": "Cài đặt",

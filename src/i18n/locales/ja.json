@@ -24,7 +24,10 @@
     "login": "ログイン",
     "signup": "新規登録",
     "logout": "ログアウト",
-    "backToSite": "サイトに戻る"
+    "backToSite": "サイトに戻る",
+    "termsOfService": "利用規約",
+    "privacyPolicy": "プライバシーポリシー",
+    "contactUs": "お問い合わせ"
   },
   "auth": {
     "welcomeBack": "お帰りなさい",
@@ -161,6 +164,10 @@
     "profileReinstated": "プロフィールが復元されました"
   },
   "landing": {
+    "greeting": "アッラーフアブハ 友人の皆さん！",
+    "welcomeTitle": "ようこそ",
+    "welcomeSubtitle": "意味のあるつながりを求めるバハイのための最高の出会いアプリへ！",
+    "description": "Unity Heartsでは、世界中のスピリチュアルな独身者をつなぎます。友情、交際、または深いロマンチックな関係をお探しの方、私たちはあなたのパートナー探しをお手伝いします。",
     "findYourPerfectMatch": "理想の相手を見つけよう",
     "connectWithPeople": "あなたの興味や価値観を共有する人々とつながりましょう",
     "getStarted": "始める",
@@ -178,7 +185,9 @@
     "secureMessaging": "安全なメッセージ",
     "secureMessagingDesc": "会話はプライベートで暗号化",
     "smartMatching": "スマートマッチング",
-    "smartMatchingDesc": "アルゴリズムがあなたに合った相手を見つけます"
+    "smartMatchingDesc": "アルゴリズムがあなたに合った相手を見つけます",
+    "coreCompatibility": "コアカリキュラム互換性",
+    "coreCompatibilityDesc": "共通のコアカリキュラム活動と興味に基づいて意味のあるつながりを見つけましょう。"
   },
   "settings": {
     "settings": "設定",

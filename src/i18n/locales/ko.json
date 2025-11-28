@@ -24,7 +24,10 @@
     "login": "로그인",
     "signup": "가입",
     "logout": "로그아웃",
-    "backToSite": "사이트로 돌아가기"
+    "backToSite": "사이트로 돌아가기",
+    "termsOfService": "서비스 약관",
+    "privacyPolicy": "개인정보 처리방침",
+    "contactUs": "문의하기"
   },
   "auth": {
     "welcomeBack": "다시 오셨군요",
@@ -161,6 +164,10 @@
     "profileReinstated": "프로필이 복원되었습니다"
   },
   "landing": {
+    "greeting": "알라우아바 친구들!",
+    "welcomeTitle": "환영합니다",
+    "welcomeSubtitle": "의미 있는 연결을 찾는 바하이를 위한 최고의 데이팅 앱!",
+    "description": "Unity Hearts에서 우리는 전 세계의 영적인 싱글들을 연결합니다. 우정, 동반자 관계, 또는 깊은 로맨틱 관계를 찾고 계시든, 우리는 당신의 짝을 찾는 것을 도와드리겠습니다.",
     "findYourPerfectMatch": "완벽한 상대를 찾으세요",
     "connectWithPeople": "관심사와 가치관을 공유하는 사람들과 연결하세요",
     "getStarted": "시작하기",
@@ -178,7 +185,9 @@
     "secureMessaging": "안전한 메시지",
     "secureMessagingDesc": "대화는 비공개이며 암호화됩니다",
     "smartMatching": "스마트 매칭",
-    "smartMatchingDesc": "알고리즘이 맞는 상대를 찾아줍니다"
+    "smartMatchingDesc": "알고리즘이 맞는 상대를 찾아줍니다",
+    "coreCompatibility": "핵심 커리큘럼 호환성",
+    "coreCompatibilityDesc": "공유된 핵심 커리큘럼 활동과 관심사를 기반으로 의미 있는 연결을 찾으세요."
   },
   "settings": {
     "settings": "설정",

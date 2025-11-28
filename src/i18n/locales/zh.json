@@ -24,7 +24,10 @@
     "login": "登录",
     "signup": "注册",
     "logout": "退出",
-    "backToSite": "返回网站"
+    "backToSite": "返回网站",
+    "termsOfService": "服务条款",
+    "privacyPolicy": "隐私政策",
+    "contactUs": "联系我们"
   },
   "auth": {
     "welcomeBack": "欢迎回来",
@@ -161,6 +164,10 @@
     "profileReinstated": "资料已恢复"
   },
   "landing": {
+    "greeting": "阿拉乌阿卜哈 朋友们！",
+    "welcomeTitle": "欢迎来到",
+    "welcomeSubtitle": "为寻求有意义连接的巴哈伊教徒打造的首选约会应用！",
+    "description": "在Unity Hearts，我们汇聚来自世界各地具有灵性思想的单身人士。无论您是在寻找友谊、陪伴还是深厚的浪漫关系，我们都在这里帮助您找到您的伴侣。",
     "findYourPerfectMatch": "寻找你的完美伴侣",
     "connectWithPeople": "与志同道合的人建立联系",
     "getStarted": "开始使用",
@@ -178,7 +185,9 @@
     "secureMessaging": "安全消息",
     "secureMessagingDesc": "你的对话私密且加密",
     "smartMatching": "智能匹配",
-    "smartMatchingDesc": "我们的算法为你找到合适的配对"
+    "smartMatchingDesc": "我们的算法为你找到合适的配对",
+    "coreCompatibility": "核心课程兼容性",
+    "coreCompatibilityDesc": "基于共同的核心课程活动和兴趣找到有意义的连接。"
   },
   "settings": {
     "settings": "设置",

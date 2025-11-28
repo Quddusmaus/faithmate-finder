@@ -24,7 +24,10 @@
     "login": "Giriş Yap",
     "signup": "Kayıt Ol",
     "logout": "Çıkış Yap",
-    "backToSite": "Siteye Dön"
+    "backToSite": "Siteye Dön",
+    "termsOfService": "Kullanım Şartları",
+    "privacyPolicy": "Gizlilik Politikası",
+    "contactUs": "Bize Ulaşın"
   },
   "auth": {
     "welcomeBack": "Tekrar hoş geldiniz",
@@ -161,6 +164,10 @@
     "profileReinstated": "Profil geri yüklendi"
   },
   "landing": {
+    "greeting": "Alláh'u'Abhá Arkadaşlar!",
+    "welcomeTitle": "Hoş Geldiniz",
+    "welcomeSubtitle": "anlamlı bağlantılar arayan Bahá'íler için önde gelen flört uygulaması!",
+    "description": "Unity Hearts'ta, dünya genelinden ruhani düşünceli bekarları bir araya getiriyoruz. İster arkadaşlık, ister yoldaşlık, ister derin romantik bir ilişki arıyor olun, eşinizi bulmanıza yardımcı olmak için buradayız.",
     "findYourPerfectMatch": "Mükemmel eşleşmenizi bulun",
     "connectWithPeople": "İlgi alanlarınızı ve değerlerinizi paylaşan insanlarla bağlantı kurun",
     "getStarted": "Başla",
@@ -178,7 +185,9 @@
     "secureMessaging": "Güvenli Mesajlaşma",
     "secureMessagingDesc": "Konuşmalarınız özel ve şifrelidir",
     "smartMatching": "Akıllı Eşleştirme",
-    "smartMatchingDesc": "Algoritmamız sizin için uyumlu eşleşmeler bulur"
+    "smartMatchingDesc": "Algoritmamız sizin için uyumlu eşleşmeler bulur",
+    "coreCompatibility": "Temel Müfredat Uyumluluğu",
+    "coreCompatibilityDesc": "Paylaşılan Temel Müfredat etkinlikleri ve ilgi alanlarına dayalı anlamlı bağlantılar bulun."
   },
   "settings": {
     "settings": "Ayarlar",

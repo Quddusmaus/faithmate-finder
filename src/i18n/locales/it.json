@@ -24,7 +24,10 @@
     "login": "Accedi",
     "signup": "Registrati",
     "logout": "Esci",
-    "backToSite": "Torna al sito"
+    "backToSite": "Torna al sito",
+    "termsOfService": "Termini di Servizio",
+    "privacyPolicy": "Informativa sulla Privacy",
+    "contactUs": "Contattaci"
   },
   "auth": {
     "welcomeBack": "Bentornato",
@@ -161,6 +164,10 @@
     "profileReinstated": "Profilo ripristinato"
   },
   "landing": {
+    "greeting": "Alláh'u'Abhá Amici!",
+    "welcomeTitle": "Benvenuti su",
+    "welcomeSubtitle": "l'app di incontri leader per i bahá'í che cercano connessioni significative!",
+    "description": "Su Unity Hearts, riuniamo single con una mentalità spirituale da tutto il mondo. Che tu stia cercando amicizia, compagnia o una profonda relazione romantica, siamo qui per aiutarti a trovare il tuo partner.",
     "findYourPerfectMatch": "Trova la tua anima gemella",
     "connectWithPeople": "Connettiti con persone che condividono i tuoi interessi e valori",
     "getStarted": "Inizia",
@@ -178,7 +185,9 @@
     "secureMessaging": "Messaggi sicuri",
     "secureMessagingDesc": "Le tue conversazioni sono private e crittografate",
     "smartMatching": "Matching intelligente",
-    "smartMatchingDesc": "Il nostro algoritmo trova match compatibili per te"
+    "smartMatchingDesc": "Il nostro algoritmo trova match compatibili per te",
+    "coreCompatibility": "Compatibilità del Curriculum di Base",
+    "coreCompatibilityDesc": "Trova connessioni significative basate su attività e interessi condivisi del Curriculum di Base."
   },
   "settings": {
     "settings": "Impostazioni",
