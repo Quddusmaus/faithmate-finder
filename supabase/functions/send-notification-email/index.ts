@@ -28,10 +28,33 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log(`Processing ${type} notification for user ${recipient_user_id}`);
 
-    // Create Supabase client to get user email
+    // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Check user's notification preferences
+    const { data: preferences, error: prefError } = await supabase
+      .from("notification_preferences")
+      .select("*")
+      .eq("user_id", recipient_user_id)
+      .maybeSingle();
+
+    if (prefError) {
+      console.error("Error fetching preferences:", prefError);
+    }
+
+    // Check if this notification type is enabled (default to true if no preferences)
+    const prefKey = `email_${type}s` as keyof typeof preferences;
+    const isEnabled = preferences ? preferences[prefKey] !== false : true;
+
+    if (!isEnabled) {
+      console.log(`User has disabled ${type} email notifications, skipping`);
+      return new Response(JSON.stringify({ success: true, skipped: true, reason: "disabled" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Get recipient's email from auth.users
     const { data: userData, error: userError } = await supabase.auth.admin.getUserById(recipient_user_id);
@@ -79,6 +102,9 @@ const handler = async (req: Request): Promise<Response> => {
             <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 32px;">
               Unity Hearts - Find your perfect match in the Baháʼí community
             </p>
+            <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 8px;">
+              <a href="https://unity-hearts.lovable.app/profile-setup" style="color: #9ca3af;">Manage email preferences</a>
+            </p>
           </div>
         </body>
         </html>
@@ -111,6 +137,9 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
             <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 32px;">
               Unity Hearts - Find your perfect match in the Baháʼí community
+            </p>
+            <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 8px;">
+              <a href="https://unity-hearts.lovable.app/profile-setup" style="color: #9ca3af;">Manage email preferences</a>
             </p>
           </div>
         </body>
@@ -145,6 +174,9 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
             <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 32px;">
               Unity Hearts - Find your perfect match in the Baháʼí community
+            </p>
+            <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 8px;">
+              <a href="https://unity-hearts.lovable.app/profile-setup" style="color: #9ca3af;">Manage email preferences</a>
             </p>
           </div>
         </body>

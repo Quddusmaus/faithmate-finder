@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { PhotoUpload } from "@/components/PhotoUpload";
 import { InterestsSelector } from "@/components/InterestsSelector";
+import { NotificationPreferences } from "@/components/NotificationPreferences";
 import { Loader2, BadgeCheck, Clock, ShieldCheck, Pause, Play, Heart, Users, MessageCircle, Shield, LogOut } from "lucide-react";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -436,6 +437,11 @@ const ProfileSetup = () => {
                     </div>
                   </CardContent>
                 </Card>
+              )}
+
+              {/* Email Notification Preferences */}
+              {existingProfile && (
+                <NotificationPreferences userId={user.id} />
               )}
 
               <div className="flex gap-3">
