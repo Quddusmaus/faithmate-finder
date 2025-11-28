@@ -91,10 +91,10 @@ const Index = () => {
                 <Users className="h-8 w-8 text-secondary" />
               </div>
               <h3 className="mb-2 text-xl font-semibold text-card-foreground">
-                {t('landing.verifiedProfiles')}
+                Core Curriculum Compatibility
               </h3>
               <p className="text-muted-foreground">
-                {t('landing.verifiedProfilesDesc')}
+                Find meaningful connections based on shared Core Curriculum activities and interests.
               </p>
             </div>
 
