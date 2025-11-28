@@ -92,12 +92,17 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
 
   const sendSignal = async (signalType: string, signalData: any) => {
     console.log("Sending signal:", signalType);
-    await supabase.from("call_signals").insert({
+    const { error } = await supabase.from("call_signals").insert({
       caller_id: localUserId,
       receiver_id: remoteUserId,
       signal_type: signalType,
       signal_data: signalData,
     });
+    
+    if (error) {
+      console.error("Error sending signal:", error);
+      throw new Error(`Failed to send ${signalType}: ${error.message}`);
+    }
   };
 
   // Use ref to avoid circular dependency between attemptReconnect and createPeerConnectionInternal

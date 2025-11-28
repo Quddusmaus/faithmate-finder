@@ -492,6 +492,10 @@ export type Database = {
       }
     }
     Functions: {
+      are_users_matched: {
+        Args: { user1_id: string; user2_id: string }
+        Returns: boolean
+      }
       get_user_matches: {
         Args: { user_uuid: string }
         Returns: {
