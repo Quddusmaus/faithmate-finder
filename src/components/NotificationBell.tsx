@@ -57,11 +57,17 @@ export const NotificationBell = () => {
 
   const fetchNotifications = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      console.log('NotificationBell: No user logged in');
+      return;
+    }
+
+    console.log('NotificationBell: Fetching notifications for user', user.id);
 
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(20);
 
@@ -70,8 +76,11 @@ export const NotificationBell = () => {
       return;
     }
 
+    const unread = data?.filter(n => !n.read).length || 0;
+    console.log('NotificationBell: Fetched', data?.length, 'notifications,', unread, 'unread');
+
     setNotifications(data || []);
-    setUnreadCount(data?.filter(n => !n.read).length || 0);
+    setUnreadCount(unread);
   };
 
   const markAsRead = async (id: string) => {
