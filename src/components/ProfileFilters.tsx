@@ -52,7 +52,7 @@ export const ProfileFilters = ({ filters, onFiltersChange, onClear }: ProfileFil
     filters.verifiedOnly,
     filters.minCompatibility > 0,
     filters.interests.length > 0,
-    filters.ageRange[0] !== 18 || filters.ageRange[1] !== 80,
+    filters.ageRange[0] !== 18 || filters.ageRange[1] !== 100,
   ].filter(Boolean).length;
 
   return (
@@ -147,7 +147,7 @@ export const ProfileFilters = ({ filters, onFiltersChange, onClear }: ProfileFil
             </Label>
             <Slider
               min={18}
-              max={80}
+              max={100}
               step={1}
               value={filters.ageRange}
               onValueChange={handleAgeRangeChange}

@@ -31,7 +31,7 @@ const Profiles = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [matchCount, setMatchCount] = useState(0);
   const [filters, setFilters] = useState({
-    ageRange: [18, 80] as [number, number],
+    ageRange: [18, 100] as [number, number],
     location: "",
     gender: "all",
     lookingFor: "all",
@@ -188,7 +188,7 @@ const Profiles = () => {
 
   const handleClearFilters = () => {
     setFilters({
-      ageRange: [18, 80],
+      ageRange: [18, 100],
       location: "",
       gender: "all",
       lookingFor: "all",
