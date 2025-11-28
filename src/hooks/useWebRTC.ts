@@ -8,13 +8,12 @@ interface UseWebRTCProps {
   onCallEnded?: () => void;
 }
 
+// Multiple TURN server providers for reliability
 const ICE_SERVERS = [
   { urls: "stun:stun.l.google.com:19302" },
   { urls: "stun:stun1.l.google.com:19302" },
   { urls: "stun:stun2.l.google.com:19302" },
-  { urls: "stun:stun3.l.google.com:19302" },
-  { urls: "stun:stun4.l.google.com:19302" },
-  // Free TURN servers from Metered.ca (free tier)
+  // Metered TURN servers
   {
     urls: "turn:a.relay.metered.ca:80",
     username: "e8dd65f92ae757e01691c074",
@@ -34,6 +33,22 @@ const ICE_SERVERS = [
     urls: "turns:a.relay.metered.ca:443?transport=tcp",
     username: "e8dd65f92ae757e01691c074",
     credential: "3DLNmU9TpLVaCZdU",
+  },
+  // Twilio TURN servers (public test credentials)
+  {
+    urls: "turn:global.turn.twilio.com:3478?transport=udp",
+    username: "f4b4035eaa76f4a55de5f4351567653ee4ff6fa97b50b6b334fcc1be9c27212d",
+    credential: "w1uxM55V9yVoqyVFjt+mxDBV0F5nkcNdDXqvWLlXhII=",
+  },
+  {
+    urls: "turn:global.turn.twilio.com:3478?transport=tcp",
+    username: "f4b4035eaa76f4a55de5f4351567653ee4ff6fa97b50b6b334fcc1be9c27212d",
+    credential: "w1uxM55V9yVoqyVFjt+mxDBV0F5nkcNdDXqvWLlXhII=",
+  },
+  {
+    urls: "turn:global.turn.twilio.com:443?transport=tcp",
+    username: "f4b4035eaa76f4a55de5f4351567653ee4ff6fa97b50b6b334fcc1be9c27212d",
+    credential: "w1uxM55V9yVoqyVFjt+mxDBV0F5nkcNdDXqvWLlXhII=",
   },
 ];
 
@@ -102,15 +117,35 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
   // Use ref to avoid circular dependency between attemptReconnect and createPeerConnectionInternal
   const attemptReconnectRef = useRef<() => Promise<void>>();
 
-  const createPeerConnectionInternal = useCallback(() => {
-    console.log("Creating peer connection");
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+  const createPeerConnectionInternal = useCallback((forceRelay: boolean = false) => {
+    console.log("Creating peer connection, forceRelay:", forceRelay);
+    
+    const config: RTCConfiguration = {
+      iceServers: ICE_SERVERS,
+      // Force relay on reconnection attempts to work around NAT issues
+      iceTransportPolicy: forceRelay ? "relay" : "all",
+      bundlePolicy: "max-bundle",
+      rtcpMuxPolicy: "require",
+    };
+    
+    const pc = new RTCPeerConnection(config);
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
-        console.log("Sending ICE candidate");
+        const candidateType = event.candidate.candidate.includes("typ relay") 
+          ? "relay" 
+          : event.candidate.candidate.includes("typ srflx") 
+            ? "srflx" 
+            : "host";
+        console.log(`Sending ICE candidate (${candidateType}):`, event.candidate.candidate.substring(0, 80));
         sendSignal("ice-candidate", { candidate: event.candidate.toJSON() });
+      } else {
+        console.log("ICE gathering complete");
       }
+    };
+
+    pc.onicegatheringstatechange = () => {
+      console.log("ICE gathering state:", pc.iceGatheringState);
     };
 
     pc.ontrack = (event) => {
@@ -136,6 +171,9 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
 
     pc.oniceconnectionstatechange = () => {
       console.log("ICE connection state:", pc.iceConnectionState);
+      if (pc.iceConnectionState === "failed") {
+        console.log("ICE connection failed - NAT traversal likely blocked");
+      }
       if (pc.iceConnectionState === "disconnected") {
         // Give it a moment to recover before triggering reconnect
         setTimeout(() => {
@@ -164,7 +202,9 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
     setIsReconnecting(true);
     setIsConnected(false);
     
-    console.log(`Reconnection attempt ${currentAttempt}/${MAX_RECONNECT_ATTEMPTS}`);
+    // Force relay mode on subsequent reconnection attempts
+    const forceRelay = currentAttempt > 1;
+    console.log(`Reconnection attempt ${currentAttempt}/${MAX_RECONNECT_ATTEMPTS}, forceRelay: ${forceRelay}`);
     
     // Close existing peer connection but keep local stream
     if (peerConnectionRef.current) {
@@ -181,8 +221,8 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
         const { videoEnabled, isInitiator } = lastCallConfigRef.current!;
         
         if (isInitiator) {
-          // Re-initiate the call
-          const pc = createPeerConnectionInternal();
+          // Re-initiate the call with relay mode if needed
+          const pc = createPeerConnectionInternal(forceRelay);
           
           if (localStreamRef.current) {
             localStreamRef.current.getTracks().forEach(track => {
@@ -196,10 +236,11 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
           await sendSignal("reconnect-offer", { 
             sdp: offer.sdp, 
             type: offer.type,
-            videoEnabled 
+            videoEnabled,
+            forceRelay,
           });
           
-          console.log("Reconnection offer sent");
+          console.log("Reconnection offer sent with forceRelay:", forceRelay);
         } else {
           // Wait for the initiator to send a reconnect offer
           console.log("Waiting for reconnect offer from initiator");
@@ -300,7 +341,7 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
   };
 
   const handleReconnectOffer = async (offerData: any) => {
-    console.log("Handling reconnect offer");
+    console.log("Handling reconnect offer, forceRelay:", offerData.forceRelay);
     setIsReconnecting(true);
     
     try {
@@ -310,7 +351,8 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
       }
       pendingCandidatesRef.current = [];
       
-      const pc = createPeerConnectionInternal();
+      // Match the relay mode of the initiator
+      const pc = createPeerConnectionInternal(offerData.forceRelay || false);
       
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach(track => {
