@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Heart, ArrowLeft, LogOut, Settings, MessageCircle } from "lucide-react";
+import { Heart, ArrowLeft, LogOut, Settings, MessageCircle, Shield } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ProfileCard } from "@/components/ProfileCard";
 import { ProfileFilters } from "@/components/ProfileFilters";
@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useCurrentUserProfile, calculateCompatibility } from "@/hooks/useCurrentUserProfile";
+import { useAdminStatus } from "@/hooks/useAdminStatus";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface Profile {
@@ -30,6 +31,7 @@ const Profiles = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [matchCount, setMatchCount] = useState(0);
+  const { isAdmin } = useAdminStatus();
   const [filters, setFilters] = useState({
     ageRange: [18, 100] as [number, number],
     location: "",
@@ -220,6 +222,14 @@ const Profiles = () => {
             {user ? (
               <>
                 <NotificationBell />
+                {isAdmin && (
+                  <Link to="/admin">
+                    <Button variant="outline" className="gap-2">
+                      <Shield className="h-4 w-4" />
+                      Admin
+                    </Button>
+                  </Link>
+                )}
                 <Link to="/messages">
                   <Button variant="outline" className="relative">
                     <MessageCircle className="mr-2 h-4 w-4" />
