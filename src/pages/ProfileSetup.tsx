@@ -14,6 +14,7 @@ import { PhotoUpload } from "@/components/PhotoUpload";
 import { InterestsSelector } from "@/components/InterestsSelector";
 import { Loader2, BadgeCheck, Clock, ShieldCheck, Pause, Play, Heart, Users, MessageCircle, Shield, LogOut } from "lucide-react";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
+import { NotificationBell } from "@/components/NotificationBell";
 import type { User } from "@supabase/supabase-js";
 
 const ProfileSetup = () => {
@@ -208,6 +209,7 @@ const ProfileSetup = () => {
             <span>HeartLink</span>
           </Link>
           <div className="flex items-center gap-2">
+            <NotificationBell />
             <Button variant="ghost" size="sm" asChild>
               <Link to="/profiles">
                 <Users className="h-4 w-4 mr-1" />
