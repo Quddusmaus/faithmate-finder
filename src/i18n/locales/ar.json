@@ -24,7 +24,10 @@
     "login": "تسجيل الدخول",
     "signup": "إنشاء حساب",
     "logout": "تسجيل الخروج",
-    "backToSite": "العودة للموقع"
+    "backToSite": "العودة للموقع",
+    "termsOfService": "شروط الخدمة",
+    "privacyPolicy": "سياسة الخصوصية",
+    "contactUs": "اتصل بنا"
   },
   "auth": {
     "welcomeBack": "مرحباً بعودتك",
@@ -161,6 +164,10 @@
     "profileReinstated": "تمت استعادة الملف الشخصي"
   },
   "landing": {
+    "greeting": "الله أبهى أصدقاء!",
+    "welcomeTitle": "مرحباً بكم في",
+    "welcomeSubtitle": "تطبيق المواعدة الرائد للبهائيين الباحثين عن روابط ذات معنى!",
+    "description": "في Unity Hearts، نجمع العزاب ذوي التوجه الروحي من جميع أنحاء العالم. سواء كنت تبحث عن صداقة أو رفقة أو علاقة رومانسية عميقة، نحن هنا لمساعدتك في العثور على شريكك.",
     "findYourPerfectMatch": "ابحث عن شريكك المثالي",
     "connectWithPeople": "تواصل مع أشخاص يشاركونك اهتماماتك وقيمك",
     "getStarted": "ابدأ الآن",
@@ -178,7 +185,9 @@
     "secureMessaging": "رسائل آمنة",
     "secureMessagingDesc": "محادثاتك خاصة ومشفرة",
     "smartMatching": "مطابقة ذكية",
-    "smartMatchingDesc": "خوارزميتنا تجد تطابقات متوافقة لك"
+    "smartMatchingDesc": "خوارزميتنا تجد تطابقات متوافقة لك",
+    "coreCompatibility": "توافق المنهج الأساسي",
+    "coreCompatibilityDesc": "اعثر على روابط ذات معنى بناءً على أنشطة واهتمامات المنهج الأساسي المشتركة."
   },
   "settings": {
     "settings": "الإعدادات",

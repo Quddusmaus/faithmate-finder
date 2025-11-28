@@ -91,10 +91,10 @@ const Index = () => {
                 <Users className="h-8 w-8 text-secondary" />
               </div>
               <h3 className="mb-2 text-xl font-semibold text-card-foreground">
-                Core Curriculum Compatibility
+                {t('landing.coreCompatibility')}
               </h3>
               <p className="text-muted-foreground">
-                Find meaningful connections based on shared Core Curriculum activities and interests.
+                {t('landing.coreCompatibilityDesc')}
               </p>
             </div>
 
@@ -133,9 +133,9 @@ const Index = () => {
       <footer className="border-t border-border py-8">
         <div className="container mx-auto px-6 text-center text-muted-foreground">
           <div className="flex justify-center gap-6 mb-4">
-            <Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link>
-            <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
-            <Link to="/contact" className="hover:text-primary transition-colors">Contact Us</Link>
+            <Link to="/terms" className="hover:text-primary transition-colors">{t('nav.termsOfService')}</Link>
+            <Link to="/privacy" className="hover:text-primary transition-colors">{t('nav.privacyPolicy')}</Link>
+            <Link to="/contact" className="hover:text-primary transition-colors">{t('nav.contactUs')}</Link>
           </div>
           <p>&copy; 2024 {t('common.appName')}.</p>
         </div>
