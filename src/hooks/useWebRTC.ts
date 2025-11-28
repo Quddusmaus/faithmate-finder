@@ -14,21 +14,26 @@ const ICE_SERVERS = [
   { urls: "stun:stun2.l.google.com:19302" },
   { urls: "stun:stun3.l.google.com:19302" },
   { urls: "stun:stun4.l.google.com:19302" },
-  // Free TURN servers from OpenRelay project
+  // Free TURN servers from Metered.ca (free tier)
   {
-    urls: "turn:openrelay.metered.ca:80",
-    username: "openrelayproject",
-    credential: "openrelayproject",
+    urls: "turn:a.relay.metered.ca:80",
+    username: "e8dd65f92ae757e01691c074",
+    credential: "3DLNmU9TpLVaCZdU",
   },
   {
-    urls: "turn:openrelay.metered.ca:443",
-    username: "openrelayproject",
-    credential: "openrelayproject",
+    urls: "turn:a.relay.metered.ca:80?transport=tcp",
+    username: "e8dd65f92ae757e01691c074",
+    credential: "3DLNmU9TpLVaCZdU",
   },
   {
-    urls: "turn:openrelay.metered.ca:443?transport=tcp",
-    username: "openrelayproject",
-    credential: "openrelayproject",
+    urls: "turn:a.relay.metered.ca:443",
+    username: "e8dd65f92ae757e01691c074",
+    credential: "3DLNmU9TpLVaCZdU",
+  },
+  {
+    urls: "turns:a.relay.metered.ca:443?transport=tcp",
+    username: "e8dd65f92ae757e01691c074",
+    credential: "3DLNmU9TpLVaCZdU",
   },
 ];
 
