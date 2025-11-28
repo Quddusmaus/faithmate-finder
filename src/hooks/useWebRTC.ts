@@ -32,6 +32,9 @@ const ICE_SERVERS = [
   },
 ];
 
+const MAX_RECONNECT_ATTEMPTS = 3;
+const RECONNECT_DELAY_MS = 2000;
+
 export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCProps) => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
@@ -39,16 +42,32 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
   const [isConnected, setIsConnected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  const [reconnectAttempt, setReconnectAttempt] = useState(0);
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastCallConfigRef = useRef<{ videoEnabled: boolean; isInitiator: boolean } | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
 
-  const cleanup = useCallback(() => {
-    console.log("Cleaning up WebRTC connection");
+  const clearReconnectTimeout = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
+
+  const cleanup = useCallback((stopLocalStream: boolean = true) => {
+    console.log("Cleaning up WebRTC connection, stopLocalStream:", stopLocalStream);
     
-    if (localStream) {
-      localStream.getTracks().forEach(track => track.stop());
+    clearReconnectTimeout();
+    
+    if (stopLocalStream && localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => track.stop());
+      localStreamRef.current = null;
+      setLocalStream(null);
     }
     
     if (peerConnectionRef.current) {
@@ -56,17 +75,14 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
       peerConnectionRef.current = null;
     }
     
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
-    }
-    
-    setLocalStream(null);
     setRemoteStream(null);
     setIsConnecting(false);
     setIsConnected(false);
+    setIsReconnecting(false);
+    setReconnectAttempt(0);
     pendingCandidatesRef.current = [];
-  }, [localStream]);
+    lastCallConfigRef.current = null;
+  }, [clearReconnectTimeout]);
 
   const sendSignal = async (signalType: string, signalData: any) => {
     console.log("Sending signal:", signalType);
@@ -78,7 +94,10 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
     });
   };
 
-  const createPeerConnection = useCallback(() => {
+  // Use ref to avoid circular dependency between attemptReconnect and createPeerConnectionInternal
+  const attemptReconnectRef = useRef<() => Promise<void>>();
+
+  const createPeerConnectionInternal = useCallback(() => {
     console.log("Creating peer connection");
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
 
@@ -99,15 +118,98 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
       if (pc.connectionState === "connected") {
         setIsConnected(true);
         setIsConnecting(false);
-      } else if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
-        cleanup();
-        onCallEnded?.();
+        setIsReconnecting(false);
+        setReconnectAttempt(0);
+      } else if (pc.connectionState === "disconnected") {
+        console.log("Connection disconnected, attempting to reconnect...");
+        attemptReconnectRef.current?.();
+      } else if (pc.connectionState === "failed") {
+        console.log("Connection failed, attempting to reconnect...");
+        attemptReconnectRef.current?.();
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log("ICE connection state:", pc.iceConnectionState);
+      if (pc.iceConnectionState === "disconnected") {
+        // Give it a moment to recover before triggering reconnect
+        setTimeout(() => {
+          if (pc.iceConnectionState === "disconnected") {
+            console.log("ICE still disconnected, attempting reconnect");
+            attemptReconnectRef.current?.();
+          }
+        }, 3000);
       }
     };
 
     peerConnectionRef.current = pc;
     return pc;
-  }, [localUserId, remoteUserId, cleanup, onCallEnded]);
+  }, [localUserId, remoteUserId]);
+
+  const attemptReconnect = useCallback(async () => {
+    if (!lastCallConfigRef.current || reconnectAttempt >= MAX_RECONNECT_ATTEMPTS) {
+      console.log("Max reconnection attempts reached or no call config");
+      cleanup(true);
+      onCallEnded?.();
+      return;
+    }
+
+    const currentAttempt = reconnectAttempt + 1;
+    setReconnectAttempt(currentAttempt);
+    setIsReconnecting(true);
+    setIsConnected(false);
+    
+    console.log(`Reconnection attempt ${currentAttempt}/${MAX_RECONNECT_ATTEMPTS}`);
+    
+    // Close existing peer connection but keep local stream
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+    pendingCandidatesRef.current = [];
+    
+    // Wait before reconnecting with exponential backoff
+    const delay = RECONNECT_DELAY_MS * Math.pow(1.5, currentAttempt - 1);
+    
+    reconnectTimeoutRef.current = setTimeout(async () => {
+      try {
+        const { videoEnabled, isInitiator } = lastCallConfigRef.current!;
+        
+        if (isInitiator) {
+          // Re-initiate the call
+          const pc = createPeerConnectionInternal();
+          
+          if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach(track => {
+              pc.addTrack(track, localStreamRef.current!);
+            });
+          }
+
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          
+          await sendSignal("reconnect-offer", { 
+            sdp: offer.sdp, 
+            type: offer.type,
+            videoEnabled 
+          });
+          
+          console.log("Reconnection offer sent");
+        } else {
+          // Wait for the initiator to send a reconnect offer
+          console.log("Waiting for reconnect offer from initiator");
+        }
+      } catch (error) {
+        console.error("Reconnection attempt failed:", error);
+        attemptReconnectRef.current?.();
+      }
+    }, delay);
+  }, [reconnectAttempt, cleanup, onCallEnded, createPeerConnectionInternal]);
+
+  // Keep ref updated with latest attemptReconnect
+  useEffect(() => {
+    attemptReconnectRef.current = attemptReconnect;
+  }, [attemptReconnect]);
 
   const startLocalStream = async (videoEnabled: boolean = true) => {
     try {
@@ -127,10 +229,12 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
 
   const initiateCall = async (videoEnabled: boolean = true) => {
     setIsConnecting(true);
+    lastCallConfigRef.current = { videoEnabled, isInitiator: true };
     
     try {
       const stream = await startLocalStream(videoEnabled);
-      const pc = createPeerConnection();
+      localStreamRef.current = stream;
+      const pc = createPeerConnectionInternal();
       
       stream.getTracks().forEach(track => {
         pc.addTrack(track, stream);
@@ -148,17 +252,19 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
       console.log("Call initiated, offer sent");
     } catch (error) {
       console.error("Error initiating call:", error);
-      cleanup();
+      cleanup(true);
       throw error;
     }
   };
 
   const acceptCall = async (offerData: any) => {
     setIsConnecting(true);
+    lastCallConfigRef.current = { videoEnabled: offerData.videoEnabled, isInitiator: false };
     
     try {
       const stream = await startLocalStream(offerData.videoEnabled);
-      const pc = createPeerConnection();
+      localStreamRef.current = stream;
+      const pc = createPeerConnectionInternal();
       
       stream.getTracks().forEach(track => {
         pc.addTrack(track, stream);
@@ -183,8 +289,66 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
       console.log("Call accepted, answer sent");
     } catch (error) {
       console.error("Error accepting call:", error);
-      cleanup();
+      cleanup(true);
       throw error;
+    }
+  };
+
+  const handleReconnectOffer = async (offerData: any) => {
+    console.log("Handling reconnect offer");
+    setIsReconnecting(true);
+    
+    try {
+      // Close existing peer connection
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+      }
+      pendingCandidatesRef.current = [];
+      
+      const pc = createPeerConnectionInternal();
+      
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach(track => {
+          pc.addTrack(track, localStreamRef.current!);
+        });
+      }
+
+      await pc.setRemoteDescription(new RTCSessionDescription({
+        sdp: offerData.sdp,
+        type: offerData.type,
+      }));
+
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      
+      await sendSignal("reconnect-answer", { sdp: answer.sdp, type: answer.type });
+      
+      console.log("Reconnect answer sent");
+    } catch (error) {
+      console.error("Error handling reconnect offer:", error);
+      attemptReconnectRef.current?.();
+    }
+  };
+
+  const handleReconnectAnswer = async (answerData: any) => {
+    console.log("Handling reconnect answer");
+    const pc = peerConnectionRef.current;
+    if (!pc) return;
+
+    try {
+      await pc.setRemoteDescription(new RTCSessionDescription({
+        sdp: answerData.sdp,
+        type: answerData.type,
+      }));
+
+      // Add any pending ICE candidates
+      for (const candidate of pendingCandidatesRef.current) {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      }
+      pendingCandidatesRef.current = [];
+    } catch (error) {
+      console.error("Error handling reconnect answer:", error);
+      attemptReconnectRef.current?.();
     }
   };
 
@@ -220,19 +384,25 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
 
   const endCall = async () => {
     await sendSignal("call-end", {});
-    cleanup();
+    cleanup(true);
     onCallEnded?.();
   };
 
   const rejectCall = async () => {
     await sendSignal("call-reject", {});
-    cleanup();
+    cleanup(true);
+    onCallEnded?.();
+  };
+
+  const cancelReconnect = () => {
+    clearReconnectTimeout();
+    cleanup(true);
     onCallEnded?.();
   };
 
   const toggleMute = () => {
-    if (localStream) {
-      localStream.getAudioTracks().forEach(track => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getAudioTracks().forEach(track => {
         track.enabled = !track.enabled;
       });
       setIsMuted(!isMuted);
@@ -240,8 +410,8 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
   };
 
   const toggleVideo = () => {
-    if (localStream) {
-      localStream.getVideoTracks().forEach(track => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getVideoTracks().forEach(track => {
         track.enabled = !track.enabled;
       });
       setIsVideoOff(!isVideoOff);
@@ -273,9 +443,15 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
             case "ice-candidate":
               await handleIceCandidate(signal.signal_data);
               break;
+            case "reconnect-offer":
+              await handleReconnectOffer(signal.signal_data);
+              break;
+            case "reconnect-answer":
+              await handleReconnectAnswer(signal.signal_data);
+              break;
             case "call-end":
             case "call-reject":
-              cleanup();
+              cleanup(true);
               onCallEnded?.();
               break;
           }
@@ -297,6 +473,9 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
     isConnected,
     isMuted,
     isVideoOff,
+    isReconnecting,
+    reconnectAttempt,
+    maxReconnectAttempts: MAX_RECONNECT_ATTEMPTS,
     initiateCall,
     acceptCall,
     endCall,
@@ -304,5 +483,6 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
     toggleMute,
     toggleVideo,
     cleanup,
+    cancelReconnect,
   };
 };

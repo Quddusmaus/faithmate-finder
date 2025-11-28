@@ -71,11 +71,15 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
     isConnected,
     isMuted,
     isVideoOff,
+    isReconnecting,
+    reconnectAttempt,
+    maxReconnectAttempts,
     initiateCall,
     acceptCall,
     endCall,
     toggleMute,
     toggleVideo,
+    cancelReconnect,
   } = useWebRTC({
     localUserId: user.id,
     remoteUserId: match.match_id,
@@ -511,11 +515,15 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
           isConnected={isConnected}
           isMuted={isMuted}
           isVideoOff={isVideoOff}
+          isReconnecting={isReconnecting}
+          reconnectAttempt={reconnectAttempt}
+          maxReconnectAttempts={maxReconnectAttempts}
           matchName={match.name}
           matchPhoto={match.photo_urls?.[0]}
           onEndCall={handleEndCall}
           onToggleMute={toggleMute}
           onToggleVideo={toggleVideo}
+          onCancelReconnect={cancelReconnect}
         />
       )}
 
