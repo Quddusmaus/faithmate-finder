@@ -79,14 +79,14 @@ export const GDPRTools = ({ userId, userEmail }: GDPRToolsProps) => {
       URL.revokeObjectURL(url);
 
       toast({
-        title: "Data Exported",
-        description: "Your data has been downloaded successfully.",
+        title: t('gdpr.exportSuccess'),
+        description: t('gdpr.exportSuccessDesc'),
       });
     } catch (error: any) {
       console.error("Export error:", error);
       toast({
-        title: "Export Failed",
-        description: "Failed to export your data. Please try again.",
+        title: t('gdpr.exportFailed'),
+        description: t('gdpr.exportFailedDesc'),
         variant: "destructive",
       });
     } finally {
@@ -97,8 +97,8 @@ export const GDPRTools = ({ userId, userEmail }: GDPRToolsProps) => {
   const deleteAccount = async () => {
     if (confirmEmail.toLowerCase() !== userEmail.toLowerCase()) {
       toast({
-        title: "Email Mismatch",
-        description: "Please enter your email correctly to confirm deletion.",
+        title: t('gdpr.emailMismatch'),
+        description: t('gdpr.emailMismatchDesc'),
         variant: "destructive",
       });
       return;
@@ -135,16 +135,16 @@ export const GDPRTools = ({ userId, userEmail }: GDPRToolsProps) => {
       await supabase.auth.signOut();
       
       toast({
-        title: "Account Deleted",
-        description: "Your account and all associated data have been deleted.",
+        title: t('gdpr.deleteSuccess'),
+        description: t('gdpr.deleteSuccessDesc'),
       });
       
       navigate("/");
     } catch (error: any) {
       console.error("Delete error:", error);
       toast({
-        title: "Deletion Failed",
-        description: error.message || "Failed to delete your account. Please contact support.",
+        title: t('gdpr.deleteFailed'),
+        description: error.message || t('gdpr.deleteFailedDesc'),
         variant: "destructive",
       });
     } finally {
@@ -159,10 +159,10 @@ export const GDPRTools = ({ userId, userEmail }: GDPRToolsProps) => {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <FileJson className="h-5 w-5" />
-            Data & Privacy (GDPR)
+            {t('gdpr.title')}
           </CardTitle>
           <CardDescription>
-            Manage your personal data in accordance with privacy regulations
+            {t('gdpr.description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -171,9 +171,9 @@ export const GDPRTools = ({ userId, userEmail }: GDPRToolsProps) => {
             <div className="flex items-center gap-3">
               <Download className="h-5 w-5 text-primary" />
               <div>
-                <p className="font-medium">Export Your Data</p>
+                <p className="font-medium">{t('gdpr.exportData')}</p>
                 <p className="text-sm text-muted-foreground">
-                  Download all your personal data in JSON format
+                  {t('gdpr.exportDescription')}
                 </p>
               </div>
             </div>
@@ -185,7 +185,7 @@ export const GDPRTools = ({ userId, userEmail }: GDPRToolsProps) => {
               {isExporting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Export"
+                t('gdpr.exportButton')
               )}
             </Button>
           </div>
@@ -195,9 +195,9 @@ export const GDPRTools = ({ userId, userEmail }: GDPRToolsProps) => {
             <div className="flex items-center gap-3">
               <Trash2 className="h-5 w-5 text-destructive" />
               <div>
-                <p className="font-medium text-destructive">Delete Account</p>
+                <p className="font-medium text-destructive">{t('gdpr.deleteAccount')}</p>
                 <p className="text-sm text-muted-foreground">
-                  Permanently delete your account and all data
+                  {t('gdpr.deleteDescription')}
                 </p>
               </div>
             </div>
@@ -205,7 +205,7 @@ export const GDPRTools = ({ userId, userEmail }: GDPRToolsProps) => {
               variant="destructive" 
               onClick={() => setShowDeleteDialog(true)}
             >
-              Delete
+              {t('gdpr.deleteButton')}
             </Button>
           </div>
         </CardContent>
@@ -217,28 +217,27 @@ export const GDPRTools = ({ userId, userEmail }: GDPRToolsProps) => {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              Delete Your Account?
+              {t('gdpr.deleteConfirmTitle')}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
               <p>
-                This action cannot be undone. This will permanently delete your account 
-                and remove all your data from our servers, including:
+                {t('gdpr.deleteConfirmDesc')}
               </p>
               <ul className="list-disc list-inside text-sm space-y-1">
-                <li>Your profile and photos</li>
-                <li>All messages you've sent</li>
-                <li>Your matches and likes</li>
-                <li>Notification preferences</li>
-                <li>Verification data</li>
+                <li>{t('gdpr.deleteItemProfile')}</li>
+                <li>{t('gdpr.deleteItemMessages')}</li>
+                <li>{t('gdpr.deleteItemMatches')}</li>
+                <li>{t('gdpr.deleteItemPreferences')}</li>
+                <li>{t('gdpr.deleteItemVerification')}</li>
               </ul>
               <div className="pt-2">
                 <Label htmlFor="confirm-email" className="text-foreground">
-                  Type your email to confirm: <strong>{userEmail}</strong>
+                  {t('gdpr.confirmEmailLabel')} <strong>{userEmail}</strong>
                 </Label>
                 <Input
                   id="confirm-email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder={t('gdpr.confirmEmailPlaceholder')}
                   value={confirmEmail}
                   onChange={(e) => setConfirmEmail(e.target.value)}
                   className="mt-2"
@@ -248,7 +247,7 @@ export const GDPRTools = ({ userId, userEmail }: GDPRToolsProps) => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setConfirmEmail("")}>
-              Cancel
+              {t('common.cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={deleteAccount}
@@ -258,7 +257,7 @@ export const GDPRTools = ({ userId, userEmail }: GDPRToolsProps) => {
               {isDeleting ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
-              Delete My Account
+              {t('gdpr.deleteMyAccount')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
