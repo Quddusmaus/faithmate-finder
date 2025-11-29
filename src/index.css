@@ -110,3 +110,11 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* iOS Safari dialog scroll fix */
+@supports (-webkit-touch-callout: none) {
+  [data-radix-dialog-content] {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+}
