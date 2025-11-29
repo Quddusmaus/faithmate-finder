@@ -172,6 +172,7 @@ const Index = () => {
         <div className="container mx-auto px-4 sm:px-6 text-center text-muted-foreground">
           <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mb-4 text-sm sm:text-base">
             <Link to="/install" className="hover:text-primary transition-colors">Install App</Link>
+            <Link to="/safety" className="hover:text-primary transition-colors">Safety Tips</Link>
             <Link to="/terms" className="hover:text-primary transition-colors">{t('nav.termsOfService')}</Link>
             <Link to="/privacy" className="hover:text-primary transition-colors">{t('nav.privacyPolicy')}</Link>
             <Link to="/contact" className="hover:text-primary transition-colors">{t('nav.contactUs')}</Link>
