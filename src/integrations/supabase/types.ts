@@ -188,6 +188,33 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_super_like_usage: {
+        Row: {
+          created_at: string
+          id: string
+          super_like_count: number
+          super_like_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          super_like_count?: number
+          super_like_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          super_like_count?: number
+          super_like_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       demo_profiles: {
         Row: {
           age: number | null
@@ -621,6 +648,27 @@ export type Database = {
         }
         Relationships: []
       }
+      super_likes: {
+        Row: {
+          created_at: string
+          id: string
+          super_liked_user_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          super_liked_user_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          super_liked_user_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -695,6 +743,10 @@ export type Database = {
       }
       get_today_call_count: { Args: { p_user_id: string }; Returns: number }
       get_today_like_count: { Args: { p_user_id: string }; Returns: number }
+      get_today_super_like_count: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
       get_user_matches: {
         Args: { user_uuid: string }
         Returns: {
@@ -719,6 +771,10 @@ export type Database = {
       }
       increment_call_count: { Args: { p_user_id: string }; Returns: number }
       increment_like_count: { Args: { p_user_id: string }; Returns: number }
+      increment_super_like_count: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
       is_blocked: {
         Args: { checker_id: string; target_id: string }
         Returns: boolean

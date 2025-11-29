@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Heart, Crown } from "lucide-react";
+import { MapPin, Heart, Crown, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import {
@@ -16,7 +16,14 @@ import { BlockUserDialog } from "./BlockUserDialog";
 import { CompatibilityBadge } from "./CompatibilityBadge";
 import { calculateCompatibility } from "@/hooks/useCurrentUserProfile";
 import { useLikeLimits } from "@/hooks/useLikeLimits";
+import { useSuperLikeLimits } from "@/hooks/useSuperLikeLimits";
 import { Link } from "react-router-dom";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Profile {
   id: string;
@@ -41,28 +48,40 @@ interface ProfileCardProps {
 export const ProfileCard = ({ profile, userInterests = [], currentUserId }: ProfileCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [superLiked, setSuperLiked] = useState(false);
   const [liking, setLiking] = useState(false);
+  const [superLiking, setSuperLiking] = useState(false);
   const { toast } = useToast();
   const { canLike, remainingLikes, maxLikes, incrementLikeCount, tier, subscribed } = useLikeLimits();
+  const { canSuperLike, remainingSuperLikes, maxSuperLikes, incrementSuperLikeCount } = useSuperLikeLimits();
   const imageUrl = profile.photo_urls[0] || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400";
 
   const compatibility = useMemo(() => {
     return calculateCompatibility(userInterests, profile.interests || []);
   }, [userInterests, profile.interests]);
 
-  // Check if liked only when dialog opens (lazy load)
-  const checkIfLiked = useCallback(async () => {
+  // Check if liked/super liked only when dialog opens (lazy load)
+  const checkLikeStatus = useCallback(async () => {
     if (!currentUserId || !profile.user_id) return;
 
     try {
-      const { data } = await supabase
-        .from("likes")
-        .select("id")
-        .eq("user_id", currentUserId)
-        .eq("liked_user_id", profile.user_id)
-        .maybeSingle();
+      const [likeResult, superLikeResult] = await Promise.all([
+        supabase
+          .from("likes")
+          .select("id")
+          .eq("user_id", currentUserId)
+          .eq("liked_user_id", profile.user_id)
+          .maybeSingle(),
+        supabase
+          .from("super_likes")
+          .select("id")
+          .eq("user_id", currentUserId)
+          .eq("super_liked_user_id", profile.user_id)
+          .maybeSingle()
+      ]);
 
-      setLiked(!!data);
+      setLiked(!!likeResult.data);
+      setSuperLiked(!!superLikeResult.data);
     } catch (error) {
       console.error("Error checking like status:", error);
     }
@@ -71,9 +90,9 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
   // Only check like status when dialog opens
   useEffect(() => {
     if (showDetails && currentUserId && profile.user_id) {
-      checkIfLiked();
+      checkLikeStatus();
     }
-  }, [showDetails, currentUserId, profile.user_id, checkIfLiked]);
+  }, [showDetails, currentUserId, profile.user_id, checkLikeStatus]);
 
   const handleLike = async () => {
     if (!currentUserId) {
@@ -173,6 +192,90 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
     }
   };
 
+  const handleSuperLike = async () => {
+    if (!currentUserId) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to use Super Likes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!profile.user_id) {
+      toast({
+        title: "Cannot super like this profile",
+        description: "This is a demo profile.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (superLiked) {
+      toast({
+        title: "Already Super Liked",
+        description: "You've already sent a Super Like to this profile.",
+      });
+      return;
+    }
+
+    if (!subscribed) {
+      toast({
+        title: "Premium feature",
+        description: "Super Likes are available for subscribers only.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!canSuperLike) {
+      toast({
+        title: "Super Like limit reached",
+        description: tier === 'basic' 
+          ? "You've used your Super Like for today. Upgrade to Premium for 5 daily!"
+          : "You've used all Super Likes for today. Come back tomorrow!",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSuperLiking(true);
+    try {
+      const success = await incrementSuperLikeCount();
+      if (!success) return;
+
+      const { error } = await supabase
+        .from("super_likes")
+        .insert([{
+          user_id: currentUserId,
+          super_liked_user_id: profile.user_id
+        }]);
+
+      if (error) throw error;
+      
+      setSuperLiked(true);
+      setLiked(true); // Super like also creates regular like via trigger
+      
+      const superLikesInfo = remainingSuperLikes !== null 
+        ? ` (${remainingSuperLikes - 1} Super Likes left today)`
+        : '';
+      
+      toast({
+        title: "⭐ Super Like sent!",
+        description: `${profile.name} will be notified about your Super Like!${superLikesInfo}`,
+      });
+    } catch (error: any) {
+      console.error("Error sending super like:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send Super Like.",
+        variant: "destructive",
+      });
+    } finally {
+      setSuperLiking(false);
+    }
+  };
+
   return (
     <>
       <Card className="group overflow-hidden transition-all hover:shadow-xl">
@@ -234,15 +337,45 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
                 View Profile
               </Button>
               {currentUserId && profile.user_id && (
-                <Button 
-                  variant={liked ? "default" : "outline"} 
-                  size="icon" 
-                  onClick={handleLike}
-                  disabled={liking || (!liked && !canLike)}
-                  className={liked ? "bg-primary text-primary-foreground" : "border-primary text-primary hover:bg-primary hover:text-primary-foreground"}
-                >
-                  <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
-                </Button>
+                <>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant={superLiked ? "default" : "outline"} 
+                          size="icon" 
+                          onClick={handleSuperLike}
+                          disabled={superLiking || superLiked || !subscribed}
+                          className={superLiked 
+                            ? "bg-amber-500 text-white hover:bg-amber-600" 
+                            : subscribed 
+                              ? "border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-white"
+                              : "border-muted text-muted-foreground"
+                          }
+                        >
+                          <Star className={`h-4 w-4 ${superLiked ? 'fill-current' : ''}`} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {!subscribed 
+                          ? "Subscribe to send Super Likes" 
+                          : superLiked 
+                            ? "Super Like sent!" 
+                            : `Super Like (${remainingSuperLikes ?? 0} left)`
+                        }
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <Button 
+                    variant={liked ? "default" : "outline"} 
+                    size="icon" 
+                    onClick={handleLike}
+                    disabled={liking || (!liked && !canLike)}
+                    className={liked ? "bg-primary text-primary-foreground" : "border-primary text-primary hover:bg-primary hover:text-primary-foreground"}
+                  >
+                    <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -312,7 +445,7 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
             </div>
 
             {currentUserId && profile.user_id ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {subscribed && tier === 'basic' && maxLikes !== null && !liked && (
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <span>{remainingLikes} likes remaining today</span>
@@ -324,6 +457,37 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
                     )}
                   </div>
                 )}
+                
+                {/* Super Like Button */}
+                {subscribed && !superLiked && (
+                  <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
+                    <span className="flex items-center gap-1">
+                      <Star className="h-3 w-3 text-amber-500" />
+                      {remainingSuperLikes ?? 0} Super Likes left today
+                    </span>
+                  </div>
+                )}
+                
+                <Button 
+                  onClick={handleSuperLike}
+                  disabled={superLiking || superLiked || !subscribed}
+                  className={`w-full ${
+                    superLiked 
+                      ? 'bg-amber-500 hover:bg-amber-600 text-white' 
+                      : subscribed
+                        ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                        : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  <Star className={`mr-2 h-4 w-4 ${superLiked ? 'fill-current' : ''}`} />
+                  {superLiked 
+                    ? 'Super Like Sent!' 
+                    : subscribed 
+                      ? 'Send Super Like ⭐' 
+                      : 'Subscribe for Super Likes'
+                  }
+                </Button>
+                
                 {!canLike && !liked ? (
                   <div className="space-y-2">
                     <Button 
@@ -344,7 +508,8 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
                   <Button 
                     onClick={handleLike}
                     disabled={liking}
-                    className={`w-full ${liked ? 'bg-muted hover:bg-muted/80' : 'bg-primary hover:bg-primary/90'}`}
+                    variant="outline"
+                    className={`w-full ${liked ? 'bg-muted hover:bg-muted/80' : ''}`}
                   >
                     <Heart className={`mr-2 h-4 w-4 ${liked ? 'fill-current' : ''}`} />
                     {liked ? 'Unlike Profile' : 'Like Profile'}
