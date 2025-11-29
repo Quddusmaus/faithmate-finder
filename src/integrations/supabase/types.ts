@@ -523,7 +523,7 @@ export type Database = {
     }
     Functions: {
       are_users_matched: {
-        Args: { user1_id: string; user2_id: string }
+        Args: { p_user1_id: string; p_user2_id: string }
         Returns: boolean
       }
       get_user_matches: {
