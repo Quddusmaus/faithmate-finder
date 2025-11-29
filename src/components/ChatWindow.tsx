@@ -15,6 +15,7 @@ import { VideoCall } from "./VideoCall";
 import { IncomingCallDialog } from "./IncomingCallDialog";
 import { useDailyCall } from "@/hooks/useDailyCall";
 import { useCallLimits } from "@/hooks/useCallLimits";
+import { EmojiPicker } from "./EmojiPicker";
 
 interface Reaction {
   id: string;
@@ -711,7 +712,8 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
 
       {/* Message input */}
       <form onSubmit={sendMessage} className="border-t border-border bg-card p-4">
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <EmojiPicker onEmojiSelect={(emoji) => setNewMessage((prev) => prev + emoji)} />
           <Input
             value={newMessage}
             onChange={handleInputChange}
