@@ -112,9 +112,9 @@ const Index = () => {
           <div className="flex items-center justify-center gap-3 sm:gap-4 rounded-xl bg-secondary/10 border border-secondary/20 p-4 sm:p-6">
             <ShieldCheck className="h-8 w-8 sm:h-10 sm:w-10 text-secondary flex-shrink-0" />
             <div>
-              <h3 className="text-lg sm:text-xl font-semibold text-foreground">Verified Profiles Only</h3>
+              <h3 className="text-lg sm:text-xl font-semibold text-foreground">{t('landing.verifiedOnly')}</h3>
               <p className="text-sm sm:text-base text-muted-foreground">
-                Our pose-matching technology confirms you're talking to real people
+                {t('landing.verifiedOnlyDesc')}
               </p>
             </div>
           </div>

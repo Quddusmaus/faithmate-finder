@@ -187,7 +187,9 @@
     "smartMatching": "Intelligentes Matching",
     "smartMatchingDesc": "Unser Algorithmus findet kompatible Matches für dich",
     "coreCompatibility": "Kernlehrplan-Kompatibilität",
-    "coreCompatibilityDesc": "Finde bedeutungsvolle Verbindungen basierend auf gemeinsamen Kernlehrplan-Aktivitäten und Interessen."
+    "coreCompatibilityDesc": "Finde bedeutungsvolle Verbindungen basierend auf gemeinsamen Kernlehrplan-Aktivitäten und Interessen.",
+    "verifiedOnly": "Nur Verifizierte Profile",
+    "verifiedOnlyDesc": "Unsere Pose-Matching-Technologie bestätigt, dass du mit echten Menschen sprichst"
   },
   "settings": {
     "settings": "Einstellungen",
