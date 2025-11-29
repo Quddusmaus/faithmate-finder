@@ -260,6 +260,30 @@ export type Database = {
           },
         ]
       }
+      login_attempts: {
+        Row: {
+          attempted_at: string
+          email: string
+          id: string
+          ip_address: string | null
+          success: boolean
+        }
+        Insert: {
+          attempted_at?: string
+          email: string
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+        }
+        Update: {
+          attempted_at?: string
+          email?: string
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+        }
+        Relationships: []
+      }
       message_reactions: {
         Row: {
           created_at: string
@@ -610,6 +634,11 @@ export type Database = {
         Args: { p_user1_id: string; p_user2_id: string }
         Returns: boolean
       }
+      check_login_rate_limit: { Args: { p_email: string }; Returns: boolean }
+      check_message_rate_limit: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       get_user_matches: {
         Args: { user_uuid: string }
         Returns: {
@@ -635,6 +664,10 @@ export type Database = {
       is_blocked: {
         Args: { checker_id: string; target_id: string }
         Returns: boolean
+      }
+      record_login_attempt: {
+        Args: { p_email: string; p_success: boolean }
+        Returns: undefined
       }
     }
     Enums: {
