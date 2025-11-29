@@ -13,7 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 import { PhotoUpload } from "@/components/PhotoUpload";
 import { InterestsSelector } from "@/components/InterestsSelector";
 import { NotificationPreferences } from "@/components/NotificationPreferences";
-import { Loader2, BadgeCheck, Clock, ShieldCheck, Pause, Play, Heart, Users, MessageCircle, Shield, LogOut, Menu } from "lucide-react";
+import { Loader2, BadgeCheck, Clock, ShieldCheck, Pause, Play, Heart, Users, MessageCircle, Shield, LogOut, Menu, Camera } from "lucide-react";
+import { PhotoVerification } from "@/components/PhotoVerification";
+import { GDPRTools } from "@/components/GDPRTools";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -22,9 +24,9 @@ import type { User } from "@supabase/supabase-js";
 const ProfileSetup = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
-  const [verificationLoading, setVerificationLoading] = useState(false);
-  const [existingProfile, setExistingProfile] = useState<any>(null);
   const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
+  const [showPhotoVerification, setShowPhotoVerification] = useState(false);
+  const [existingProfile, setExistingProfile] = useState<any>(null);
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
@@ -75,65 +77,25 @@ const ProfileSetup = () => {
       setInterests(profile.interests || []);
       setIsVisible(profile.is_visible ?? true);
       
-      // Check verification status
+      // Check verification status from photo_verifications
       if (profile.verified) {
         setVerificationStatus("verified");
       } else {
-        const { data: verificationRequest } = await supabase
-          .from("verification_requests")
+        const { data: photoVerification } = await supabase
+          .from("photo_verifications")
           .select("status")
           .eq("user_id", user.id)
-          .order("submitted_at", { ascending: false })
+          .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
         
-        if (verificationRequest) {
-          setVerificationStatus(verificationRequest.status);
+        if (photoVerification) {
+          setVerificationStatus(photoVerification.status);
         }
       }
     } else {
       // Set name from signup if available
       setName(user.user_metadata?.name || "");
-    }
-  };
-
-  const handleRequestVerification = async () => {
-    if (!user) return;
-    
-    setVerificationLoading(true);
-    try {
-      const { error } = await supabase
-        .from("verification_requests")
-        .insert({
-          user_id: user.id,
-          status: "pending",
-        });
-
-      if (error) {
-        if (error.code === "23505") {
-          toast({
-            title: "Already Requested",
-            description: "You already have a pending verification request.",
-            variant: "destructive",
-          });
-        } else {
-          throw error;
-        }
-      } else {
-        setVerificationStatus("pending");
-        toast({
-          title: "Verification Requested",
-          description: "Your verification request has been submitted for review.",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to submit verification request.",
-        variant: "destructive",
-      });
-    } finally {
-      setVerificationLoading(false);
     }
   };
 
@@ -426,7 +388,7 @@ const ProfileSetup = () => {
               </Card>
 
               {/* Verification Section */}
-              {existingProfile && (
+              {existingProfile && !showPhotoVerification && (
                 <Card className="border-primary/20 bg-primary/5">
                   <CardContent className="pt-4">
                     <div className="flex items-center justify-between">
@@ -435,7 +397,7 @@ const ProfileSetup = () => {
                         <div>
                           <p className="font-medium">Profile Verification</p>
                           <p className="text-sm text-muted-foreground">
-                            Get a verified badge on your profile
+                            Verify with a selfie matching a random pose
                           </p>
                         </div>
                       </div>
@@ -447,35 +409,27 @@ const ProfileSetup = () => {
                       ) : verificationStatus === "pending" ? (
                         <Badge variant="outline" className="gap-1 border-yellow-500 text-yellow-600">
                           <Clock className="h-3 w-3" />
-                          Pending Review
+                          Processing...
                         </Badge>
-                      ) : verificationStatus === "rejected" ? (
+                      ) : verificationStatus === "rejected" || verificationStatus === "failed" ? (
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={handleRequestVerification}
-                          disabled={verificationLoading}
+                          onClick={() => setShowPhotoVerification(true)}
                         >
-                          {verificationLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            "Request Again"
-                          )}
+                          <Camera className="h-4 w-4 mr-1" />
+                          Try Again
                         </Button>
                       ) : (
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          onClick={handleRequestVerification}
-                          disabled={verificationLoading}
+                          onClick={() => setShowPhotoVerification(true)}
                         >
-                          {verificationLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            "Request Verification"
-                          )}
+                          <Camera className="h-4 w-4 mr-1" />
+                          Verify Now
                         </Button>
                       )}
                     </div>
@@ -483,9 +437,26 @@ const ProfileSetup = () => {
                 </Card>
               )}
 
+              {/* Photo Verification Flow */}
+              {showPhotoVerification && (
+                <PhotoVerification
+                  userId={user.id}
+                  onVerified={() => {
+                    setShowPhotoVerification(false);
+                    setVerificationStatus("verified");
+                  }}
+                  onCancel={() => setShowPhotoVerification(false)}
+                />
+              )}
+
               {/* Email Notification Preferences */}
               {existingProfile && (
                 <NotificationPreferences userId={user.id} />
+              )}
+
+              {/* GDPR Data & Privacy Tools */}
+              {existingProfile && user.email && (
+                <GDPRTools userId={user.id} userEmail={user.email} />
               )}
 
               <div className="flex gap-3">

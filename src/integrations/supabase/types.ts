@@ -349,6 +349,42 @@ export type Database = {
         }
         Relationships: []
       }
+      photo_verifications: {
+        Row: {
+          ai_confidence: number | null
+          ai_result: Json | null
+          created_at: string
+          id: string
+          pose_type: string
+          selfie_url: string | null
+          status: string
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_result?: Json | null
+          created_at?: string
+          id?: string
+          pose_type: string
+          selfie_url?: string | null
+          status?: string
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_result?: Json | null
+          created_at?: string
+          id?: string
+          pose_type?: string
+          selfie_url?: string | null
+          status?: string
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       profile_reports: {
         Row: {
           created_at: string
