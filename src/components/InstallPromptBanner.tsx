@@ -4,11 +4,13 @@ import { X, Download, Share, Plus } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const InstallPromptBanner = () => {
   const { isInstallable, isInstalled, isIOS, promptInstall } = usePWAInstall();
   const { toast } = useToast();
   const [isDismissed, setIsDismissed] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const dismissed = localStorage.getItem("pwa-banner-dismissed");
@@ -41,10 +43,14 @@ const InstallPromptBanner = () => {
     return null;
   }
 
-  // Don't show if not installable and not iOS
-  if (!isInstallable && !isIOS) {
+  // Show on mobile devices, or when installable, or on iOS
+  const shouldShow = isMobile || isInstallable || isIOS;
+  if (!shouldShow) {
     return null;
   }
+
+  // Determine if this is Android (not iOS and on mobile)
+  const isAndroid = isMobile && !isIOS;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 p-3 sm:p-4 bg-gradient-to-r from-primary/95 to-primary-glow/95 backdrop-blur-sm border-t border-primary-foreground/10 shadow-lg animate-in slide-in-from-bottom duration-300">
@@ -62,8 +68,8 @@ const InstallPromptBanner = () => {
                 Tap <Share className="w-3 h-3 inline" /> then <Plus className="w-3 h-3 inline" /> Add to Home Screen
               </p>
             ) : (
-              <p className="text-xs sm:text-sm text-primary-foreground/80 hidden sm:block">
-                Add to your home screen for the best experience
+              <p className="text-xs sm:text-sm text-primary-foreground/80">
+                Add to your home screen for quick access
               </p>
             )}
           </div>
@@ -81,17 +87,17 @@ const InstallPromptBanner = () => {
               <span className="hidden sm:inline">Install</span>
               <span className="sm:hidden">Get</span>
             </Button>
-          ) : isIOS ? (
+          ) : (
             <Link to="/install">
               <Button
                 size="sm"
                 variant="secondary"
                 className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-medium"
               >
-                How to Install
+                {isIOS ? "How to" : "Install"}
               </Button>
             </Link>
-          ) : null}
+          )}
           
           <Button
             onClick={handleDismiss}
