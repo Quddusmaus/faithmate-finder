@@ -61,7 +61,7 @@ const InstallPromptBanner = () => {
   const isAndroid = isMobileDevice && !isIOS;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-3 sm:p-4 bg-gradient-to-r from-primary/95 to-primary-glow/95 backdrop-blur-sm border-t border-primary-foreground/10 shadow-lg animate-in slide-in-from-bottom duration-300">
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-3 sm:p-4 bg-primary backdrop-blur-sm border-t border-primary-foreground/10 shadow-lg animate-in slide-in-from-bottom duration-300">
       <div className="container mx-auto flex items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="hidden sm:flex items-center justify-center w-10 h-10 rounded-lg bg-primary-foreground/20 shrink-0">
