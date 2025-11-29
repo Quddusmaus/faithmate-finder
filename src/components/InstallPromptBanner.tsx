@@ -4,15 +4,23 @@ import { X, Download, Share, Plus } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 const InstallPromptBanner = () => {
   const { isInstallable, isInstalled, isIOS, promptInstall } = usePWAInstall();
   const { toast } = useToast();
   const [isDismissed, setIsDismissed] = useState(false);
-  const isMobile = useIsMobile();
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
 
   useEffect(() => {
+    // Check if mobile using user agent (more reliable for PWA detection)
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/i.test(userAgent);
+      setIsMobileDevice(isMobile);
+    };
+    
+    checkMobile();
+    
     const dismissed = localStorage.getItem("pwa-banner-dismissed");
     if (dismissed) {
       const dismissedTime = parseInt(dismissed, 10);
@@ -44,13 +52,13 @@ const InstallPromptBanner = () => {
   }
 
   // Show on mobile devices, or when installable, or on iOS
-  const shouldShow = isMobile || isInstallable || isIOS;
+  const shouldShow = isMobileDevice || isInstallable || isIOS;
   if (!shouldShow) {
     return null;
   }
 
   // Determine if this is Android (not iOS and on mobile)
-  const isAndroid = isMobile && !isIOS;
+  const isAndroid = isMobileDevice && !isIOS;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 p-3 sm:p-4 bg-gradient-to-r from-primary/95 to-primary-glow/95 backdrop-blur-sm border-t border-primary-foreground/10 shadow-lg animate-in slide-in-from-bottom duration-300">
