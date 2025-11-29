@@ -81,7 +81,10 @@ const Index = () => {
             <p className="text-2xl sm:text-4xl md:text-5xl font-semibold text-primary animate-fade-in-up">
               {t('landing.greeting')}
             </p>
-            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold leading-tight text-foreground">
+            <h1 
+              className="text-2xl sm:text-4xl md:text-5xl font-bold leading-tight text-foreground animate-fade-in-up"
+              style={{ animationDelay: '0.15s' }}
+            >
               {t('landing.welcomeTitle')}{" "}
               <span className="text-primary">{t('common.appName')}</span>
               {" – "}
@@ -89,10 +92,16 @@ const Index = () => {
                 {t('landing.welcomeSubtitle')}
               </span>
             </h1>
-            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto px-2">
+            <p 
+              className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto px-2 animate-fade-in-up"
+              style={{ animationDelay: '0.3s' }}
+            >
               {t('landing.description')}
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 pt-4 px-4 sm:px-0">
+            <div 
+              className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 pt-4 px-4 sm:px-0 animate-fade-in-up"
+              style={{ animationDelay: '0.45s' }}
+            >
               <Link to="/profiles" className="w-full sm:w-auto">
                 <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground">
                   {t('profiles.browseProfiles')}
