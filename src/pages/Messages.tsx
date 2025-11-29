@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MatchesList } from "@/components/MatchesList";
 import { ChatWindow } from "@/components/ChatWindow";
 import { NotificationBell } from "@/components/NotificationBell";
+import { SuperLikesReceived } from "@/components/SuperLikesReceived";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { User } from "@supabase/supabase-js";
 
@@ -171,13 +172,19 @@ const Messages = () => {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Matches sidebar */}
-        <div className={`${selectedMatch ? 'hidden md:block' : 'block'} w-full border-r border-border bg-card md:w-96`}>
-          <MatchesList
-            matches={matches}
-            loading={loading}
-            selectedMatchId={selectedMatch?.match_id}
-            onSelectMatch={handleSelectMatch}
+        <div className={`${selectedMatch ? 'hidden md:block' : 'block'} w-full border-r border-border bg-card md:w-96 flex flex-col`}>
+          <SuperLikesReceived 
+            currentUserId={user.id} 
+            onLikeBack={fetchMatches}
           />
+          <div className="flex-1 overflow-hidden">
+            <MatchesList
+              matches={matches}
+              loading={loading}
+              selectedMatchId={selectedMatch?.match_id}
+              onSelectMatch={handleSelectMatch}
+            />
+          </div>
         </div>
 
         {/* Chat window */}
