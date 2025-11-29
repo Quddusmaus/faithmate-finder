@@ -10,6 +10,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useWakeLock } from "@/hooks/useWakeLock";
 
 interface VideoCallProps {
   localVideoTrack: MediaStreamTrack | null;
@@ -43,6 +44,9 @@ export const VideoCall = ({
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
+
+  // Keep screen on during calls
+  useWakeLock(isConnecting || isConnected);
 
   // Attach local video track
   useEffect(() => {
