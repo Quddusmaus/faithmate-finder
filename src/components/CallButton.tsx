@@ -86,25 +86,29 @@ export const CallButton = ({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <div className="p-2">
-              {!tier || tier === 'basic' ? (
+              {!tier ? (
                 <div className="text-xs text-muted-foreground text-center">
-                  <p className="mb-2">Upgrade to Premium or Elite to make calls</p>
+                  <p className="mb-2">Subscribe to make video and voice calls</p>
                   <Link to="/subscription">
                     <Button size="sm" className="w-full gap-1">
                       <Crown className="h-3 w-3" />
-                      Upgrade Now
+                      Subscribe Now
+                    </Button>
+                  </Link>
+                </div>
+              ) : tier === 'basic' ? (
+                <div className="text-xs text-muted-foreground text-center">
+                  <p className="mb-2">Daily call used. Upgrade to Premium for unlimited calls.</p>
+                  <Link to="/subscription">
+                    <Button size="sm" variant="outline" className="w-full gap-1">
+                      <Crown className="h-3 w-3" />
+                      Go Premium
                     </Button>
                   </Link>
                 </div>
               ) : (
                 <div className="text-xs text-muted-foreground text-center">
-                  <p className="mb-2">Daily limit reached. Upgrade to Elite for unlimited calls.</p>
-                  <Link to="/subscription">
-                    <Button size="sm" variant="outline" className="w-full gap-1">
-                      <Crown className="h-3 w-3" />
-                      Go Elite
-                    </Button>
-                  </Link>
+                  <p>Daily limit reached. Try again tomorrow.</p>
                 </div>
               )}
             </div>

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
-export type SubscriptionTier = 'basic' | 'premium' | 'elite' | null;
+export type SubscriptionTier = 'basic' | 'premium' | null;
 
 export interface SubscriptionStatus {
   subscribed: boolean;
@@ -14,36 +14,25 @@ export interface SubscriptionStatus {
 export const SUBSCRIPTION_TIERS = {
   basic: {
     name: 'Basic',
-    price: 9.99,
+    price: 10.00,
     features: [
-      '10 daily messages',
-      'Limited likes per day',
+      '20 likes per day',
+      'Unlimited messaging',
+      '1 video/voice call per day',
       'Basic profile visibility',
       'Standard support',
     ],
   },
   premium: {
     name: 'Premium',
-    price: 14.99,
+    price: 15.99,
     features: [
-      'Unlimited messaging',
       'Unlimited likes',
-      '3 video/voice calls per day',
-      'See who likes you',
-      'Priority support',
-    ],
-  },
-  elite: {
-    name: 'Elite',
-    price: 19.99,
-    features: [
       'Unlimited messaging',
-      'Unlimited likes',
       'Unlimited video/voice calls',
-      'Super Boost visibility',
       'See who likes you',
-      'Advanced filters',
-      'VIP support',
+      'Boosted profile visibility',
+      'Priority support',
     ],
   },
 };
@@ -94,7 +83,7 @@ export function useSubscription() {
     }
   }, []);
 
-  const createCheckout = useCallback(async (tier: 'basic' | 'premium' | 'elite') => {
+  const createCheckout = useCallback(async (tier: 'basic' | 'premium') => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       

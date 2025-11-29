@@ -9,9 +9,8 @@ const corsHeaders = {
 
 // Product ID to tier name mapping
 const PRODUCT_TIERS: Record<string, string> = {
-  "prod_TVwKKQDQq7uRsB": "basic",
-  "prod_TVwUGSA2FdtbvC": "premium",
-  "prod_TVwVcYZnDpmnAJ": "elite",
+  "prod_TVxRMVOo4ggFGj": "basic",
+  "prod_TVxS2qrvpWe0zd": "premium",
 };
 
 const logStep = (step: string, details?: Record<string, unknown>) => {
