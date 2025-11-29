@@ -351,6 +351,7 @@ const Profiles = () => {
                   key={profile.id} 
                   profile={profile} 
                   userInterests={currentUserProfile?.interests || []}
+                  currentUserId={user?.id || null}
                 />
               ))}
             </div>

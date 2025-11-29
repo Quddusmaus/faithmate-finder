@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Heart, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -33,12 +33,12 @@ interface Profile {
 interface ProfileCardProps {
   profile: Profile;
   userInterests?: string[];
+  currentUserId?: string | null;
 }
 
-export const ProfileCard = ({ profile, userInterests = [] }: ProfileCardProps) => {
+export const ProfileCard = ({ profile, userInterests = [], currentUserId }: ProfileCardProps) => {
   const [showDetails, setShowDetails] = useState(false);
   const [liked, setLiked] = useState(false);
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [liking, setLiking] = useState(false);
   const { toast } = useToast();
   const imageUrl = profile.photo_urls[0] || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400";
@@ -47,29 +47,15 @@ export const ProfileCard = ({ profile, userInterests = [] }: ProfileCardProps) =
     return calculateCompatibility(userInterests, profile.interests || []);
   }, [userInterests, profile.interests]);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  useEffect(() => {
-    if (currentUser && profile.user_id) {
-      checkIfLiked();
-    }
-  }, [currentUser, profile.user_id]);
-
-  const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setCurrentUser(user?.id || null);
-  };
-
-  const checkIfLiked = async () => {
-    if (!currentUser || !profile.user_id) return;
+  // Check if liked only when dialog opens (lazy load)
+  const checkIfLiked = useCallback(async () => {
+    if (!currentUserId || !profile.user_id) return;
 
     try {
       const { data } = await supabase
         .from("likes")
         .select("id")
-        .eq("user_id", currentUser)
+        .eq("user_id", currentUserId)
         .eq("liked_user_id", profile.user_id)
         .maybeSingle();
 
@@ -77,10 +63,17 @@ export const ProfileCard = ({ profile, userInterests = [] }: ProfileCardProps) =
     } catch (error) {
       console.error("Error checking like status:", error);
     }
-  };
+  }, [currentUserId, profile.user_id]);
+
+  // Only check like status when dialog opens
+  useEffect(() => {
+    if (showDetails && currentUserId && profile.user_id) {
+      checkIfLiked();
+    }
+  }, [showDetails, currentUserId, profile.user_id, checkIfLiked]);
 
   const handleLike = async () => {
-    if (!currentUser) {
+    if (!currentUserId) {
       toast({
         title: "Sign in required",
         description: "Please sign in to like profiles.",
@@ -104,7 +97,7 @@ export const ProfileCard = ({ profile, userInterests = [] }: ProfileCardProps) =
         const { error } = await supabase
           .from("likes")
           .delete()
-          .eq("user_id", currentUser)
+          .eq("user_id", currentUserId)
           .eq("liked_user_id", profile.user_id);
 
         if (error) throw error;
@@ -117,7 +110,7 @@ export const ProfileCard = ({ profile, userInterests = [] }: ProfileCardProps) =
         const { error } = await supabase
           .from("likes")
           .insert([{
-            user_id: currentUser,
+            user_id: currentUserId,
             liked_user_id: profile.user_id
           }]);
 
@@ -129,7 +122,7 @@ export const ProfileCard = ({ profile, userInterests = [] }: ProfileCardProps) =
           .from("likes")
           .select("id")
           .eq("user_id", profile.user_id)
-          .eq("liked_user_id", currentUser)
+          .eq("liked_user_id", currentUserId)
           .maybeSingle();
 
         if (matchData) {
@@ -210,7 +203,7 @@ export const ProfileCard = ({ profile, userInterests = [] }: ProfileCardProps) =
             >
               View Profile
             </Button>
-            {currentUser && profile.user_id && (
+            {currentUserId && profile.user_id && (
               <Button 
                 variant={liked ? "default" : "outline"} 
                 size="icon" 
@@ -226,7 +219,7 @@ export const ProfileCard = ({ profile, userInterests = [] }: ProfileCardProps) =
       </Card>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto overscroll-contain touch-pan-y">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl sm:text-2xl">
               <span>
@@ -295,7 +288,7 @@ export const ProfileCard = ({ profile, userInterests = [] }: ProfileCardProps) =
               )}
             </div>
 
-            {currentUser && profile.user_id ? (
+            {currentUserId && profile.user_id ? (
               <Button 
                 onClick={handleLike}
                 disabled={liking}
@@ -307,11 +300,11 @@ export const ProfileCard = ({ profile, userInterests = [] }: ProfileCardProps) =
             ) : (
               <Button className="w-full bg-primary hover:bg-primary/90" disabled>
                 <Heart className="mr-2 h-4 w-4" />
-                {!currentUser ? 'Sign in to like' : 'Demo profile'}
+                {!currentUserId ? 'Sign in to like' : 'Demo profile'}
               </Button>
             )}
 
-            {currentUser && profile.user_id && (
+            {currentUserId && profile.user_id && (
               <div className="flex items-center justify-end gap-2 pt-2">
                 <BlockUserDialog
                   userId={profile.user_id}
@@ -321,7 +314,7 @@ export const ProfileCard = ({ profile, userInterests = [] }: ProfileCardProps) =
                 <ReportProfileDialog
                   profileId={profile.id}
                   profileName={profile.name}
-                  currentUserId={currentUser}
+                  currentUserId={currentUserId}
                 />
               </div>
             )}
