@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSubscription, SubscriptionTier } from '@/hooks/useSubscription';
+import { useSubscription, SubscriptionTier } from '@/contexts/SubscriptionContext';
 import { toast } from '@/hooks/use-toast';
 
 interface SuperLikeLimits {
