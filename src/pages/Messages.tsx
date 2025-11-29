@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Heart, ArrowLeft } from "lucide-react";
+import { Heart, ArrowLeft, Menu, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { MatchesList } from "@/components/MatchesList";
 import { ChatWindow } from "@/components/ChatWindow";
 import { NotificationBell } from "@/components/NotificationBell";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { User } from "@supabase/supabase-js";
 
 interface Match {
@@ -26,6 +27,7 @@ const Messages = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -116,23 +118,53 @@ const Messages = () => {
 
   return (
     <div className="flex h-screen flex-col bg-background">
-      <nav className="border-b border-border bg-card px-6 py-4">
+      <nav className="border-b border-border bg-card px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <Heart className="h-8 w-8 text-primary" fill="currentColor" />
-            <span className="text-2xl font-bold text-foreground">Unity Hearts</span>
+            <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-primary" fill="currentColor" />
+            <span className="text-lg sm:text-2xl font-bold text-foreground">Unity Hearts</span>
           </Link>
-          <div className="flex gap-3">
+          
+          {/* Desktop Navigation */}
+          <div className="hidden sm:flex gap-3 items-center">
             <NotificationBell />
             <Link to="/profiles">
-              <Button variant="ghost">
+              <Button variant="ghost" size="sm">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Browse Profiles
               </Button>
             </Link>
             <Link to="/profile-setup">
-              <Button variant="outline">My Profile</Button>
+              <Button variant="outline" size="sm">My Profile</Button>
             </Link>
+          </div>
+
+          {/* Mobile Navigation */}
+          <div className="flex sm:hidden items-center gap-2">
+            <NotificationBell />
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[250px]">
+                <div className="flex flex-col gap-3 mt-8">
+                  <Link to="/profiles" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start">
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Browse Profiles
+                    </Button>
+                  </Link>
+                  <Link to="/profile-setup" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Settings className="mr-2 h-4 w-4" />
+                      My Profile
+                    </Button>
+                  </Link>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </nav>

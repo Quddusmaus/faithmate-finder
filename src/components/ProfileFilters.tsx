@@ -56,15 +56,15 @@ export const ProfileFilters = ({ filters, onFiltersChange, onClear }: ProfileFil
   ].filter(Boolean).length;
 
   return (
-    <Card className="p-6 bg-card border-border">
+    <Card className="p-4 sm:p-6 bg-card border-border">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Search className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold text-foreground">Filter Profiles</h3>
+            <Search className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <h3 className="text-base sm:text-lg font-semibold text-foreground">Filter Profiles</h3>
             {activeFilterCount > 0 && (
-              <Badge variant="secondary" className="bg-primary/20 text-primary">
-                {activeFilterCount} active
+              <Badge variant="secondary" className="bg-primary/20 text-primary text-xs">
+                {activeFilterCount}
               </Badge>
             )}
           </div>
