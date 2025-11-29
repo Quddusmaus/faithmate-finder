@@ -187,7 +187,9 @@
     "smartMatching": "Akıllı Eşleştirme",
     "smartMatchingDesc": "Algoritmamız sizin için uyumlu eşleşmeler bulur",
     "coreCompatibility": "Temel Müfredat Uyumluluğu",
-    "coreCompatibilityDesc": "Paylaşılan Temel Müfredat etkinlikleri ve ilgi alanlarına dayalı anlamlı bağlantılar bulun."
+    "coreCompatibilityDesc": "Paylaşılan Temel Müfredat etkinlikleri ve ilgi alanlarına dayalı anlamlı bağlantılar bulun.",
+    "verifiedOnly": "Yalnızca Doğrulanmış Profiller",
+    "verifiedOnlyDesc": "Poz eşleştirme teknolojimiz gerçek insanlarla konuştuğunuzu doğrular"
   },
   "settings": {
     "settings": "Ayarlar",

@@ -187,7 +187,9 @@
     "smartMatching": "Ghép đôi thông minh",
     "smartMatchingDesc": "Thuật toán của chúng tôi tìm ghép đôi tương thích cho bạn",
     "coreCompatibility": "Tương thích chương trình cốt lõi",
-    "coreCompatibilityDesc": "Tìm kết nối ý nghĩa dựa trên các hoạt động và sở thích chương trình cốt lõi chung."
+    "coreCompatibilityDesc": "Tìm kết nối ý nghĩa dựa trên các hoạt động và sở thích chương trình cốt lõi chung.",
+    "verifiedOnly": "Chỉ Hồ Sơ Đã Xác Minh",
+    "verifiedOnlyDesc": "Công nghệ xác minh tư thế của chúng tôi xác nhận bạn đang nói chuyện với người thật"
   },
   "settings": {
     "settings": "Cài đặt",

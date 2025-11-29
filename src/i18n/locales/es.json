@@ -187,7 +187,9 @@
     "smartMatching": "Coincidencia Inteligente",
     "smartMatchingDesc": "Nuestro algoritmo encuentra coincidencias compatibles para ti",
     "coreCompatibility": "Compatibilidad del Currículo Central",
-    "coreCompatibilityDesc": "Encuentra conexiones significativas basadas en actividades e intereses del Currículo Central compartidos."
+    "coreCompatibilityDesc": "Encuentra conexiones significativas basadas en actividades e intereses del Currículo Central compartidos.",
+    "verifiedOnly": "Solo Perfiles Verificados",
+    "verifiedOnlyDesc": "Nuestra tecnología de verificación por poses confirma que hablas con personas reales"
   },
   "settings": {
     "settings": "Configuración",

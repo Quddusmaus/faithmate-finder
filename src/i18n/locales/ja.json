@@ -187,7 +187,9 @@
     "smartMatching": "スマートマッチング",
     "smartMatchingDesc": "アルゴリズムがあなたに合った相手を見つけます",
     "coreCompatibility": "コアカリキュラム互換性",
-    "coreCompatibilityDesc": "共通のコアカリキュラム活動と興味に基づいて意味のあるつながりを見つけましょう。"
+    "coreCompatibilityDesc": "共通のコアカリキュラム活動と興味に基づいて意味のあるつながりを見つけましょう。",
+    "verifiedOnly": "認証済みプロフィールのみ",
+    "verifiedOnlyDesc": "ポーズマッチング技術により、実在する人物と会話していることを確認します"
   },
   "settings": {
     "settings": "設定",

@@ -190,7 +190,9 @@
     "smartMatching": "Unity in Diversity",
     "smartMatchingDesc": "Find compatible souls from our diverse global Bahá'í community",
     "coreCompatibility": "Core Curriculum Compatibility",
-    "coreCompatibilityDesc": "Find meaningful connections based on shared Core Curriculum activities and interests."
+    "coreCompatibilityDesc": "Find meaningful connections based on shared Core Curriculum activities and interests.",
+    "verifiedOnly": "Verified Profiles Only",
+    "verifiedOnlyDesc": "Our pose-matching technology confirms you're talking to real people"
   },
   "settings": {
     "settings": "Settings",

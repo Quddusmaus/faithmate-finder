@@ -187,7 +187,9 @@
     "smartMatching": "Correspondance Intelligente",
     "smartMatchingDesc": "Notre algorithme trouve des correspondances compatibles pour vous",
     "coreCompatibility": "Compatibilité du Programme Central",
-    "coreCompatibilityDesc": "Trouvez des connexions significatives basées sur des activités et intérêts partagés du Programme Central."
+    "coreCompatibilityDesc": "Trouvez des connexions significatives basées sur des activités et intérêts partagés du Programme Central.",
+    "verifiedOnly": "Profils Vérifiés Uniquement",
+    "verifiedOnlyDesc": "Notre technologie de vérification par pose confirme que vous parlez à de vraies personnes"
   },
   "settings": {
     "settings": "Paramètres",

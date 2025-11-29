@@ -187,7 +187,9 @@
     "smartMatching": "스마트 매칭",
     "smartMatchingDesc": "알고리즘이 맞는 상대를 찾아줍니다",
     "coreCompatibility": "핵심 커리큘럼 호환성",
-    "coreCompatibilityDesc": "공유된 핵심 커리큘럼 활동과 관심사를 기반으로 의미 있는 연결을 찾으세요."
+    "coreCompatibilityDesc": "공유된 핵심 커리큘럼 활동과 관심사를 기반으로 의미 있는 연결을 찾으세요.",
+    "verifiedOnly": "인증된 프로필만",
+    "verifiedOnlyDesc": "포즈 매칭 기술로 실제 사람과 대화하고 있음을 확인합니다"
   },
   "settings": {
     "settings": "설정",

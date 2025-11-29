@@ -187,7 +187,9 @@
     "smartMatching": "Matching intelligente",
     "smartMatchingDesc": "Il nostro algoritmo trova match compatibili per te",
     "coreCompatibility": "Compatibilità del Curriculum di Base",
-    "coreCompatibilityDesc": "Trova connessioni significative basate su attività e interessi condivisi del Curriculum di Base."
+    "coreCompatibilityDesc": "Trova connessioni significative basate su attività e interessi condivisi del Curriculum di Base.",
+    "verifiedOnly": "Solo Profili Verificati",
+    "verifiedOnlyDesc": "La nostra tecnologia di verifica con pose conferma che stai parlando con persone reali"
   },
   "settings": {
     "settings": "Impostazioni",

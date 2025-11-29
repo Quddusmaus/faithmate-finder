@@ -187,7 +187,9 @@
     "smartMatching": "智能匹配",
     "smartMatchingDesc": "我们的算法为你找到合适的配对",
     "coreCompatibility": "核心课程兼容性",
-    "coreCompatibilityDesc": "基于共同的核心课程活动和兴趣找到有意义的连接。"
+    "coreCompatibilityDesc": "基于共同的核心课程活动和兴趣找到有意义的连接。",
+    "verifiedOnly": "仅限认证档案",
+    "verifiedOnlyDesc": "我们的姿势匹配技术确认您正在与真实的人交谈"
   },
   "settings": {
     "settings": "设置",
