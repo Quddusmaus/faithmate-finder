@@ -12,6 +12,7 @@ import { useCurrentUserProfile, calculateCompatibility } from "@/hooks/useCurren
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { useUnreadMessageCount } from "@/hooks/useUnreadMessageCount";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface Profile {
@@ -319,6 +320,8 @@ const Profiles = () => {
       </nav>
 
       <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        {user && <SubscriptionBanner />}
+        
         <div className="mb-8 sm:mb-12 text-center">
           <h1 className="mb-3 sm:mb-4 text-2xl sm:text-4xl font-bold text-foreground">Discover Your Match</h1>
           <p className="text-base sm:text-xl text-muted-foreground px-2">
