@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, Globe, ShieldCheck, MessageCircleHeart, Settings, Menu } from "lucide-react";
+import { Heart, Globe, Users, MessageCircleHeart, Settings, Menu, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { useTranslation } from "react-i18next";
@@ -107,6 +107,19 @@ const Index = () => {
           </div>
         </section>
 
+        {/* Verification Banner */}
+        <section className="py-6 sm:py-10">
+          <div className="flex items-center justify-center gap-3 sm:gap-4 rounded-xl bg-secondary/10 border border-secondary/20 p-4 sm:p-6">
+            <ShieldCheck className="h-8 w-8 sm:h-10 sm:w-10 text-secondary flex-shrink-0" />
+            <div>
+              <h3 className="text-lg sm:text-xl font-semibold text-foreground">Verified Profiles Only</h3>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Our pose-matching technology confirms you're talking to real people
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Features */}
         <section className="py-10 sm:py-16">
           <div className="grid gap-4 sm:gap-8 grid-cols-1 md:grid-cols-3">
@@ -124,13 +137,13 @@ const Index = () => {
 
             <div className="rounded-2xl bg-card p-6 sm:p-8 text-center shadow-lg transition-transform hover:scale-105">
               <div className="mx-auto mb-3 sm:mb-4 flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-secondary/10">
-                <ShieldCheck className="h-6 w-6 sm:h-8 sm:w-8 text-secondary" />
+                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-secondary" />
               </div>
               <h3 className="mb-2 text-lg sm:text-xl font-semibold text-card-foreground">
-                Verified Profiles Only
+                {t('landing.coreCompatibility')}
               </h3>
               <p className="text-sm sm:text-base text-muted-foreground">
-                Our pose-matching technology confirms you're talking to real people
+                {t('landing.coreCompatibilityDesc')}
               </p>
             </div>
 
