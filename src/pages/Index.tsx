@@ -6,6 +6,7 @@ import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import InstallPromptBanner from "@/components/InstallPromptBanner";
 
 const Index = () => {
   const { isAdmin } = useAdminStatus();
@@ -165,7 +166,7 @@ const Index = () => {
         </section>
       </main>
 
-      <footer className="border-t border-border py-6 sm:py-8">
+      <footer className="border-t border-border py-6 sm:py-8 pb-20 sm:pb-8">
         <div className="container mx-auto px-4 sm:px-6 text-center text-muted-foreground">
           <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mb-4 text-sm sm:text-base">
             <Link to="/install" className="hover:text-primary transition-colors">Install App</Link>
@@ -176,6 +177,8 @@ const Index = () => {
           <p className="text-sm sm:text-base">&copy; 2024 {t('common.appName')}.</p>
         </div>
       </footer>
+
+      <InstallPromptBanner />
     </div>
   );
 };
