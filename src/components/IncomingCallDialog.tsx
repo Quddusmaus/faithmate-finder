@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Phone, PhoneOff, Video } from "lucide-react";
+import { useRingtone } from "@/hooks/useRingtone";
 
 interface IncomingCallDialogProps {
   callerName: string;
@@ -17,6 +18,9 @@ export const IncomingCallDialog = ({
   onAccept,
   onReject,
 }: IncomingCallDialogProps) => {
+  // Play ringtone while dialog is shown
+  useRingtone(true);
+
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
       <div className="bg-card border border-border rounded-2xl p-8 shadow-xl max-w-sm w-full mx-4 animate-in fade-in zoom-in duration-300">
