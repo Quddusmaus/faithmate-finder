@@ -6,7 +6,7 @@ import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import InstallPromptBanner from "@/components/InstallPromptBanner";
+
 
 const Index = () => {
   const { isAdmin } = useAdminStatus();
@@ -178,7 +178,6 @@ const Index = () => {
         </div>
       </footer>
 
-      <InstallPromptBanner />
     </div>
   );
 };

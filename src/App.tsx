@@ -16,6 +16,7 @@ import Contact from "./pages/Contact";
 import Install from "./pages/Install";
 import NotFound from "./pages/NotFound";
 import CookieConsent from "./components/CookieConsent";
+import InstallPromptBanner from "./components/InstallPromptBanner";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
         <CookieConsent />
+        <InstallPromptBanner />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
