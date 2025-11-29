@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Heart, BadgeCheck } from "lucide-react";
+import { MapPin, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import {
@@ -169,18 +169,12 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
             </div>
           )}
           
-          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+            <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
             <div className="mb-1 flex items-center gap-2">
               <h3 className="text-2xl font-bold">
                 {profile.name}
                 {profile.age && `, ${profile.age}`}
               </h3>
-              {profile.verified && (
-                <Badge variant="secondary" className="gap-1 bg-primary/90 text-primary-foreground">
-                  <BadgeCheck className="h-3 w-3" />
-                  Verified
-                </Badge>
-              )}
             </div>
             {profile.location && (
               <div className="flex items-center gap-1 text-sm text-white/90">
@@ -221,17 +215,9 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto overscroll-contain touch-pan-y">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl sm:text-2xl">
-              <span>
-                {profile.name}
-                {profile.age && `, ${profile.age}`}
-              </span>
-              {profile.verified && (
-                <Badge variant="secondary" className="gap-1 text-xs">
-                  <BadgeCheck className="h-3 w-3 sm:h-4 sm:w-4" />
-                  Verified
-                </Badge>
-              )}
+            <DialogTitle className="text-xl sm:text-2xl">
+              {profile.name}
+              {profile.age && `, ${profile.age}`}
             </DialogTitle>
           </DialogHeader>
 
