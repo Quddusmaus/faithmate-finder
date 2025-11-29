@@ -80,7 +80,7 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
           
           <div style="text-align: center; margin-top: 32px;">
-            <a href="https://unity-hearts.lovable.app/profiles" style="display: inline-block; background: linear-gradient(135deg, #ec4899, #f43f5e); color: white; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
+            <a href="https://unityhearts.app/profiles" style="display: inline-block; background: linear-gradient(135deg, #ec4899, #f43f5e); color: white; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
               Start Browsing Profiles
             </a>
           </div>
@@ -110,7 +110,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Unity Hearts <onboarding@resend.dev>",
+        from: "Unity Hearts <hello@unityhearts.app>",
         to: [recipientEmail],
         subject,
         html: htmlContent,

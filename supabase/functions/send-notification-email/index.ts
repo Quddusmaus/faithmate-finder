@@ -95,7 +95,7 @@ const handler = async (req: Request): Promise<Response> => {
               Like them back to start a conversation!
             </p>
             <div style="text-align: center; margin-top: 32px;">
-              <a href="https://unity-hearts.lovable.app/profiles" style="display: inline-block; background: linear-gradient(135deg, #ec4899, #f43f5e); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+              <a href="https://unityhearts.app/profiles" style="display: inline-block; background: linear-gradient(135deg, #ec4899, #f43f5e); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
                 View Profiles
               </a>
             </div>
@@ -103,7 +103,7 @@ const handler = async (req: Request): Promise<Response> => {
               Unity Hearts - Find your perfect match in the Baháʼí community
             </p>
             <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 8px;">
-              <a href="https://unity-hearts.lovable.app/profile-setup" style="color: #9ca3af;">Manage email preferences</a>
+              <a href="https://unityhearts.app/profile-setup" style="color: #9ca3af;">Manage email preferences</a>
             </p>
           </div>
         </body>
@@ -131,7 +131,7 @@ const handler = async (req: Request): Promise<Response> => {
               Start a conversation and see where it leads. Good luck! 🍀
             </p>
             <div style="text-align: center; margin-top: 32px;">
-              <a href="https://unity-hearts.lovable.app/messages?match=${sender_user_id}" style="display: inline-block; background: linear-gradient(135deg, #f59e0b, #eab308); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+              <a href="https://unityhearts.app/messages?match=${sender_user_id}" style="display: inline-block; background: linear-gradient(135deg, #f59e0b, #eab308); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
                 Send a Message
               </a>
             </div>
@@ -139,7 +139,7 @@ const handler = async (req: Request): Promise<Response> => {
               Unity Hearts - Find your perfect match in the Baháʼí community
             </p>
             <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 8px;">
-              <a href="https://unity-hearts.lovable.app/profile-setup" style="color: #9ca3af;">Manage email preferences</a>
+              <a href="https://unityhearts.app/profile-setup" style="color: #9ca3af;">Manage email preferences</a>
             </p>
           </div>
         </body>
@@ -168,7 +168,7 @@ const handler = async (req: Request): Promise<Response> => {
               Don't keep them waiting - reply now!
             </p>
             <div style="text-align: center; margin-top: 32px;">
-              <a href="https://unity-hearts.lovable.app/messages?match=${sender_user_id}" style="display: inline-block; background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+              <a href="https://unityhearts.app/messages?match=${sender_user_id}" style="display: inline-block; background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">
                 View Message
               </a>
             </div>
@@ -176,7 +176,7 @@ const handler = async (req: Request): Promise<Response> => {
               Unity Hearts - Find your perfect match in the Baháʼí community
             </p>
             <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 8px;">
-              <a href="https://unity-hearts.lovable.app/profile-setup" style="color: #9ca3af;">Manage email preferences</a>
+              <a href="https://unityhearts.app/profile-setup" style="color: #9ca3af;">Manage email preferences</a>
             </p>
           </div>
         </body>
@@ -192,7 +192,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Unity Hearts <onboarding@resend.dev>",
+        from: "Unity Hearts <hello@unityhearts.app>",
         to: [recipientEmail],
         subject,
         html: htmlContent,
