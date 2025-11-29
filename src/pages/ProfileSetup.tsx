@@ -13,9 +13,10 @@ import { useToast } from "@/hooks/use-toast";
 import { PhotoUpload } from "@/components/PhotoUpload";
 import { InterestsSelector } from "@/components/InterestsSelector";
 import { NotificationPreferences } from "@/components/NotificationPreferences";
-import { Loader2, BadgeCheck, Clock, ShieldCheck, Pause, Play, Heart, Users, MessageCircle, Shield, LogOut } from "lucide-react";
+import { Loader2, BadgeCheck, Clock, ShieldCheck, Pause, Play, Heart, Users, MessageCircle, Shield, LogOut, Menu } from "lucide-react";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { NotificationBell } from "@/components/NotificationBell";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { User } from "@supabase/supabase-js";
 
 const ProfileSetup = () => {
@@ -33,6 +34,7 @@ const ProfileSetup = () => {
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [interests, setInterests] = useState<string[]>([]);
   const [isVisible, setIsVisible] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAdmin } = useAdminStatus();
@@ -205,11 +207,13 @@ const ProfileSetup = () => {
       {/* Navigation */}
       <nav className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-2xl font-bold text-primary">
-            <Heart className="h-7 w-7" />
-            <span>HeartLink</span>
+          <Link to="/" className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-primary">
+            <Heart className="h-6 w-6 sm:h-7 sm:w-7" />
+            <span className="hidden xs:inline">Unity Hearts</span>
           </Link>
-          <div className="flex items-center gap-2">
+          
+          {/* Desktop Navigation */}
+          <div className="hidden sm:flex items-center gap-2">
             <NotificationBell />
             <Button variant="ghost" size="sm" asChild>
               <Link to="/profiles">
@@ -236,14 +240,54 @@ const ProfileSetup = () => {
               Sign Out
             </Button>
           </div>
+
+          {/* Mobile Navigation */}
+          <div className="flex sm:hidden items-center gap-2">
+            <NotificationBell />
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[250px]">
+                <div className="flex flex-col gap-3 mt-8">
+                  <Link to="/profiles" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start">
+                      <Users className="mr-2 h-4 w-4" />
+                      Profiles
+                    </Button>
+                  </Link>
+                  <Link to="/messages" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start">
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      Messages
+                    </Button>
+                  </Link>
+                  {isAdmin && (
+                    <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start">
+                        <Shield className="mr-2 h-4 w-4" />
+                        Admin
+                      </Button>
+                    </Link>
+                  )}
+                  <Button variant="ghost" className="w-full justify-start" onClick={() => { handleSignOut(); setMobileMenuOpen(false); }}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </nav>
 
-      <div className="p-6">
-        <div className="mx-auto max-w-2xl py-12">
+      <div className="p-4 sm:p-6">
+        <div className="mx-auto max-w-2xl py-6 sm:py-12">
         <Card className="shadow-2xl">
-          <CardHeader>
-            <CardTitle className="text-3xl">
+          <CardHeader className="px-4 sm:px-6">
+            <CardTitle className="text-2xl sm:text-3xl">
               {existingProfile ? "Edit Your Profile" : "Complete Your Profile"}
             </CardTitle>
             <CardDescription>
@@ -252,7 +296,7 @@ const ProfileSetup = () => {
                 : "Tell us about yourself to start connecting"}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 sm:px-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name *</Label>
@@ -267,7 +311,7 @@ const ProfileSetup = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="age">Age</Label>
                   <Input

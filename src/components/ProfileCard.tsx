@@ -226,16 +226,16 @@ export const ProfileCard = ({ profile, userInterests = [] }: ProfileCardProps) =
       </Card>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-2xl">
+            <DialogTitle className="flex items-center gap-2 text-xl sm:text-2xl">
               <span>
                 {profile.name}
                 {profile.age && `, ${profile.age}`}
               </span>
               {profile.verified && (
-                <Badge variant="secondary" className="gap-1">
-                  <BadgeCheck className="h-4 w-4" />
+                <Badge variant="secondary" className="gap-1 text-xs">
+                  <BadgeCheck className="h-3 w-3 sm:h-4 sm:w-4" />
                   Verified
                 </Badge>
               )}

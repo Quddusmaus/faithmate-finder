@@ -245,21 +245,21 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted to-background p-6">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted to-background p-4 sm:p-6">
       <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
+        <div className="mb-6 sm:mb-8 text-center">
           <Link to="/" className="inline-flex items-center gap-2">
-            <Heart className="h-10 w-10 text-primary" fill="currentColor" />
-            <span className="text-3xl font-bold text-foreground">Unity Hearts</span>
+            <Heart className="h-8 w-8 sm:h-10 sm:w-10 text-primary" fill="currentColor" />
+            <span className="text-2xl sm:text-3xl font-bold text-foreground">Unity Hearts</span>
           </Link>
         </div>
 
         <Card className="shadow-2xl">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">{getCardTitle()}</CardTitle>
-            <CardDescription>{getCardDescription()}</CardDescription>
+          <CardHeader className="text-center px-4 sm:px-6">
+            <CardTitle className="text-xl sm:text-2xl">{getCardTitle()}</CardTitle>
+            <CardDescription className="text-sm">{getCardDescription()}</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 sm:px-6">
             {/* Login Form */}
             {mode === "login" && (
               <form onSubmit={handleAuth} className="space-y-4">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Heart, ArrowLeft, LogOut, Settings, MessageCircle, Shield } from "lucide-react";
+import { Heart, ArrowLeft, LogOut, Settings, MessageCircle, Shield, Menu } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ProfileCard } from "@/components/ProfileCard";
 import { ProfileFilters } from "@/components/ProfileFilters";
@@ -11,6 +11,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { useCurrentUserProfile, calculateCompatibility } from "@/hooks/useCurrentUserProfile";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { useUnreadMessageCount } from "@/hooks/useUnreadMessageCount";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface Profile {
@@ -31,6 +32,7 @@ const Profiles = () => {
   const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { unreadCount: unreadMessageCount } = useUnreadMessageCount();
   const { isAdmin } = useAdminStatus();
   const [filters, setFilters] = useState({
@@ -199,17 +201,20 @@ const Profiles = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
-      <nav className="container mx-auto px-6 py-6">
+      <nav className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <Heart className="h-8 w-8 text-primary" fill="currentColor" />
-            <span className="text-2xl font-bold text-foreground">Unity Hearts</span>
+            <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-primary" fill="currentColor" />
+            <span className="text-xl sm:text-2xl font-bold text-foreground">Unity Hearts</span>
           </Link>
-          <div className="flex gap-4">
+          
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex gap-2 lg:gap-4 items-center">
             <Link to="/">
-              <Button variant="ghost">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Home
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="mr-1 sm:mr-2 h-4 w-4" />
+                <span className="hidden lg:inline">Back to Home</span>
+                <span className="lg:hidden">Home</span>
               </Button>
             </Link>
             {user ? (
@@ -217,47 +222,106 @@ const Profiles = () => {
                 <NotificationBell />
                 {isAdmin && (
                   <Link to="/admin">
-                    <Button variant="outline" className="gap-2">
+                    <Button variant="outline" size="sm" className="gap-1 lg:gap-2">
                       <Shield className="h-4 w-4" />
-                      Admin
+                      <span className="hidden lg:inline">Admin</span>
                     </Button>
                   </Link>
                 )}
                 <Link to="/messages">
-                  <Button variant="outline" className="relative">
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    Messages
+                  <Button variant="outline" size="sm" className="relative">
+                    <MessageCircle className="mr-1 lg:mr-2 h-4 w-4" />
+                    <span className="hidden lg:inline">Messages</span>
                     {unreadMessageCount > 0 && (
-                      <Badge className="ml-2 bg-destructive text-destructive-foreground">
+                      <Badge className="ml-1 lg:ml-2 bg-destructive text-destructive-foreground text-xs">
                         {unreadMessageCount}
                       </Badge>
                     )}
                   </Button>
                 </Link>
                 <Link to="/profile-setup">
-                  <Button variant="outline">
-                    <Settings className="mr-2 h-4 w-4" />
-                    My Profile
+                  <Button variant="outline" size="sm">
+                    <Settings className="mr-1 lg:mr-2 h-4 w-4" />
+                    <span className="hidden lg:inline">My Profile</span>
                   </Button>
                 </Link>
-                <Button variant="ghost" onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
+                <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                  <LogOut className="mr-1 lg:mr-2 h-4 w-4" />
+                  <span className="hidden lg:inline">Sign Out</span>
                 </Button>
               </>
             ) : (
               <Link to="/auth">
-                <Button className="bg-primary hover:bg-primary/90">Sign In</Button>
+                <Button className="bg-primary hover:bg-primary/90" size="sm">Sign In</Button>
               </Link>
             )}
+          </div>
+
+          {/* Mobile Navigation */}
+          <div className="flex md:hidden items-center gap-2">
+            {user && <NotificationBell />}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[280px]">
+                <div className="flex flex-col gap-3 mt-8">
+                  <Link to="/" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start">
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Back to Home
+                    </Button>
+                  </Link>
+                  {user ? (
+                    <>
+                      {isAdmin && (
+                        <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
+                          <Button variant="outline" className="w-full justify-start gap-2">
+                            <Shield className="h-4 w-4" />
+                            Admin
+                          </Button>
+                        </Link>
+                      )}
+                      <Link to="/messages" onClick={() => setMobileMenuOpen(false)}>
+                        <Button variant="outline" className="w-full justify-start relative">
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          Messages
+                          {unreadMessageCount > 0 && (
+                            <Badge className="ml-2 bg-destructive text-destructive-foreground">
+                              {unreadMessageCount}
+                            </Badge>
+                          )}
+                        </Button>
+                      </Link>
+                      <Link to="/profile-setup" onClick={() => setMobileMenuOpen(false)}>
+                        <Button variant="outline" className="w-full justify-start">
+                          <Settings className="mr-2 h-4 w-4" />
+                          My Profile
+                        </Button>
+                      </Link>
+                      <Button variant="ghost" className="w-full justify-start" onClick={() => { handleSignOut(); setMobileMenuOpen(false); }}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Sign Out
+                      </Button>
+                    </>
+                  ) : (
+                    <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                      <Button className="w-full bg-primary hover:bg-primary/90">Sign In</Button>
+                    </Link>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </nav>
 
-      <main className="container mx-auto px-6 py-12">
-        <div className="mb-12 text-center">
-          <h1 className="mb-4 text-4xl font-bold text-foreground">Discover Your Match</h1>
-          <p className="text-xl text-muted-foreground">
+      <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="mb-8 sm:mb-12 text-center">
+          <h1 className="mb-3 sm:mb-4 text-2xl sm:text-4xl font-bold text-foreground">Discover Your Match</h1>
+          <p className="text-base sm:text-xl text-muted-foreground px-2">
             Browse profiles of Baháʼí singles seeking meaningful connections
           </p>
         </div>
