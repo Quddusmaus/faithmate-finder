@@ -90,9 +90,35 @@ const Auth = () => {
 
     try {
       if (mode === "login") {
+        // Check rate limit before attempting login
+        const { data: isAllowed, error: rateLimitError } = await supabase.rpc(
+          'check_login_rate_limit',
+          { p_email: email }
+        );
+
+        if (rateLimitError) {
+          console.error('Rate limit check error:', rateLimitError);
+        }
+
+        if (isAllowed === false) {
+          toast({
+            title: "Too many attempts",
+            description: "Please wait 15 minutes before trying again.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
+        });
+
+        // Record the login attempt
+        await supabase.rpc('record_login_attempt', {
+          p_email: email,
+          p_success: !error
         });
 
         if (error) throw error;
