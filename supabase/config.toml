@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.daily-room]
 verify_jwt = false
+
+[functions.verify-pose]
+verify_jwt = false
