@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, Globe, Users, MessageCircleHeart, Settings, Menu, ShieldCheck } from "lucide-react";
+import { Heart, Globe, Users, Settings, Menu, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { useTranslation } from "react-i18next";
@@ -122,7 +122,7 @@ const Index = () => {
 
         {/* Features */}
         <section className="py-10 sm:py-16">
-          <div className="grid gap-4 sm:gap-8 grid-cols-1 md:grid-cols-3">
+          <div className="grid gap-4 sm:gap-8 grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto">
             <div className="rounded-2xl bg-card p-6 sm:p-8 text-center shadow-lg transition-transform hover:scale-105">
               <div className="mx-auto mb-3 sm:mb-4 flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-primary/10">
                 <Globe className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
@@ -147,17 +147,6 @@ const Index = () => {
               </p>
             </div>
 
-            <div className="rounded-2xl bg-card p-6 sm:p-8 text-center shadow-lg transition-transform hover:scale-105">
-              <div className="mx-auto mb-3 sm:mb-4 flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-accent/10">
-                <MessageCircleHeart className="h-6 w-6 sm:h-8 sm:w-8 text-accent" />
-              </div>
-              <h3 className="mb-2 text-lg sm:text-xl font-semibold text-card-foreground">
-                {t('landing.secureMessaging')}
-              </h3>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                {t('landing.secureMessagingDesc')}
-              </p>
-            </div>
           </div>
         </section>
 
