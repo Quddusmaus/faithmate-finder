@@ -117,7 +117,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.url) {
-        window.open(data.url, '_blank');
+        // Redirect in same tab to avoid popup blockers
+        window.location.href = data.url;
       }
     } catch (error) {
       console.error('Error creating checkout:', error);
