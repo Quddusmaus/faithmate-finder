@@ -110,7 +110,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Unity Hearts <hello@unityhearts.app>",
+        from: "Unity Hearts <hello@contact.unityhearts.app>",
         to: [recipientEmail],
         subject,
         html: htmlContent,
