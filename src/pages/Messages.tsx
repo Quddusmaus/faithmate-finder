@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { MatchesList } from "@/components/MatchesList";
 import { ChatWindow } from "@/components/ChatWindow";
 import { NotificationBell } from "@/components/NotificationBell";
-import { IncomingCallDialog } from "@/components/IncomingCallDialog";
 import type { User } from "@supabase/supabase-js";
 
 interface Match {
@@ -27,12 +26,6 @@ const Messages = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
-  const [incomingCallData, setIncomingCallData] = useState<{
-    callerId: string;
-    callerName: string;
-    callerPhoto?: string;
-    offerData: any;
-  } | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -117,38 +110,12 @@ const Messages = () => {
     setSearchParams({});
   };
 
-  const handleAcceptCall = (call: { callerId: string; callerName: string; callerPhoto?: string; offerData: any }) => {
-    // Find the match for this caller
-    const callerMatch = matches.find(m => m.match_id === call.callerId);
-    if (callerMatch) {
-      setSelectedMatch(callerMatch);
-      setSearchParams({ match: call.callerId });
-      setIncomingCallData(call);
-    }
-  };
-
-  const handleRejectCall = (callerId: string) => {
-    toast({
-      title: "Call Rejected",
-      description: "You declined the incoming call.",
-    });
-  };
-
   if (!user) {
     return null;
   }
 
   return (
     <div className="flex h-screen flex-col bg-background">
-      {/* Incoming call dialog */}
-      {user && (
-        <IncomingCallDialog
-          userId={user.id}
-          onAccept={handleAcceptCall}
-          onReject={handleRejectCall}
-        />
-      )}
-
       <nav className="border-b border-border bg-card px-6 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
@@ -188,8 +155,6 @@ const Messages = () => {
               user={user}
               match={selectedMatch}
               onBack={handleBackToList}
-              incomingCallData={incomingCallData}
-              onCallHandled={() => setIncomingCallData(null)}
               onMessagesRead={handleMessagesRead}
             />
           ) : (
