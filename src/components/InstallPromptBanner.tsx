@@ -16,6 +16,7 @@ const InstallPromptBanner = () => {
     const checkMobile = () => {
       const userAgent = navigator.userAgent.toLowerCase();
       const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/i.test(userAgent);
+      console.log("PWA Banner Debug:", { userAgent, isMobile, isIOS, isInstallable, isInstalled });
       setIsMobileDevice(isMobile);
     };
     
@@ -29,7 +30,7 @@ const InstallPromptBanner = () => {
         setIsDismissed(true);
       }
     }
-  }, []);
+  }, [isIOS, isInstallable, isInstalled]);
 
   const handleDismiss = () => {
     setIsDismissed(true);
@@ -46,14 +47,20 @@ const InstallPromptBanner = () => {
     }
   };
 
+  // Debug: log all conditions
+  console.log("PWA Banner Conditions:", { isInstalled, isDismissed, isMobileDevice, isInstallable, isIOS });
+
   // Don't show if already installed or dismissed
   if (isInstalled || isDismissed) {
+    console.log("PWA Banner hidden: installed or dismissed");
     return null;
   }
 
+  // TEMPORARILY: Always show banner on any device for debugging
   // Show on mobile devices, or when installable, or on iOS
-  const shouldShow = isMobileDevice || isInstallable || isIOS;
+  const shouldShow = true; // isMobileDevice || isInstallable || isIOS;
   if (!shouldShow) {
+    console.log("PWA Banner hidden: shouldShow is false");
     return null;
   }
 
