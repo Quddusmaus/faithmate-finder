@@ -2,23 +2,19 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { PhotoUpload } from "@/components/PhotoUpload";
-import { InterestsSelector } from "@/components/InterestsSelector";
+import { ProfileSetupWizard } from "@/components/ProfileSetupWizard";
 import { NotificationPreferences } from "@/components/NotificationPreferences";
-import { Loader2, BadgeCheck, Clock, ShieldCheck, Pause, Play, Heart, Users, MessageCircle, Shield, LogOut, Menu, Camera } from "lucide-react";
+import { Loader2, BadgeCheck, Clock, ShieldCheck, Pause, Play, Heart, Users, MessageCircle, Shield, LogOut, Menu, Camera, Settings } from "lucide-react";
 import { PhotoVerification } from "@/components/PhotoVerification";
 import { GDPRTools } from "@/components/GDPRTools";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { User } from "@supabase/supabase-js";
 
 const ProfileSetup = () => {
@@ -27,16 +23,21 @@ const ProfileSetup = () => {
   const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
   const [showPhotoVerification, setShowPhotoVerification] = useState(false);
   const [existingProfile, setExistingProfile] = useState<any>(null);
-  const [name, setName] = useState("");
-  const [age, setAge] = useState("");
-  const [gender, setGender] = useState("");
-  const [location, setLocation] = useState("");
-  const [lookingFor, setLookingFor] = useState("");
-  const [bio, setBio] = useState("");
-  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
-  const [interests, setInterests] = useState<string[]>([]);
   const [isVisible, setIsVisible] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("profile");
+  
+  const [profileData, setProfileData] = useState({
+    name: "",
+    age: "",
+    gender: "",
+    location: "",
+    lookingFor: "",
+    bio: "",
+    photoUrls: [] as string[],
+    interests: [] as string[],
+  });
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAdmin } = useAdminStatus();
@@ -58,7 +59,6 @@ const ProfileSetup = () => {
     }
     setUser(user);
     
-    // Check if profile exists
     const { data: profile } = await supabase
       .from("profiles")
       .select("*")
@@ -67,17 +67,18 @@ const ProfileSetup = () => {
 
     if (profile) {
       setExistingProfile(profile);
-      setName(profile.name || "");
-      setAge(profile.age?.toString() || "");
-      setGender(profile.gender || "");
-      setLocation(profile.location || "");
-      setLookingFor(profile.looking_for || "");
-      setBio(profile.bio || "");
-      setPhotoUrls(profile.photo_urls || []);
-      setInterests(profile.interests || []);
+      setProfileData({
+        name: profile.name || "",
+        age: profile.age?.toString() || "",
+        gender: profile.gender || "",
+        location: profile.location || "",
+        lookingFor: profile.looking_for || "",
+        bio: profile.bio || "",
+        photoUrls: profile.photo_urls || [],
+        interests: profile.interests || [],
+      });
       setIsVisible(profile.is_visible ?? true);
       
-      // Check verification status from photo_verifications
       if (profile.verified) {
         setVerificationStatus("verified");
       } else {
@@ -94,35 +95,36 @@ const ProfileSetup = () => {
         }
       }
     } else {
-      // Set name from signup if available
-      setName(user.user_metadata?.name || "");
+      setProfileData(prev => ({
+        ...prev,
+        name: user.user_metadata?.name || "",
+      }));
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (data: typeof profileData) => {
     if (!user) return;
 
     setLoading(true);
 
     try {
-      const profileData = {
+      const dbData = {
         user_id: user.id,
-        name,
-        age: age ? parseInt(age) : null,
-        gender: gender || null,
-        location: location || null,
-        looking_for: lookingFor || null,
-        bio: bio || null,
-        photo_urls: photoUrls,
-        interests,
+        name: data.name,
+        age: data.age ? parseInt(data.age) : null,
+        gender: data.gender || null,
+        location: data.location || null,
+        looking_for: data.lookingFor || null,
+        bio: data.bio || null,
+        photo_urls: data.photoUrls,
+        interests: data.interests,
         is_visible: isVisible,
       };
 
       if (existingProfile) {
         const { error } = await supabase
           .from("profiles")
-          .update(profileData)
+          .update(dbData)
           .eq("id", existingProfile.id);
 
         if (error) throw error;
@@ -134,13 +136,13 @@ const ProfileSetup = () => {
       } else {
         const { error } = await supabase
           .from("profiles")
-          .insert([profileData]);
+          .insert([dbData]);
 
         if (error) throw error;
 
         toast({
           title: "Profile Created",
-          description: "Your profile has been created successfully.",
+          description: "Welcome! Your profile is now live.",
         });
       }
 
@@ -153,6 +155,33 @@ const ProfileSetup = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVisibilityChange = async (paused: boolean) => {
+    setIsVisible(!paused);
+    
+    if (existingProfile) {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_visible: !paused })
+        .eq("id", existingProfile.id);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to update visibility.",
+          variant: "destructive",
+        });
+        setIsVisible(paused);
+      } else {
+        toast({
+          title: paused ? "Account Paused" : "Account Active",
+          description: paused 
+            ? "You're now hidden from matching" 
+            : "You're visible and can be matched",
+        });
+      }
     }
   };
 
@@ -247,246 +276,153 @@ const ProfileSetup = () => {
 
       <div className="p-4 sm:p-6">
         <div className="mx-auto max-w-2xl py-6 sm:py-12">
-        <Card className="shadow-2xl">
-          <CardHeader className="px-4 sm:px-6">
-            <CardTitle className="text-2xl sm:text-3xl">
-              {existingProfile ? "Edit Your Profile" : "Complete Your Profile"}
-            </CardTitle>
-            <CardDescription>
+          {/* Page Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl sm:text-4xl font-bold mb-2">
+              {existingProfile ? "Your Profile" : "Welcome! Let's set up your profile"}
+            </h1>
+            <p className="text-muted-foreground">
               {existingProfile 
-                ? "Update your information to keep your profile current" 
-                : "Tell us about yourself to start connecting"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="px-4 sm:px-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name *</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  maxLength={100}
+                ? "Keep your profile updated to attract the right connections"
+                : "Complete your profile to start meeting amazing people"}
+            </p>
+          </div>
+
+          {existingProfile ? (
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="profile" className="gap-2">
+                  <Heart className="h-4 w-4" />
+                  Profile
+                </TabsTrigger>
+                <TabsTrigger value="settings" className="gap-2">
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="profile" className="space-y-6">
+                <ProfileSetupWizard
+                  userId={user.id}
+                  initialData={profileData}
+                  isEditing={true}
+                  loading={loading}
+                  onSubmit={handleSubmit}
+                  onCancel={() => navigate("/profiles")}
                 />
-              </div>
+              </TabsContent>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="age">Age</Label>
-                  <Input
-                    id="age"
-                    type="number"
-                    placeholder="25"
-                    value={age}
-                    onChange={(e) => setAge(e.target.value)}
-                    min="18"
-                    max="120"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="gender">Gender</Label>
-                  <Select value={gender} onValueChange={setGender}>
-                    <SelectTrigger id="gender">
-                      <SelectValue placeholder="Select gender" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="non-binary">Non-binary</SelectItem>
-                      <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  type="text"
-                  placeholder="City, Country"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  maxLength={100}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="lookingFor">Looking For</Label>
-                <Select value={lookingFor} onValueChange={setLookingFor}>
-                  <SelectTrigger id="lookingFor">
-                    <SelectValue placeholder="What are you looking for?" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="friendship">Friendship</SelectItem>
-                    <SelectItem value="dating">Dating</SelectItem>
-                    <SelectItem value="marriage">Marriage</SelectItem>
-                    <SelectItem value="networking">Networking</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bio">About Me</Label>
-                <Textarea
-                  id="bio"
-                  placeholder="Tell us about yourself, your interests, and what you're looking for..."
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  rows={5}
-                  maxLength={1000}
-                />
-                <p className="text-xs text-muted-foreground">{bio.length}/1000 characters</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Profile Photos</Label>
-                <PhotoUpload 
-                  userId={user.id} 
-                  existingPhotos={photoUrls}
-                  onPhotosChange={setPhotoUrls}
-                />
-              </div>
-
-              <InterestsSelector
-                selectedInterests={interests}
-                onInterestsChange={setInterests}
-              />
-
-              {/* Pause Account Section */}
-              <Card className={isVisible ? "border-muted" : "border-yellow-500/50 bg-yellow-500/5"}>
-                <CardContent className="pt-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {isVisible ? (
-                        <Play className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <Pause className="h-5 w-5 text-yellow-500" />
-                      )}
-                      <div>
-                        <p className="font-medium">
-                          {isVisible ? "Account Active" : "Account Paused"}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {isVisible 
-                            ? "You're visible and can be matched with others" 
-                            : "You're hidden from matching - existing conversations remain"}
-                        </p>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={!isVisible}
-                      onCheckedChange={(checked) => setIsVisible(!checked)}
-                      aria-label="Pause account"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Verification Section */}
-              {existingProfile && !showPhotoVerification && (
-                <Card className="border-primary/20 bg-primary/5">
+              <TabsContent value="settings" className="space-y-4">
+                {/* Account Status */}
+                <Card className={isVisible ? "border-muted" : "border-yellow-500/50 bg-yellow-500/5"}>
                   <CardContent className="pt-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <ShieldCheck className="h-5 w-5 text-primary" />
+                        {isVisible ? (
+                          <Play className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <Pause className="h-5 w-5 text-yellow-500" />
+                        )}
                         <div>
-                          <p className="font-medium">Profile Verification</p>
+                          <p className="font-medium">
+                            {isVisible ? "Account Active" : "Account Paused"}
+                          </p>
                           <p className="text-sm text-muted-foreground">
-                            Verify with a selfie matching a random pose
+                            {isVisible 
+                              ? "You're visible and can be matched with others" 
+                              : "You're hidden from matching - existing conversations remain"}
                           </p>
                         </div>
                       </div>
-                      {verificationStatus === "verified" ? (
-                        <Badge className="gap-1 bg-green-500">
-                          <BadgeCheck className="h-3 w-3" />
-                          Verified
-                        </Badge>
-                      ) : verificationStatus === "pending" ? (
-                        <Badge variant="outline" className="gap-1 border-yellow-500 text-yellow-600">
-                          <Clock className="h-3 w-3" />
-                          Processing...
-                        </Badge>
-                      ) : verificationStatus === "rejected" || verificationStatus === "failed" ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setShowPhotoVerification(true)}
-                        >
-                          <Camera className="h-4 w-4 mr-1" />
-                          Try Again
-                        </Button>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setShowPhotoVerification(true)}
-                        >
-                          <Camera className="h-4 w-4 mr-1" />
-                          Verify Now
-                        </Button>
-                      )}
+                      <Switch
+                        checked={!isVisible}
+                        onCheckedChange={handleVisibilityChange}
+                        aria-label="Pause account"
+                      />
                     </div>
                   </CardContent>
                 </Card>
-              )}
 
-              {/* Photo Verification Flow */}
-              {showPhotoVerification && (
-                <PhotoVerification
-                  userId={user.id}
-                  onVerified={() => {
-                    setShowPhotoVerification(false);
-                    setVerificationStatus("verified");
-                  }}
-                  onCancel={() => setShowPhotoVerification(false)}
-                />
-              )}
-
-              {/* Email Notification Preferences */}
-              {existingProfile && (
-                <NotificationPreferences userId={user.id} />
-              )}
-
-              {/* GDPR Data & Privacy Tools */}
-              {existingProfile && user.email && (
-                <GDPRTools userId={user.id} userEmail={user.email} />
-              )}
-
-              <div className="flex gap-3">
-                <Button
-                  type="submit"
-                  className="flex-1 bg-primary hover:bg-primary/90"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    existingProfile ? "Update Profile" : "Create Profile"
-                  )}
-                </Button>
-                {existingProfile && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => navigate("/profiles")}
-                  >
-                    Cancel
-                  </Button>
+                {/* Verification Section */}
+                {!showPhotoVerification && (
+                  <Card className="border-primary/20 bg-primary/5">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <ShieldCheck className="h-5 w-5 text-primary" />
+                          <div>
+                            <p className="font-medium">Profile Verification</p>
+                            <p className="text-sm text-muted-foreground">
+                              Verify with a selfie matching a random pose
+                            </p>
+                          </div>
+                        </div>
+                        {verificationStatus === "verified" ? (
+                          <Badge className="gap-1 bg-green-500">
+                            <BadgeCheck className="h-3 w-3" />
+                            Verified
+                          </Badge>
+                        ) : verificationStatus === "pending" ? (
+                          <Badge variant="outline" className="gap-1 border-yellow-500 text-yellow-600">
+                            <Clock className="h-3 w-3" />
+                            Processing...
+                          </Badge>
+                        ) : verificationStatus === "rejected" || verificationStatus === "failed" ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowPhotoVerification(true)}
+                          >
+                            <Camera className="h-4 w-4 mr-1" />
+                            Try Again
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowPhotoVerification(true)}
+                          >
+                            <Camera className="h-4 w-4 mr-1" />
+                            Verify Now
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+
+                {/* Photo Verification Flow */}
+                {showPhotoVerification && (
+                  <PhotoVerification
+                    userId={user.id}
+                    onVerified={() => {
+                      setShowPhotoVerification(false);
+                      setVerificationStatus("verified");
+                    }}
+                    onCancel={() => setShowPhotoVerification(false)}
+                  />
+                )}
+
+                {/* Email Notification Preferences */}
+                <NotificationPreferences userId={user.id} />
+
+                {/* GDPR Data & Privacy Tools */}
+                {user.email && (
+                  <GDPRTools userId={user.id} userEmail={user.email} />
+                )}
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <ProfileSetupWizard
+              userId={user.id}
+              initialData={profileData}
+              isEditing={false}
+              loading={loading}
+              onSubmit={handleSubmit}
+            />
+          )}
         </div>
       </div>
     </div>
