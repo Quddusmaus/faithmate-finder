@@ -39,8 +39,8 @@ export function useSuperLikeLimits() {
         return;
       }
 
-      const { data, error } = await supabase
-        .rpc('get_today_super_like_count', { p_user_id: user.id });
+      const { data, error } = await (supabase
+        .rpc('get_today_super_like_count' as any, { p_user_id: user.id }) as any);
 
       if (error) {
         console.error('Error fetching super like count:', error);
@@ -70,8 +70,8 @@ export function useSuperLikeLimits() {
         return false;
       }
 
-      const { data, error } = await supabase
-        .rpc('increment_super_like_count', { p_user_id: user.id });
+      const { data, error } = await (supabase
+        .rpc('increment_super_like_count' as any, { p_user_id: user.id }) as any);
 
       if (error) {
         console.error('Error incrementing super like count:', error);

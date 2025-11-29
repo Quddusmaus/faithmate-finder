@@ -72,16 +72,16 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
           .eq("user_id", currentUserId)
           .eq("liked_user_id", profile.user_id)
           .maybeSingle(),
-        supabase
-          .from("super_likes")
+        (supabase
+          .from("super_likes" as any)
           .select("id")
           .eq("user_id", currentUserId)
           .eq("super_liked_user_id", profile.user_id)
-          .maybeSingle()
+          .maybeSingle()) as any
       ]);
 
       setLiked(!!likeResult.data);
-      setSuperLiked(!!superLikeResult.data);
+      setSuperLiked(!!superLikeResult?.data);
     } catch (error) {
       console.error("Error checking like status:", error);
     }
@@ -244,12 +244,12 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
       const success = await incrementSuperLikeCount();
       if (!success) return;
 
-      const { error } = await supabase
-        .from("super_likes")
+      const { error } = await (supabase
+        .from("super_likes" as any)
         .insert([{
           user_id: currentUserId,
           super_liked_user_id: profile.user_id
-        }]);
+        }]) as any);
 
       if (error) throw error;
       
