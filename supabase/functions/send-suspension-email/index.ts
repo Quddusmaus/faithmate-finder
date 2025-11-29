@@ -154,7 +154,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const emailResponse = await resend.emails.send({
-      from: "Unity Hearts <hello@unityhearts.app>",
+      from: "Unity Hearts <hello@contact.unityhearts.app>",
       to: [userEmail],
       subject: subject,
       html: emailHtml,
