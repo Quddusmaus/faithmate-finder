@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Shield, Users, CheckCircle, XCircle, Clock, ArrowLeft, Flag, AlertTriangle, Ban, Scale, LayoutDashboard } from "lucide-react";
+import { Heart, Shield, Users, CheckCircle, XCircle, Clock, ArrowLeft, Flag, AlertTriangle, Ban, Scale, LayoutDashboard, Bug } from "lucide-react";
+import { AdminErrorLogs } from "@/components/AdminErrorLogs";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -88,7 +89,7 @@ const Admin = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState("pending");
-  const [activeSection, setActiveSection] = useState<"dashboard" | "verifications" | "reports" | "appeals">("dashboard");
+  const [activeSection, setActiveSection] = useState<"dashboard" | "verifications" | "reports" | "appeals" | "errors">("dashboard");
   const [selectedReport, setSelectedReport] = useState<ProfileReport | null>(null);
   const [selectedAppeal, setSelectedAppeal] = useState<BanAppeal | null>(null);
   const [resolutionNotes, setResolutionNotes] = useState("");
@@ -563,6 +564,14 @@ const Admin = () => {
               </Badge>
             )}
           </Button>
+          <Button
+            variant={activeSection === "errors" ? "default" : "outline"}
+            onClick={() => setActiveSection("errors")}
+            className="gap-2"
+          >
+            <Bug className="h-4 w-4" />
+            Error Logs
+          </Button>
         </div>
 
         {activeSection === "dashboard" ? (
@@ -884,7 +893,7 @@ const Admin = () => {
               )}
             </Tabs>
           </>
-        ) : (
+        ) : activeSection === "appeals" ? (
           <>
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-foreground">Ban Appeals</h1>
@@ -1043,7 +1052,15 @@ const Admin = () => {
               )}
             </Tabs>
           </>
-        )}
+        ) : activeSection === "errors" ? (
+          <>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-foreground">Error Logs</h1>
+              <p className="text-muted-foreground">Monitor and manage application errors</p>
+            </div>
+            <AdminErrorLogs />
+          </>
+        ) : null}
       </main>
 
       {/* Report Review Dialog */}
