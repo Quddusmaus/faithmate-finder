@@ -14,6 +14,7 @@ import { CallButton } from "./CallButton";
 import { VideoCall } from "./VideoCall";
 import { IncomingCallDialog } from "./IncomingCallDialog";
 import { useDailyCall } from "@/hooks/useDailyCall";
+import { useCallLimits } from "@/hooks/useCallLimits";
 
 interface Reaction {
   id: string;
@@ -82,6 +83,15 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
     onCallEnded: () => setIsInCall(false),
   });
 
+  const {
+    canMakeCall,
+    remainingCalls,
+    maxCalls,
+    tier,
+    isLoading: callLimitsLoading,
+    incrementCallCount,
+  } = useCallLimits();
+
   // Handle incoming call from pendingInvitation
   const handleAcceptIncomingCall = async () => {
     if (pendingInvitation) {
@@ -104,6 +114,10 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
   };
 
   const handleVoiceCall = async () => {
+    // Check and increment call count
+    const allowed = await incrementCallCount();
+    if (!allowed) return;
+    
     try {
       setIsInCall(true);
       await initiateCall(false);
@@ -121,6 +135,10 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
   };
 
   const handleVideoCall = async () => {
+    // Check and increment call count
+    const allowed = await incrementCallCount();
+    if (!allowed) return;
+    
     try {
       setIsInCall(true);
       await initiateCall(true);
@@ -580,6 +598,11 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
         <CallButton
           onVoiceCall={handleVoiceCall}
           onVideoCall={handleVideoCall}
+          canMakeCall={canMakeCall}
+          remainingCalls={remainingCalls}
+          maxCalls={maxCalls}
+          tier={tier}
+          isLoading={callLimitsLoading}
         />
 
         <BlockUserDialog
