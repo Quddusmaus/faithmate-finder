@@ -1,14 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Download, Share, Plus } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+const DISMISS_DURATION_DAYS = 7;
 
 const InstallPromptBanner = () => {
   const { isInstallable, isInstalled, isIOS, promptInstall } = usePWAInstall();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [isDismissed, setIsDismissed] = useState(false);
+  const [isWithinDismissPeriod, setIsWithinDismissPeriod] = useState(false);
+
+  useEffect(() => {
+    const dismissedAt = localStorage.getItem("pwa-banner-dismissed");
+    if (dismissedAt) {
+      const dismissedTime = parseInt(dismissedAt, 10);
+      const daysSinceDismissed = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
+      setIsWithinDismissPeriod(daysSinceDismissed < DISMISS_DURATION_DAYS);
+    }
+  }, []);
 
   const handleDismiss = () => {
     setIsDismissed(true);
@@ -25,8 +39,12 @@ const InstallPromptBanner = () => {
     }
   };
 
-  // FORCE SHOW: Skip all conditions for debugging
-  if (isDismissed) {
+  // Hide banner if:
+  // - Already dismissed this session
+  // - Within 7-day dismiss period
+  // - Already installed as PWA
+  // - Not on mobile device
+  if (isDismissed || isWithinDismissPeriod || isInstalled || !isMobile) {
     return null;
   }
 
