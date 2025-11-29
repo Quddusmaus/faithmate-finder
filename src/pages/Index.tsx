@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, Globe, Users, MessageCircleHeart, Settings, Menu, X } from "lucide-react";
+import { Heart, Globe, ShieldCheck, MessageCircleHeart, Settings, Menu } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { useTranslation } from "react-i18next";
@@ -124,13 +124,13 @@ const Index = () => {
 
             <div className="rounded-2xl bg-card p-6 sm:p-8 text-center shadow-lg transition-transform hover:scale-105">
               <div className="mx-auto mb-3 sm:mb-4 flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-secondary/10">
-                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-secondary" />
+                <ShieldCheck className="h-6 w-6 sm:h-8 sm:w-8 text-secondary" />
               </div>
               <h3 className="mb-2 text-lg sm:text-xl font-semibold text-card-foreground">
-                {t('landing.coreCompatibility')}
+                Verified Profiles Only
               </h3>
               <p className="text-sm sm:text-base text-muted-foreground">
-                {t('landing.coreCompatibilityDesc')}
+                Our pose-matching technology confirms you're talking to real people
               </p>
             </div>
 
