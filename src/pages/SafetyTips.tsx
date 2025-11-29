@@ -15,69 +15,69 @@ const SafetyTips = () => {
   const safetyCategories = [
     {
       icon: MessageCircle,
-      title: "Messaging Safety",
+      title: t('safety.messagingSafety'),
       color: "text-blue-500",
       tips: [
-        "Keep conversations on Unity Hearts until you feel comfortable",
-        "Never share financial information or send money",
-        "Be cautious of anyone who asks for personal details too quickly",
-        "Trust your instincts - if something feels off, it probably is"
+        t('safety.messagingTip1'),
+        t('safety.messagingTip2'),
+        t('safety.messagingTip3'),
+        t('safety.messagingTip4')
       ]
     },
     {
       icon: Users,
-      title: "Meeting in Person",
+      title: t('safety.meetingInPerson'),
       color: "text-green-500",
       tips: [
-        "Always meet in a public place for first dates",
-        "Tell a friend or family member where you're going",
-        "Arrange your own transportation to and from the date",
-        "Keep your phone charged and easily accessible"
+        t('safety.meetingTip1'),
+        t('safety.meetingTip2'),
+        t('safety.meetingTip3'),
+        t('safety.meetingTip4')
       ]
     },
     {
       icon: Eye,
-      title: "Protecting Your Privacy",
+      title: t('safety.protectingPrivacy'),
       color: "text-purple-500",
       tips: [
-        "Don't share your home or work address early on",
-        "Use Unity Hearts messaging instead of personal phone/email",
-        "Be mindful of what's visible in your photos (addresses, workplace)",
-        "Research your match before meeting - a simple search is OK"
+        t('safety.privacyTip1'),
+        t('safety.privacyTip2'),
+        t('safety.privacyTip3'),
+        t('safety.privacyTip4')
       ]
     },
     {
       icon: AlertTriangle,
-      title: "Recognizing Red Flags",
+      title: t('safety.redFlags'),
       color: "text-amber-500",
       tips: [
-        "Requests for money or financial help",
-        "Refusing to video chat or meet in person",
-        "Inconsistent stories or evasive answers",
-        "Pressuring you to move off the platform quickly",
-        "Love bombing - excessive affection very early on"
+        t('safety.redFlagTip1'),
+        t('safety.redFlagTip2'),
+        t('safety.redFlagTip3'),
+        t('safety.redFlagTip4'),
+        t('safety.redFlagTip5')
       ]
     },
     {
       icon: Lock,
-      title: "Online Security",
+      title: t('safety.onlineSecurity'),
       color: "text-red-500",
       tips: [
-        "Use a strong, unique password for your account",
-        "Never click suspicious links sent in messages",
-        "Report and block anyone who makes you uncomfortable",
-        "Enable two-factor authentication if available"
+        t('safety.securityTip1'),
+        t('safety.securityTip2'),
+        t('safety.securityTip3'),
+        t('safety.securityTip4')
       ]
     },
     {
       icon: Video,
-      title: "Video Call Safety",
+      title: t('safety.videoCallSafety'),
       color: "text-cyan-500",
       tips: [
-        "Video chat before meeting in person to verify identity",
-        "Be aware of what's visible in your background",
-        "You can end a call at any time - no explanation needed",
-        "Trust your instincts about the person's authenticity"
+        t('safety.videoTip1'),
+        t('safety.videoTip2'),
+        t('safety.videoTip3'),
+        t('safety.videoTip4')
       ]
     }
   ];
@@ -102,7 +102,7 @@ const SafetyTips = () => {
             </Button>
             <div className="flex items-center gap-2">
               <Shield className="h-6 w-6 text-primary" />
-              <h1 className="text-xl font-bold">Safety Tips</h1>
+              <h1 className="text-xl font-bold">{t('safety.safetyTips')}</h1>
             </div>
           </div>
         </div>
@@ -119,11 +119,9 @@ const SafetyTips = () => {
                 </div>
               </div>
               <div>
-                <h2 className="text-xl font-semibold mb-2">Your Safety Matters</h2>
+                <h2 className="text-xl font-semibold mb-2">{t('safety.yourSafetyMatters')}</h2>
                 <p className="text-muted-foreground">
-                  At Unity Hearts, your safety is our top priority. Whether you're chatting online 
-                  or meeting in person, these guidelines will help you have a safe and positive 
-                  experience while finding meaningful connections.
+                  {t('safety.safetyIntro')}
                 </p>
               </div>
             </div>
@@ -161,30 +159,30 @@ const SafetyTips = () => {
           <CardHeader>
             <div className="flex items-center gap-3">
               <UserX className="h-6 w-6 text-destructive" />
-              <CardTitle>Report Concerns</CardTitle>
+              <CardTitle>{t('safety.reportConcerns')}</CardTitle>
             </div>
             <CardDescription>
-              If someone makes you feel unsafe, don't hesitate to take action
+              {t('safety.reportConcernsDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
               <div className="p-4 bg-background rounded-lg">
-                <h4 className="font-medium mb-1">Block Users</h4>
+                <h4 className="font-medium mb-1">{t('safety.blockUsers')}</h4>
                 <p className="text-sm text-muted-foreground">
-                  Instantly prevent someone from contacting you
+                  {t('safety.blockUsersDesc')}
                 </p>
               </div>
               <div className="p-4 bg-background rounded-lg">
-                <h4 className="font-medium mb-1">Report Profiles</h4>
+                <h4 className="font-medium mb-1">{t('safety.reportProfiles')}</h4>
                 <p className="text-sm text-muted-foreground">
-                  Alert our team to investigate suspicious behavior
+                  {t('safety.reportProfilesDesc')}
                 </p>
               </div>
               <div className="p-4 bg-background rounded-lg">
-                <h4 className="font-medium mb-1">Contact Support</h4>
+                <h4 className="font-medium mb-1">{t('safety.contactSupport')}</h4>
                 <p className="text-sm text-muted-foreground">
-                  Reach out to us through the contact page
+                  {t('safety.contactSupportDesc')}
                 </p>
               </div>
             </div>
@@ -196,10 +194,10 @@ const SafetyTips = () => {
           <CardHeader>
             <div className="flex items-center gap-3">
               <Phone className="h-6 w-6 text-primary" />
-              <CardTitle>Emergency Resources</CardTitle>
+              <CardTitle>{t('safety.emergencyResources')}</CardTitle>
             </div>
             <CardDescription>
-              If you're in immediate danger, please contact emergency services (911 in US)
+              {t('safety.emergencyResourcesDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -222,7 +220,7 @@ const SafetyTips = () => {
           <Button asChild>
             <Link to="/profiles">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Profiles
+              {t('safety.backToProfiles')}
             </Link>
           </Button>
         </div>
