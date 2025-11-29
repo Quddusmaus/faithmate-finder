@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Download, Share, Plus } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
@@ -9,28 +9,6 @@ const InstallPromptBanner = () => {
   const { isInstallable, isInstalled, isIOS, promptInstall } = usePWAInstall();
   const { toast } = useToast();
   const [isDismissed, setIsDismissed] = useState(false);
-  const [isMobileDevice, setIsMobileDevice] = useState(false);
-
-  useEffect(() => {
-    // Check if mobile using user agent (more reliable for PWA detection)
-    const checkMobile = () => {
-      const userAgent = navigator.userAgent.toLowerCase();
-      const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/i.test(userAgent);
-      console.log("PWA Banner Debug:", { userAgent, isMobile, isIOS, isInstallable, isInstalled });
-      setIsMobileDevice(isMobile);
-    };
-    
-    checkMobile();
-    
-    const dismissed = localStorage.getItem("pwa-banner-dismissed");
-    if (dismissed) {
-      const dismissedTime = parseInt(dismissed, 10);
-      // Show banner again after 7 days
-      if (Date.now() - dismissedTime < 7 * 24 * 60 * 60 * 1000) {
-        setIsDismissed(true);
-      }
-    }
-  }, [isIOS, isInstallable, isInstalled]);
 
   const handleDismiss = () => {
     setIsDismissed(true);
@@ -47,25 +25,10 @@ const InstallPromptBanner = () => {
     }
   };
 
-  // Debug: log all conditions
-  console.log("PWA Banner Conditions:", { isInstalled, isDismissed, isMobileDevice, isInstallable, isIOS });
-
-  // Don't show if already installed or dismissed
-  if (isInstalled || isDismissed) {
-    console.log("PWA Banner hidden: installed or dismissed");
+  // FORCE SHOW: Skip all conditions for debugging
+  if (isDismissed) {
     return null;
   }
-
-  // TEMPORARILY: Always show banner on any device for debugging
-  // Show on mobile devices, or when installable, or on iOS
-  const shouldShow = true; // isMobileDevice || isInstallable || isIOS;
-  if (!shouldShow) {
-    console.log("PWA Banner hidden: shouldShow is false");
-    return null;
-  }
-
-  // Determine if this is Android (not iOS and on mobile)
-  const isAndroid = isMobileDevice && !isIOS;
 
   return (
     <div 
