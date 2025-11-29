@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Heart } from "lucide-react";
+import { MapPin, Heart, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import {
@@ -15,6 +15,8 @@ import { ReportProfileDialog } from "./ReportProfileDialog";
 import { BlockUserDialog } from "./BlockUserDialog";
 import { CompatibilityBadge } from "./CompatibilityBadge";
 import { calculateCompatibility } from "@/hooks/useCurrentUserProfile";
+import { useLikeLimits } from "@/hooks/useLikeLimits";
+import { Link } from "react-router-dom";
 
 interface Profile {
   id: string;
@@ -41,6 +43,7 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
   const [liked, setLiked] = useState(false);
   const [liking, setLiking] = useState(false);
   const { toast } = useToast();
+  const { canLike, remainingLikes, maxLikes, incrementLikeCount, tier, subscribed } = useLikeLimits();
   const imageUrl = profile.photo_urls[0] || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400";
 
   const compatibility = useMemo(() => {
@@ -91,6 +94,18 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
       return;
     }
 
+    // Check like limit before liking (not for unlikes)
+    if (!liked && !canLike) {
+      toast({
+        title: "Like limit reached",
+        description: tier === 'basic' 
+          ? "You've used all 20 likes for today. Upgrade to Premium for unlimited likes!"
+          : "Daily limit reached. Try again tomorrow.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLiking(true);
     try {
       if (liked) {
@@ -107,6 +122,12 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
           description: "Profile removed from your likes.",
         });
       } else {
+        // Increment like count for Basic tier users
+        if (subscribed && tier === 'basic') {
+          const success = await incrementLikeCount();
+          if (!success) return;
+        }
+
         const { error } = await supabase
           .from("likes")
           .insert([{
@@ -131,9 +152,12 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
             description: `You and ${profile.name} liked each other!`,
           });
         } else {
+          const likesInfo = maxLikes !== null && remainingLikes !== null 
+            ? ` (${remainingLikes - 1} likes left today)`
+            : '';
           toast({
             title: "Liked",
-            description: "Profile added to your likes.",
+            description: `Profile added to your likes.${likesInfo}`,
           });
         }
       }
@@ -190,24 +214,37 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
             {profile.bio || "No bio available"}
           </p>
 
-          <div className="flex gap-2">
-            <Button
-              className="flex-1 bg-primary hover:bg-primary/90"
-              onClick={() => setShowDetails(true)}
-            >
-              View Profile
-            </Button>
-            {currentUserId && profile.user_id && (
-              <Button 
-                variant={liked ? "default" : "outline"} 
-                size="icon" 
-                onClick={handleLike}
-                disabled={liking}
-                className={liked ? "bg-primary text-primary-foreground" : "border-primary text-primary hover:bg-primary hover:text-primary-foreground"}
-              >
-                <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
-              </Button>
+          <div className="flex flex-col gap-2">
+            {subscribed && tier === 'basic' && maxLikes !== null && (
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{remainingLikes} likes left today</span>
+                {remainingLikes !== null && remainingLikes <= 5 && (
+                  <Link to="/subscription" className="text-primary hover:underline flex items-center gap-1">
+                    <Crown className="h-3 w-3" />
+                    Go unlimited
+                  </Link>
+                )}
+              </div>
             )}
+            <div className="flex gap-2">
+              <Button
+                className="flex-1 bg-primary hover:bg-primary/90"
+                onClick={() => setShowDetails(true)}
+              >
+                View Profile
+              </Button>
+              {currentUserId && profile.user_id && (
+                <Button 
+                  variant={liked ? "default" : "outline"} 
+                  size="icon" 
+                  onClick={handleLike}
+                  disabled={liking || (!liked && !canLike)}
+                  className={liked ? "bg-primary text-primary-foreground" : "border-primary text-primary hover:bg-primary hover:text-primary-foreground"}
+                >
+                  <Heart className={`h-4 w-4 ${liked ? 'fill-current' : ''}`} />
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -275,14 +312,45 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
             </div>
 
             {currentUserId && profile.user_id ? (
-              <Button 
-                onClick={handleLike}
-                disabled={liking}
-                className={`w-full ${liked ? 'bg-muted hover:bg-muted/80' : 'bg-primary hover:bg-primary/90'}`}
-              >
-                <Heart className={`mr-2 h-4 w-4 ${liked ? 'fill-current' : ''}`} />
-                {liked ? 'Unlike Profile' : 'Like Profile'}
-              </Button>
+              <div className="space-y-2">
+                {subscribed && tier === 'basic' && maxLikes !== null && !liked && (
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>{remainingLikes} likes remaining today</span>
+                    {remainingLikes !== null && remainingLikes <= 5 && (
+                      <Link to="/subscription" className="text-primary hover:underline flex items-center gap-1">
+                        <Crown className="h-3 w-3" />
+                        Upgrade for unlimited
+                      </Link>
+                    )}
+                  </div>
+                )}
+                {!canLike && !liked ? (
+                  <div className="space-y-2">
+                    <Button 
+                      disabled
+                      className="w-full bg-muted"
+                    >
+                      <Heart className="mr-2 h-4 w-4" />
+                      Daily limit reached
+                    </Button>
+                    <Link to="/subscription" className="block">
+                      <Button variant="outline" className="w-full gap-2">
+                        <Crown className="h-4 w-4" />
+                        Upgrade to Premium for unlimited likes
+                      </Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <Button 
+                    onClick={handleLike}
+                    disabled={liking}
+                    className={`w-full ${liked ? 'bg-muted hover:bg-muted/80' : 'bg-primary hover:bg-primary/90'}`}
+                  >
+                    <Heart className={`mr-2 h-4 w-4 ${liked ? 'fill-current' : ''}`} />
+                    {liked ? 'Unlike Profile' : 'Like Profile'}
+                  </Button>
+                )}
+              </div>
             ) : (
               <Button className="w-full bg-primary hover:bg-primary/90" disabled>
                 <Heart className="mr-2 h-4 w-4" />

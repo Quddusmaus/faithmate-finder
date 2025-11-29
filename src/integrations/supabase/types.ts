@@ -161,6 +161,33 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_like_usage: {
+        Row: {
+          created_at: string
+          id: string
+          like_count: number
+          like_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          like_count?: number
+          like_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          like_count?: number
+          like_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       demo_profiles: {
         Row: {
           age: number | null
@@ -667,6 +694,7 @@ export type Database = {
         Returns: boolean
       }
       get_today_call_count: { Args: { p_user_id: string }; Returns: number }
+      get_today_like_count: { Args: { p_user_id: string }; Returns: number }
       get_user_matches: {
         Args: { user_uuid: string }
         Returns: {
@@ -690,6 +718,7 @@ export type Database = {
         Returns: boolean
       }
       increment_call_count: { Args: { p_user_id: string }; Returns: number }
+      increment_like_count: { Args: { p_user_id: string }; Returns: number }
       is_blocked: {
         Args: { checker_id: string; target_id: string }
         Returns: boolean
