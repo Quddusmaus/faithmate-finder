@@ -2,96 +2,86 @@ import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { 
-  Phone, 
   PhoneOff, 
   Mic, 
   MicOff, 
   Video, 
   VideoOff,
   Loader2,
-  RefreshCw,
-  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface VideoCallProps {
-  localStream: MediaStream | null;
-  remoteStream: MediaStream | null;
+  localVideoTrack: MediaStreamTrack | null;
+  remoteVideoTrack: MediaStreamTrack | null;
+  remoteAudioTrack: MediaStreamTrack | null;
   isConnecting: boolean;
   isConnected: boolean;
   isMuted: boolean;
   isVideoOff: boolean;
-  isReconnecting?: boolean;
-  reconnectAttempt?: number;
-  maxReconnectAttempts?: number;
   matchName: string;
   matchPhoto?: string;
   onEndCall: () => void;
   onToggleMute: () => void;
   onToggleVideo: () => void;
-  onCancelReconnect?: () => void;
 }
 
 export const VideoCall = ({
-  localStream,
-  remoteStream,
+  localVideoTrack,
+  remoteVideoTrack,
+  remoteAudioTrack,
   isConnecting,
   isConnected,
   isMuted,
   isVideoOff,
-  isReconnecting = false,
-  reconnectAttempt = 0,
-  maxReconnectAttempts = 3,
   matchName,
   matchPhoto,
   onEndCall,
   onToggleMute,
   onToggleVideo,
-  onCancelReconnect,
 }: VideoCallProps) => {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement>(null);
 
+  // Attach local video track
   useEffect(() => {
-    if (localVideoRef.current && localStream) {
-      localVideoRef.current.srcObject = localStream;
+    if (localVideoRef.current && localVideoTrack) {
+      const stream = new MediaStream([localVideoTrack]);
+      localVideoRef.current.srcObject = stream;
+    } else if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
     }
-  }, [localStream]);
+  }, [localVideoTrack]);
 
+  // Attach remote video track
   useEffect(() => {
-    if (remoteVideoRef.current && remoteStream) {
-      remoteVideoRef.current.srcObject = remoteStream;
+    if (remoteVideoRef.current && remoteVideoTrack) {
+      const stream = new MediaStream([remoteVideoTrack]);
+      remoteVideoRef.current.srcObject = stream;
+    } else if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
     }
-  }, [remoteStream]);
+  }, [remoteVideoTrack]);
+
+  // Attach remote audio track
+  useEffect(() => {
+    if (remoteAudioRef.current && remoteAudioTrack) {
+      const stream = new MediaStream([remoteAudioTrack]);
+      remoteAudioRef.current.srcObject = stream;
+    } else if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = null;
+    }
+  }, [remoteAudioTrack]);
 
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
-      {/* Reconnecting overlay */}
-      {isReconnecting && (
-        <div className="absolute inset-0 z-10 bg-background/80 backdrop-blur-sm flex items-center justify-center">
-          <div className="text-center p-6 rounded-lg bg-card border border-border shadow-lg">
-            <RefreshCw className="h-12 w-12 mx-auto mb-4 text-primary animate-spin" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">Connection Lost</h3>
-            <p className="text-muted-foreground mb-4">
-              Reconnecting... Attempt {reconnectAttempt} of {maxReconnectAttempts}
-            </p>
-            <div className="flex gap-2 justify-center">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onCancelReconnect || onEndCall}
-              >
-                <X className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Hidden audio element for remote audio */}
+      <audio ref={remoteAudioRef} autoPlay playsInline />
 
       {/* Remote video (full screen) */}
       <div className="flex-1 relative bg-muted">
-        {remoteStream && remoteStream.getVideoTracks().length > 0 ? (
+        {remoteVideoTrack ? (
           <video
             ref={remoteVideoRef}
             autoPlay
@@ -106,37 +96,36 @@ export const VideoCall = ({
                 <AvatarFallback className="text-4xl">{matchName[0]}</AvatarFallback>
               </Avatar>
               <h2 className="text-2xl font-semibold text-foreground">{matchName}</h2>
-              {isConnecting && !isReconnecting && (
+              {isConnecting && (
                 <div className="flex items-center justify-center gap-2 mt-4 text-muted-foreground">
                   <Loader2 className="h-5 w-5 animate-spin" />
                   <span>Connecting...</span>
                 </div>
               )}
-              {isConnected && !remoteStream?.getVideoTracks().length && (
-                <p className="text-muted-foreground mt-2">Voice call</p>
+              {isConnected && !remoteVideoTrack && (
+                <p className="text-muted-foreground mt-2">Voice call in progress</p>
               )}
             </div>
           </div>
         )}
 
         {/* Local video (picture-in-picture) */}
-        {localStream && (
-          <div className="absolute bottom-24 right-4 w-32 h-48 md:w-48 md:h-64 rounded-lg overflow-hidden shadow-lg border-2 border-border">
-            {localStream.getVideoTracks().length > 0 && !isVideoOff ? (
-              <video
-                ref={localVideoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-muted flex items-center justify-center">
-                <VideoOff className="h-8 w-8 text-muted-foreground" />
-              </div>
-            )}
-          </div>
-        )}
+        <div className="absolute bottom-24 right-4 w-32 h-48 md:w-48 md:h-64 rounded-lg overflow-hidden shadow-lg border-2 border-border">
+          {localVideoTrack && !isVideoOff ? (
+            <video
+              ref={localVideoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover mirror"
+              style={{ transform: "scaleX(-1)" }}
+            />
+          ) : (
+            <div className="w-full h-full bg-muted flex items-center justify-center">
+              <VideoOff className="h-8 w-8 text-muted-foreground" />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Controls */}
@@ -150,7 +139,6 @@ export const VideoCall = ({
               isMuted && "bg-destructive/20 border-destructive text-destructive"
             )}
             onClick={onToggleMute}
-            disabled={isReconnecting}
           >
             {isMuted ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
           </Button>
@@ -163,7 +151,6 @@ export const VideoCall = ({
               isVideoOff && "bg-destructive/20 border-destructive text-destructive"
             )}
             onClick={onToggleVideo}
-            disabled={isReconnecting}
           >
             {isVideoOff ? <VideoOff className="h-6 w-6" /> : <Video className="h-6 w-6" />}
           </Button>

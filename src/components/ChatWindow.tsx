@@ -12,7 +12,8 @@ import { BlockUserDialog } from "./BlockUserDialog";
 import { MessageReactions } from "./MessageReactions";
 import { CallButton } from "./CallButton";
 import { VideoCall } from "./VideoCall";
-import { useWebRTC } from "@/hooks/useWebRTC";
+import { IncomingCallDialog } from "./IncomingCallDialog";
+import { useDailyCall } from "@/hooks/useDailyCall";
 
 interface Reaction {
   id: string;
@@ -42,15 +43,10 @@ interface ChatWindowProps {
   user: User;
   match: Match;
   onBack: () => void;
-  incomingCallData?: {
-    callerId: string;
-    offerData: any;
-  } | null;
-  onCallHandled?: () => void;
   onMessagesRead?: () => void;
 }
 
-export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandled, onMessagesRead }: ChatWindowProps) => {
+export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -66,42 +62,46 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
   const { toast } = useToast();
 
   const {
-    localStream,
-    remoteStream,
     isConnecting,
     isConnected,
     isMuted,
     isVideoOff,
-    isReconnecting,
-    reconnectAttempt,
-    maxReconnectAttempts,
+    localVideoTrack,
+    remoteVideoTrack,
+    remoteAudioTrack,
+    pendingInvitation,
     initiateCall,
     acceptCall,
+    rejectCall,
     endCall,
     toggleMute,
     toggleVideo,
-    cancelReconnect,
-  } = useWebRTC({
+  } = useDailyCall({
     localUserId: user.id,
     remoteUserId: match.match_id,
     onCallEnded: () => setIsInCall(false),
   });
 
-  // Handle incoming call
-  useEffect(() => {
-    if (incomingCallData && incomingCallData.callerId === match.match_id) {
-      setIsInCall(true);
-      acceptCall(incomingCallData.offerData).catch((error) => {
+  // Handle incoming call from pendingInvitation
+  const handleAcceptIncomingCall = async () => {
+    if (pendingInvitation) {
+      try {
+        setIsInCall(true);
+        await acceptCall(pendingInvitation);
+      } catch (error: any) {
         toast({
           title: "Call Failed",
-          description: "Could not accept call. Please check your permissions.",
+          description: "Could not accept call. Please try again.",
           variant: "destructive",
         });
         setIsInCall(false);
-      });
-      onCallHandled?.();
+      }
     }
-  }, [incomingCallData, match.match_id]);
+  };
+
+  const handleRejectIncomingCall = async () => {
+    await rejectCall();
+  };
 
   const handleVoiceCall = async () => {
     try {
@@ -591,24 +591,32 @@ export const ChatWindow = ({ user, match, onBack, incomingCallData, onCallHandle
         />
       </div>
 
+      {/* Incoming Call Dialog */}
+      {pendingInvitation && (
+        <IncomingCallDialog
+          callerName={match.name}
+          callerPhoto={match.photo_urls?.[0]}
+          videoEnabled={pendingInvitation.videoEnabled}
+          onAccept={handleAcceptIncomingCall}
+          onReject={handleRejectIncomingCall}
+        />
+      )}
+
       {/* Video/Voice Call */}
       {isInCall && (
         <VideoCall
-          localStream={localStream}
-          remoteStream={remoteStream}
+          localVideoTrack={localVideoTrack}
+          remoteVideoTrack={remoteVideoTrack}
+          remoteAudioTrack={remoteAudioTrack}
           isConnecting={isConnecting}
           isConnected={isConnected}
           isMuted={isMuted}
           isVideoOff={isVideoOff}
-          isReconnecting={isReconnecting}
-          reconnectAttempt={reconnectAttempt}
-          maxReconnectAttempts={maxReconnectAttempts}
           matchName={match.name}
           matchPhoto={match.photo_urls?.[0]}
           onEndCall={handleEndCall}
           onToggleMute={toggleMute}
           onToggleVideo={toggleVideo}
-          onCancelReconnect={cancelReconnect}
         />
       )}
 
