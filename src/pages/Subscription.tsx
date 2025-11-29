@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Check, Crown, Sparkles, Zap, ArrowLeft, Loader2 } from 'lucide-react';
+import { Check, Sparkles, Zap, ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,19 +12,16 @@ import { supabase } from '@/integrations/supabase/client';
 const tierIcons: Record<string, React.ReactNode> = {
   basic: <Zap className="h-6 w-6" />,
   premium: <Sparkles className="h-6 w-6" />,
-  elite: <Crown className="h-6 w-6" />,
 };
 
 const tierColors: Record<string, string> = {
   basic: 'border-blue-500/50 bg-blue-500/5',
   premium: 'border-purple-500/50 bg-purple-500/5',
-  elite: 'border-amber-500/50 bg-amber-500/5',
 };
 
 const tierBadgeColors: Record<string, string> = {
   basic: 'bg-blue-500',
   premium: 'bg-purple-500',
-  elite: 'bg-amber-500',
 };
 
 export default function Subscription() {
@@ -85,7 +82,7 @@ export default function Subscription() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container max-w-6xl mx-auto px-4 py-8">
+      <div className="container max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
           <Link to="/profiles" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -120,21 +117,22 @@ export default function Subscription() {
           )}
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
+        <div className="grid md:grid-cols-2 gap-8 mb-12">
           {(Object.entries(SUBSCRIPTION_TIERS) as [SubscriptionTier, typeof SUBSCRIPTION_TIERS.basic][]).map(([tierKey, tierData]) => {
+            if (!tierKey) return null;
             const isCurrentTier = tier === tierKey;
-            const isPopular = tierKey === 'premium';
+            const isPremium = tierKey === 'premium';
 
             return (
               <Card 
                 key={tierKey} 
                 className={`relative transition-all duration-300 hover:shadow-lg ${
                   tierColors[tierKey as string]
-                } ${isCurrentTier ? 'ring-2 ring-primary' : ''}`}
+                } ${isCurrentTier ? 'ring-2 ring-primary' : ''} ${isPremium ? 'scale-105' : ''}`}
               >
-                {isPopular && (
+                {isPremium && (
                   <Badge className={`absolute -top-3 left-1/2 -translate-x-1/2 ${tierBadgeColors[tierKey as string]}`}>
-                    Most Popular
+                    Best Value
                   </Badge>
                 )}
                 {isCurrentTier && (
@@ -149,7 +147,7 @@ export default function Subscription() {
                   </div>
                   <CardTitle className="text-2xl">{tierData.name}</CardTitle>
                   <CardDescription>
-                    <span className="text-4xl font-bold text-foreground">${tierData.price}</span>
+                    <span className="text-4xl font-bold text-foreground">${tierData.price.toFixed(2)}</span>
                     <span className="text-muted-foreground">/month</span>
                   </CardDescription>
                 </CardHeader>
@@ -159,8 +157,7 @@ export default function Subscription() {
                     {tierData.features.map((feature, index) => (
                       <li key={index} className="flex items-start gap-3">
                         <Check className={`h-5 w-5 mt-0.5 flex-shrink-0 ${
-                          tierKey === 'basic' ? 'text-blue-500' :
-                          tierKey === 'premium' ? 'text-purple-500' : 'text-amber-500'
+                          tierKey === 'basic' ? 'text-blue-500' : 'text-purple-500'
                         }`} />
                         <span className="text-sm">{feature}</span>
                       </li>
@@ -188,11 +185,10 @@ export default function Subscription() {
                   ) : (
                     <Button 
                       className={`w-full ${
-                        tierKey === 'elite' ? 'bg-amber-500 hover:bg-amber-600' :
                         tierKey === 'premium' ? 'bg-purple-500 hover:bg-purple-600' :
                         'bg-blue-500 hover:bg-blue-600'
                       }`}
-                      onClick={() => createCheckout(tierKey as 'basic' | 'premium' | 'elite')}
+                      onClick={() => createCheckout(tierKey as 'basic' | 'premium')}
                     >
                       Get {tierData.name}
                     </Button>

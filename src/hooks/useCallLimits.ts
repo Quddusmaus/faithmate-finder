@@ -11,11 +11,10 @@ interface CallLimits {
   isLoading: boolean;
 }
 
-// Call limits per tier
+// Call limits per tier - Basic gets 1 call/day, Premium gets unlimited
 const TIER_CALL_LIMITS: Record<string, number | null> = {
-  basic: 0, // No calls
-  premium: 3, // 3 calls per day
-  elite: null, // Unlimited
+  basic: 1, // 1 call per day
+  premium: null, // Unlimited
 };
 
 export function useCallLimits() {
@@ -116,12 +115,8 @@ function getTierMessage(tier: SubscriptionTier, maxCalls: number | null): string
     return 'Subscribe to a plan to make video and voice calls.';
   }
   
-  if (tier === 'basic') {
-    return 'Basic plan does not include calls. Upgrade to Premium or Elite to make calls.';
-  }
-  
-  if (tier === 'premium' && maxCalls !== null) {
-    return `You've used all ${maxCalls} calls for today. Upgrade to Elite for unlimited calls or wait until tomorrow.`;
+  if (tier === 'basic' && maxCalls !== null) {
+    return `You've used your daily call. Upgrade to Premium for unlimited calls or wait until tomorrow.`;
   }
   
   return 'You have reached your daily call limit.';

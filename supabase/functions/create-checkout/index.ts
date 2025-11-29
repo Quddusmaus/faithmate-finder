@@ -10,16 +10,12 @@ const corsHeaders = {
 // Subscription tiers with their Stripe price IDs
 const SUBSCRIPTION_TIERS = {
   basic: {
-    price_id: "price_1RYqUdGmhKCyJYKRkZLJmqx8",
-    product_id: "prod_TVwKKQDQq7uRsB",
+    price_id: "price_1SYvWhFlLANlilHtnx9IM0PO",
+    product_id: "prod_TVxRMVOo4ggFGj",
   },
   premium: {
-    price_id: "price_1SYubVFlLANlilHtcnvQHEb6",
-    product_id: "prod_TVwUGSA2FdtbvC",
-  },
-  elite: {
-    price_id: "price_1SYucFFlLANlilHtqCSBpTov",
-    product_id: "prod_TVwVcYZnDpmnAJ",
+    price_id: "price_1SYvX9FlLANlilHtTarAiK35",
+    product_id: "prod_TVxS2qrvpWe0zd",
   },
 };
 
@@ -45,7 +41,7 @@ serve(async (req) => {
     logStep("Received tier", { tier });
 
     if (!tier || !SUBSCRIPTION_TIERS[tier as keyof typeof SUBSCRIPTION_TIERS]) {
-      throw new Error(`Invalid tier: ${tier}. Valid tiers: basic, premium, elite`);
+      throw new Error(`Invalid tier: ${tier}. Valid tiers: basic, premium`);
     }
 
     const selectedTier = SUBSCRIPTION_TIERS[tier as keyof typeof SUBSCRIPTION_TIERS];
