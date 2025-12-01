@@ -78,10 +78,7 @@ const Index = () => {
         {/* Hero */}
         <section className="py-12 sm:py-20 text-center">
           <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6">
-            <p className="text-2xl sm:text-4xl md:text-5xl font-semibold text-primary animate-bounce-in animate-glow-pulse">
-              {t('landing.greeting')}
-            </p>
-            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold leading-tight text-foreground animate-slide-up-fade" style={{ animationDelay: '0.3s' }}>
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold leading-tight text-foreground animate-slide-up-fade">
               {t('landing.welcomeTitle')}{" "}
               <span className="text-primary">{t('common.appName')}</span>
               {" – "}
