@@ -12,7 +12,8 @@ import { useCurrentUserProfile, calculateCompatibility } from "@/hooks/useCurren
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { useUnreadMessageCount } from "@/hooks/useUnreadMessageCount";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-
+import { SubscriptionBanner } from "@/components/SubscriptionBanner";
+import { useLikeLimits } from "@/hooks/useLikeLimits";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface Profile {
@@ -48,6 +49,10 @@ const Profiles = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { profile: currentUserProfile } = useCurrentUserProfile();
+  const { canLike, tier, subscribed } = useLikeLimits();
+  
+  // Show upgrade banner only when like limit is reached (basic tier)
+  const showLikeLimitBanner = user && subscribed && tier === 'basic' && !canLike;
 
   useEffect(() => {
     checkAuth();
@@ -320,6 +325,8 @@ const Profiles = () => {
       </nav>
 
       <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        {showLikeLimitBanner && <SubscriptionBanner type="likes" />}
+        
         <div className="mb-8 sm:mb-12 text-center">
           <h1 className="mb-3 sm:mb-4 text-2xl sm:text-4xl font-bold text-foreground">Discover Your Match</h1>
           <p className="text-base sm:text-xl text-muted-foreground px-2">
