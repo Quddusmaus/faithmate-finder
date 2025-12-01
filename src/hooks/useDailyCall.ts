@@ -122,9 +122,13 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
     setIsVideoOff(!videoEnabled);
 
     try {
-      console.log("Creating Daily.co room...");
+      console.log("[DAILY-CALL] Starting call initiation...");
+      console.log("[DAILY-CALL] Caller:", localUserId);
+      console.log("[DAILY-CALL] Receiver:", remoteUserId);
+      console.log("[DAILY-CALL] Video enabled:", videoEnabled);
       
       // Create room via edge function
+      console.log("[DAILY-CALL] Invoking daily-room edge function...");
       const { data, error } = await supabase.functions.invoke("daily-room", {
         body: {
           callerUserId: localUserId,
@@ -133,13 +137,25 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
         },
       });
 
-      if (error || !data) {
+      if (error) {
+        console.error("[DAILY-CALL] Edge function error:", error);
         throw new Error(error?.message || "Failed to create room");
       }
+      
+      if (!data) {
+        console.error("[DAILY-CALL] No data returned from edge function");
+        throw new Error("No data returned from room creation");
+      }
 
-      console.log("Room created:", data.roomName);
+      console.log("[DAILY-CALL] Room created successfully:", {
+        roomName: data.roomName,
+        roomUrl: data.roomUrl,
+        hasCallerToken: !!data.callerToken,
+        hasReceiverToken: !!data.receiverToken,
+      });
 
       // Send call invitation to receiver via call_signals table
+      console.log("[DAILY-CALL] Sending call invitation signal...");
       const { error: signalError } = await supabase.from("call_signals").insert({
         caller_id: localUserId,
         receiver_id: remoteUserId,
@@ -153,10 +169,29 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
       });
 
       if (signalError) {
-        throw new Error("Failed to send call invitation");
+        console.error("[DAILY-CALL] Signal insert error:", signalError);
+        throw new Error("Failed to send call invitation: " + signalError.message);
+      }
+      
+      console.log("[DAILY-CALL] Call invitation sent successfully");
+
+      // Request media permissions first
+      console.log("[DAILY-CALL] Requesting media permissions...");
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: videoEnabled,
+          audio: true,
+        });
+        // Stop the test stream
+        stream.getTracks().forEach(track => track.stop());
+        console.log("[DAILY-CALL] Media permissions granted");
+      } catch (mediaError: any) {
+        console.error("[DAILY-CALL] Media permission error:", mediaError);
+        throw new Error("Please allow camera/microphone access to make calls");
       }
 
       // Create and join the call
+      console.log("[DAILY-CALL] Creating Daily call object...");
       const callObject = DailyIframe.createCallObject({
         url: data.roomUrl,
         token: data.callerToken,
@@ -166,11 +201,12 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
 
       setupCallObject(callObject);
 
+      console.log("[DAILY-CALL] Joining call...");
       await callObject.join();
-      console.log("Joined call as caller");
+      console.log("[DAILY-CALL] Successfully joined call as caller");
 
     } catch (error: any) {
-      console.error("Error initiating call:", error);
+      console.error("[DAILY-CALL] Error initiating call:", error);
       toast.error("Failed to start call: " + error.message);
       cleanup();
       throw error;
@@ -183,8 +219,27 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
     setPendingInvitation(null);
 
     try {
-      console.log("Accepting call, joining room:", invitation.roomName);
+      console.log("[DAILY-CALL] Accepting call...");
+      console.log("[DAILY-CALL] Room:", invitation.roomName);
+      console.log("[DAILY-CALL] URL:", invitation.roomUrl);
+      console.log("[DAILY-CALL] Has token:", !!invitation.token);
+      console.log("[DAILY-CALL] Video enabled:", invitation.videoEnabled);
 
+      // Request media permissions first
+      console.log("[DAILY-CALL] Requesting media permissions for receiver...");
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: invitation.videoEnabled,
+          audio: true,
+        });
+        stream.getTracks().forEach(track => track.stop());
+        console.log("[DAILY-CALL] Media permissions granted for receiver");
+      } catch (mediaError: any) {
+        console.error("[DAILY-CALL] Media permission error for receiver:", mediaError);
+        throw new Error("Please allow camera/microphone access to join calls");
+      }
+
+      console.log("[DAILY-CALL] Creating Daily call object for receiver...");
       const callObject = DailyIframe.createCallObject({
         url: invitation.roomUrl,
         token: invitation.token,
@@ -194,11 +249,12 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
 
       setupCallObject(callObject);
 
+      console.log("[DAILY-CALL] Receiver joining call...");
       await callObject.join();
-      console.log("Joined call as receiver");
+      console.log("[DAILY-CALL] Receiver successfully joined call");
 
     } catch (error: any) {
-      console.error("Error accepting call:", error);
+      console.error("[DAILY-CALL] Error accepting call:", error);
       toast.error("Failed to join call: " + error.message);
       cleanup();
       throw error;
@@ -250,7 +306,9 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
 
   // Listen for incoming calls and call events
   useEffect(() => {
-    const channelId = `daily-calls:${localUserId}`;
+    const channelId = `daily-calls:${localUserId}-${remoteUserId}`;
+    console.log("[DAILY-CALL] Setting up realtime subscription:", channelId);
+    console.log("[DAILY-CALL] Listening for signals where receiver_id =", localUserId);
     
     channelRef.current = supabase
       .channel(channelId)
@@ -264,9 +322,15 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
         },
         async (payload) => {
           const signal = payload.new as any;
-          console.log("Received signal:", signal.signal_type);
+          console.log("[DAILY-CALL] Received realtime signal:", {
+            type: signal.signal_type,
+            callerId: signal.caller_id,
+            receiverId: signal.receiver_id,
+            expectedCaller: remoteUserId,
+          });
 
           if (signal.signal_type === "daily-invite" && signal.caller_id === remoteUserId) {
+            console.log("[DAILY-CALL] Incoming call invitation received!");
             // Incoming call from the person we're chatting with
             setPendingInvitation({
               ...signal.signal_data,
@@ -274,6 +338,7 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
             });
           } else if (signal.signal_type === "call-end" || signal.signal_type === "call-reject") {
             if (signal.caller_id === remoteUserId) {
+              console.log("[DAILY-CALL] Call ended/rejected by remote user");
               toast.info(signal.signal_type === "call-reject" ? "Call was declined" : "Call ended");
               cleanup();
               onCallEnded?.();
@@ -281,9 +346,12 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("[DAILY-CALL] Subscription status:", status);
+      });
 
     return () => {
+      console.log("[DAILY-CALL] Cleaning up subscription");
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
       }
