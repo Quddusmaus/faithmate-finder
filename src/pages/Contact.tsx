@@ -158,8 +158,8 @@ const Contact = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-card-foreground">Email</h3>
-                  <a href="mailto:support@unityhearts.com" className="text-muted-foreground hover:text-primary transition-colors">
-                    support@unityhearts.com
+                  <a href="mailto:Unityheartsapp@gmail.com" className="text-muted-foreground hover:text-primary transition-colors">
+                    Unityheartsapp@gmail.com
                   </a>
                 </div>
               </div>
