@@ -140,6 +140,11 @@ const ProfileSetup = () => {
 
         if (error) throw error;
 
+        // Send welcome email (fire and forget - don't block on this)
+        supabase.functions.invoke("send-welcome-email", {
+          body: { user_id: user.id, name: data.name }
+        }).catch(err => console.error("Failed to send welcome email:", err));
+
         toast({
           title: "Profile Created",
           description: "Welcome! Your profile is now live.",
