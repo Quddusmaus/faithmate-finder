@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.85.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,6 +19,32 @@ serve(async (req) => {
   }
 
   try {
+    // Verify JWT authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.error("Missing or invalid Authorization header");
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      console.error("Auth error:", authError?.message || "No user found");
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("Authenticated user:", user.id);
+
     const DAILY_API_KEY = Deno.env.get("DAILY_API_KEY");
     if (!DAILY_API_KEY) {
       console.error("DAILY_API_KEY is not configured");
@@ -28,6 +55,27 @@ serve(async (req) => {
     }
 
     const { callerUserId, receiverUserId, videoEnabled }: CreateRoomRequest = await req.json();
+
+    // Verify the authenticated user is the caller
+    if (user.id !== callerUserId) {
+      console.error("User mismatch: authenticated user is not the caller");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: you can only initiate calls for yourself" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify users are matched before allowing call creation
+    const { data: matchCheck, error: matchError } = await supabase
+      .rpc('are_users_matched', { p_user1_id: callerUserId, p_user2_id: receiverUserId });
+    
+    if (matchError || !matchCheck) {
+      console.error("Match check failed:", matchError?.message || "Users not matched");
+      return new Response(
+        JSON.stringify({ error: "You can only call users you have matched with" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     
     console.log(`Creating Daily.co room for call between ${callerUserId} and ${receiverUserId}`);
 
