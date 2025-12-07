@@ -49,15 +49,28 @@ const Profiles = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { profile: currentUserProfile } = useCurrentUserProfile();
-  const { canLike, tier, subscribed } = useLikeLimits();
+  const { canLike, tier, subscribed, isLoading: subscriptionLoading } = useLikeLimits();
   
   // Show upgrade banner only when like limit is reached (basic tier)
   const showLikeLimitBanner = user && subscribed && tier === 'basic' && !canLike;
 
   useEffect(() => {
     checkAuth();
-    fetchProfiles();
   }, []);
+
+  // Redirect non-subscribers to subscription page
+  useEffect(() => {
+    if (!subscriptionLoading && user && !subscribed) {
+      navigate('/subscription');
+    }
+  }, [subscriptionLoading, user, subscribed, navigate]);
+
+  // Only fetch profiles if user is subscribed
+  useEffect(() => {
+    if (subscribed) {
+      fetchProfiles();
+    }
+  }, [subscribed]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -342,9 +355,11 @@ const Profiles = () => {
           />
         </div>
 
-        {loading ? (
+        {(loading || subscriptionLoading || (user && !subscribed)) ? (
           <div className="flex justify-center py-20">
-            <div className="text-muted-foreground">Loading profiles...</div>
+            <div className="text-muted-foreground">
+              {subscriptionLoading ? "Checking subscription..." : "Loading profiles..."}
+            </div>
           </div>
         ) : (
           <>
