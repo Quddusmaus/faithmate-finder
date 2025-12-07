@@ -47,6 +47,33 @@ serve(async (req) => {
     console.log("Authenticated user:", user.id);
 
     const { action, imageBase64, poseType, verificationId } = await req.json();
+
+    // If verificationId is provided, verify the authenticated user owns it
+    if (verificationId) {
+      const { data: verification, error: verifyError } = await supabaseAuth
+        .from('photo_verifications')
+        .select('user_id')
+        .eq('id', verificationId)
+        .single();
+      
+      if (verifyError || !verification) {
+        console.error("Verification lookup error:", verifyError?.message || "Not found");
+        return new Response(
+          JSON.stringify({ error: "Verification request not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      if (verification.user_id !== user.id) {
+        console.error("Ownership mismatch: user does not own this verification");
+        return new Response(
+          JSON.stringify({ error: "Unauthorized: you can only verify your own photos" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      console.log("Ownership verified for verification:", verificationId);
+    }
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
