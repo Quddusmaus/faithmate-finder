@@ -90,17 +90,26 @@ const Auth = () => {
 
     try {
       if (mode === "login") {
-        // Check rate limit before attempting login
-        const { data: isAllowed, error: rateLimitError } = await supabase.rpc(
-          'check_login_rate_limit',
-          { p_email: email }
-        );
-
-        if (rateLimitError) {
-          console.error('Rate limit check error:', rateLimitError);
+        // Check rate limit before attempting login (with timeout to prevent hanging)
+        let isAllowed = true;
+        try {
+          const rateLimitPromise = supabase.rpc('check_login_rate_limit', { p_email: email });
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Rate limit check timeout')), 5000)
+          );
+          
+          const { data, error: rateLimitError } = await Promise.race([rateLimitPromise, timeoutPromise]) as any;
+          
+          if (rateLimitError) {
+            console.error('Rate limit check error:', rateLimitError);
+          } else {
+            isAllowed = data !== false;
+          }
+        } catch (e) {
+          console.error('Rate limit check failed, proceeding with login:', e);
         }
 
-        if (isAllowed === false) {
+        if (!isAllowed) {
           toast({
             title: "Too many attempts",
             description: "Please wait 15 minutes before trying again.",
@@ -115,11 +124,11 @@ const Auth = () => {
           password,
         });
 
-        // Record the login attempt
-        await supabase.rpc('record_login_attempt', {
+        // Record the login attempt (don't block on this)
+        Promise.resolve(supabase.rpc('record_login_attempt', {
           p_email: email,
           p_success: !error
-        });
+        })).catch(e => console.error('Failed to record login attempt:', e));
 
         if (error) throw error;
 
