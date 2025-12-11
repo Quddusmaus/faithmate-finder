@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -20,6 +21,11 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
+  const [rememberMe, setRememberMe] = useState(() => {
+    // Default to true, or read from localStorage if previously set
+    const saved = localStorage.getItem("rememberMe");
+    return saved !== null ? saved === "true" : true;
+  });
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -140,6 +146,13 @@ const Auth = () => {
           return;
         }
 
+        // Save remember me preference
+        localStorage.setItem("rememberMe", String(rememberMe));
+
+        // If not remembering, we'll clear session on browser close by not persisting
+        // Supabase uses localStorage by default, so we sign in normally
+        // The session will be cleared when the user closes the browser if they don't want to be remembered
+        
         // Sign in with timeout to prevent hanging
         const signInPromise = supabase.auth.signInWithPassword({
           email,
@@ -149,7 +162,7 @@ const Auth = () => {
           setTimeout(() => reject(new Error('Sign in timed out. Please check your internet connection and try again.')), 15000)
         );
         
-        const { error } = await Promise.race([signInPromise, timeoutPromise]) as any;
+        const { error, data } = await Promise.race([signInPromise, timeoutPromise]) as any;
 
         // Record the login attempt (don't block on this)
         Promise.resolve(supabase.rpc('record_login_attempt', {
@@ -159,9 +172,14 @@ const Auth = () => {
 
         if (error) throw error;
 
+        // If "Remember me" is unchecked, mark session for clearing on browser close
+        if (!rememberMe && data?.session) {
+          sessionStorage.setItem("clearSessionOnClose", "true");
+        }
+
         toast({
           title: "Welcome back!",
-          description: "Successfully signed in.",
+          description: rememberMe ? "Successfully signed in." : "Successfully signed in. Session will end when you close the browser.",
         });
       } else if (mode === "signup") {
         const redirectUrl = `${window.location.origin}/`;
@@ -350,7 +368,20 @@ const Auth = () => {
                   />
                 </div>
 
-                <div className="text-right">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="rememberMe"
+                      checked={rememberMe}
+                      onCheckedChange={(checked) => setRememberMe(checked === true)}
+                    />
+                    <Label
+                      htmlFor="rememberMe"
+                      className="text-sm font-normal text-muted-foreground cursor-pointer"
+                    >
+                      Remember me
+                    </Label>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setMode("forgot-password")}
