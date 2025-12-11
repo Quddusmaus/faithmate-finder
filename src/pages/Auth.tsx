@@ -42,19 +42,25 @@ const Auth = () => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        if (session?.user && mode !== "update-password") {
-          // Check if user has a profile
+        // Only redirect on SIGNED_IN event (not on initial load which uses INITIAL_SESSION)
+        if (event === 'SIGNED_IN' && session?.user && mode !== "update-password") {
+          // Check if user has a profile - use setTimeout to avoid Supabase deadlock
           setTimeout(async () => {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("id")
-              .eq("user_id", session.user.id)
-              .maybeSingle();
-            
-            if (profile) {
-              navigate("/profiles");
-            } else {
-              navigate("/profile-setup");
+            try {
+              const { data: profile } = await supabase
+                .from("profiles")
+                .select("id")
+                .eq("user_id", session.user.id)
+                .maybeSingle();
+              
+              if (profile) {
+                navigate("/profiles", { replace: true });
+              } else {
+                navigate("/profile-setup", { replace: true });
+              }
+            } catch (err) {
+              console.error('Error checking profile:', err);
+              navigate("/profile-setup", { replace: true });
             }
           }, 0);
         }
