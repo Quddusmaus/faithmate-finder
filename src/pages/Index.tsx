@@ -90,14 +90,14 @@ const Index = () => {
               {t('landing.description')}
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 pt-4 px-4 sm:px-0 animate-slide-up-fade" style={{ animationDelay: '0.7s' }}>
-              <Link to="/profiles" className="w-full sm:w-auto">
+              <Link to="/auth?mode=signup" className="w-full sm:w-auto">
                 <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground">
-                  {t('profiles.browseProfiles')}
+                  {t('landing.getStarted')}
                 </Button>
               </Link>
-              <Link to="/auth?mode=signup" className="w-full sm:w-auto">
+              <Link to="/auth" className="w-full sm:w-auto">
                 <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                  {t('nav.signup')}
+                  {t('nav.login')}
                 </Button>
               </Link>
             </div>
