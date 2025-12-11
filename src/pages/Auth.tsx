@@ -181,6 +181,21 @@ const Auth = () => {
           title: "Welcome back!",
           description: rememberMe ? "Successfully signed in." : "Successfully signed in. Session will end when you close the browser.",
         });
+
+        // Explicitly navigate after successful login (don't rely only on onAuthStateChange)
+        if (data?.user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("user_id", data.user.id)
+            .maybeSingle();
+          
+          if (profile) {
+            navigate("/profiles", { replace: true });
+          } else {
+            navigate("/profile-setup", { replace: true });
+          }
+        }
       } else if (mode === "signup") {
         const redirectUrl = `${window.location.origin}/`;
         
