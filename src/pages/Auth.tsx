@@ -38,7 +38,7 @@ const Auth = () => {
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -61,8 +61,17 @@ const Auth = () => {
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    // Check for existing session and clear stale tokens
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      // If there's an error (like invalid refresh token), sign out to clear stale data
+      if (error) {
+        console.log('Clearing stale session:', error.message);
+        await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+        return;
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -79,10 +88,16 @@ const Auth = () => {
           navigate("/profile-setup");
         }
       }
+    }).catch(async (err) => {
+      // Handle any unexpected errors by clearing session
+      console.log('Session check failed, clearing:', err);
+      await supabase.auth.signOut();
+      setSession(null);
+      setUser(null);
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, mode]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,10 +134,16 @@ const Auth = () => {
           return;
         }
 
-        const { error } = await supabase.auth.signInWithPassword({
+        // Sign in with timeout to prevent hanging
+        const signInPromise = supabase.auth.signInWithPassword({
           email,
           password,
         });
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Sign in timed out. Please check your internet connection and try again.')), 15000)
+        );
+        
+        const { error } = await Promise.race([signInPromise, timeoutPromise]) as any;
 
         // Record the login attempt (don't block on this)
         Promise.resolve(supabase.rpc('record_login_attempt', {
