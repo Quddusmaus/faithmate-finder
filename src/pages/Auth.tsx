@@ -182,19 +182,28 @@ const Auth = () => {
           description: rememberMe ? "Successfully signed in." : "Successfully signed in. Session will end when you close the browser.",
         });
 
-        // Explicitly navigate after successful login (don't rely only on onAuthStateChange)
+        // Explicitly navigate after successful login using window.location for guaranteed redirect
         if (data?.user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("user_id", data.user.id)
-            .maybeSingle();
-          
-          if (profile) {
-            navigate("/profiles", { replace: true });
-          } else {
-            navigate("/profile-setup", { replace: true });
+          try {
+            const { data: profile, error: profileError } = await supabase
+              .from("profiles")
+              .select("id")
+              .eq("user_id", data.user.id)
+              .maybeSingle();
+            
+            console.log('Profile check:', { profile, profileError, userId: data.user.id });
+            
+            // Use window.location.href for guaranteed navigation
+            if (profile) {
+              window.location.href = "/profiles";
+            } else {
+              window.location.href = "/profile-setup";
+            }
+          } catch (profileErr) {
+            console.error('Profile check failed:', profileErr);
+            window.location.href = "/profile-setup";
           }
+          return; // Don't continue to finally block until navigation completes
         }
       } else if (mode === "signup") {
         const redirectUrl = `${window.location.origin}/`;
