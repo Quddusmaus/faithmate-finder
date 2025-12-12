@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,8 +29,24 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [redirectPath, setRedirectPath] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const determineRedirect = async (userId: string) => {
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      setRedirectPath(profile ? "/profiles" : "/profile-setup");
+    } catch (err) {
+      console.error("Error determining redirect path:", err);
+      setRedirectPath("/profile-setup");
+    }
+  };
 
   useEffect(() => {
     // Check for password recovery token in URL hash
@@ -47,27 +63,11 @@ const Auth = () => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
-        // Only redirect on SIGNED_IN event (not on initial load which uses INITIAL_SESSION)
-        if (event === 'SIGNED_IN' && session?.user && mode !== "update-password") {
-          // Check if user has a profile - use setTimeout to avoid Supabase deadlock
-          setTimeout(async () => {
-            try {
-              const { data: profile } = await supabase
-                .from("profiles")
-                .select("id")
-                .eq("user_id", session.user.id)
-                .maybeSingle();
-              
-              if (profile) {
-                navigate("/profiles", { replace: true });
-              } else {
-                navigate("/profile-setup", { replace: true });
-              }
-            } catch (err) {
-              console.error('Error checking profile:', err);
-              navigate("/profile-setup", { replace: true });
-            }
+
+        // When user signs in, compute redirect target (handled via <Navigate />)
+        if (event === "SIGNED_IN" && session?.user && mode !== "update-password") {
+          setTimeout(() => {
+            determineRedirect(session.user.id);
           }, 0);
         }
       }
@@ -169,28 +169,8 @@ const Auth = () => {
           description: rememberMe ? "Successfully signed in." : "Successfully signed in. Session will end when you close the browser.",
         });
 
-        // Explicitly navigate after successful login using window.location for guaranteed redirect
         if (data?.user) {
-          try {
-            const { data: profile, error: profileError } = await supabase
-              .from("profiles")
-              .select("id")
-              .eq("user_id", data.user.id)
-              .maybeSingle();
-            
-            console.log('Profile check:', { profile, profileError, userId: data.user.id });
-            
-            // Use window.location.href for guaranteed navigation
-            if (profile) {
-              window.location.href = "/profiles";
-            } else {
-              window.location.href = "/profile-setup";
-            }
-          } catch (profileErr) {
-            console.error('Profile check failed:', profileErr);
-            window.location.href = "/profile-setup";
-          }
-          return; // Don't continue to finally block until navigation completes
+          determineRedirect(data.user.id);
         }
       } else if (mode === "signup") {
         const redirectUrl = `${window.location.origin}/`;
@@ -334,6 +314,10 @@ const Auth = () => {
         return "";
     }
   };
+
+  if (redirectPath && mode !== "update-password") {
+    return <Navigate to={redirectPath} replace />;
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted to-background p-4 sm:p-6">
