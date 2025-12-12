@@ -86,20 +86,7 @@ const Auth = () => {
       
       setSession(session);
       setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("user_id", session.user.id)
-          .maybeSingle();
-        
-        if (profile) {
-          navigate("/profiles");
-        } else {
-          navigate("/profile-setup");
-        }
-      }
+
     }).catch(async (err) => {
       // Handle any unexpected errors by clearing session
       console.log('Session check failed, clearing:', err);
