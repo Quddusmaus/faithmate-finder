@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams, Navigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,11 +29,10 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [redirectPath, setRedirectPath] = useState<string | null>(null);
-  const navigate = useNavigate();
   const { toast } = useToast();
 
-  const determineRedirect = async (userId: string) => {
+  // Simple, reliable redirect after login - always use hard redirect
+  const redirectAfterLogin = async (userId: string) => {
     try {
       const { data: profile } = await supabase
         .from("profiles")
@@ -41,10 +40,11 @@ const Auth = () => {
         .eq("user_id", userId)
         .maybeSingle();
 
-      setRedirectPath(profile ? "/profiles" : "/profile-setup");
+      const target = profile ? "/profiles" : "/profile-setup";
+      window.location.href = target;
     } catch (err) {
-      console.error("Error determining redirect path:", err);
-      setRedirectPath("/profile-setup");
+      console.error("Error checking profile:", err);
+      window.location.href = "/profile-setup";
     }
   };
 
@@ -58,18 +58,11 @@ const Auth = () => {
       setMode("update-password");
     }
 
-    // Set up auth state listener
+    // Set up auth state listener - only update state, no redirects here
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-
-        // When user signs in, compute redirect target (handled via <Navigate />)
-        if (event === "SIGNED_IN" && session?.user && mode !== "update-password") {
-          setTimeout(() => {
-            determineRedirect(session.user.id);
-          }, 0);
-        }
       }
     );
 
@@ -96,7 +89,7 @@ const Auth = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, mode]);
+  }, [mode]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,8 +162,10 @@ const Auth = () => {
           description: rememberMe ? "Successfully signed in." : "Successfully signed in. Session will end when you close the browser.",
         });
 
+        // Redirect after successful login
         if (data?.user) {
-          determineRedirect(data.user.id);
+          await redirectAfterLogin(data.user.id);
+          return; // Stop execution, page is navigating
         }
       } else if (mode === "signup") {
         const redirectUrl = `${window.location.origin}/`;
@@ -315,9 +310,6 @@ const Auth = () => {
     }
   };
 
-  if (redirectPath && mode !== "update-password") {
-    return <Navigate to={redirectPath} replace />;
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted to-background p-4 sm:p-6">
