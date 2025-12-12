@@ -56,7 +56,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const checkSubscription = useCallback(async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (!session) {
         setStatus({
           subscribed: false,
@@ -67,11 +67,21 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('check-subscription', {
+      // Add a safety timeout so we never get stuck on "Checking subscription..."
+      const invokePromise = supabase.functions.invoke('check-subscription', {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
       });
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Subscription check timeout')), 10000);
+      });
+
+      const { data, error } = await Promise.race([
+        invokePromise,
+        timeoutPromise,
+      ]) as any;
 
       if (error) {
         console.error('Error checking subscription:', error);
