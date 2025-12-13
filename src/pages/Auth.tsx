@@ -40,8 +40,15 @@ const Auth = () => {
         .eq("user_id", userId)
         .maybeSingle();
 
-      const target = profile ? "/profiles" : "/profile-setup";
-      window.location.href = target;
+      // If no profile, go to profile setup first
+      if (!profile) {
+        window.location.href = "/profile-setup";
+        return;
+      }
+
+      // Profile exists - go to subscription page to check/get subscription
+      // The subscription page will handle redirecting to profiles if already subscribed
+      window.location.href = "/subscription";
     } catch (err) {
       console.error("Error checking profile:", err);
       window.location.href = "/profile-setup";
