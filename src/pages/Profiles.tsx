@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Heart, ArrowLeft, LogOut, Settings, MessageCircle, Shield, Menu } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ProfileCard } from "@/components/ProfileCard";
 import { ProfileFilters } from "@/components/ProfileFilters";
 import { useToast } from "@/hooks/use-toast";
@@ -36,7 +36,7 @@ const Profiles = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { unreadCount: unreadMessageCount } = useUnreadMessageCount();
-  const { isAdmin } = useAdminStatus();
+  const { isAdmin, isLoading: adminLoading } = useAdminStatus();
   const [filters, setFilters] = useState({
     ageRange: [18, 100] as [number, number],
     location: "",
@@ -47,6 +47,7 @@ const Profiles = () => {
     interests: [] as string[],
   });
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const { profile: currentUserProfile } = useCurrentUserProfile();
   const { canLike, tier, subscribed, isLoading: subscriptionLoading } = useLikeLimits();
@@ -58,16 +59,21 @@ const Profiles = () => {
     checkAuth();
   }, []);
 
-  // Subscription is no longer a hard gate for browsing profiles.
-  // Users will see contextual upgrade prompts instead of being redirected.
-
-
-  // Fetch profiles once the user is authenticated (subscription not required)
+  // Enforce subscription paywall for non-admin users
   useEffect(() => {
-    if (user) {
+    if (!user || subscriptionLoading || adminLoading) return;
+
+    if (!subscribed && !isAdmin) {
+      navigate('/subscription');
+    }
+  }, [user, subscribed, isAdmin, subscriptionLoading, adminLoading, navigate]);
+
+  // Fetch profiles only when user is allowed to browse
+  useEffect(() => {
+    if (user && !subscriptionLoading && !adminLoading && (subscribed || isAdmin)) {
       fetchProfiles();
     }
-  }, [user]);
+  }, [user, subscribed, isAdmin, subscriptionLoading, adminLoading]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
