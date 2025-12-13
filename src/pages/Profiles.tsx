@@ -58,12 +58,9 @@ const Profiles = () => {
     checkAuth();
   }, []);
 
-  // Redirect non-subscribers to subscription page
-  useEffect(() => {
-    if (!subscriptionLoading && user && !subscribed) {
-      navigate('/subscription');
-    }
-  }, [subscriptionLoading, user, subscribed, navigate]);
+  // Subscription is no longer a hard gate for browsing profiles.
+  // Users will see contextual upgrade prompts instead of being redirected.
+
 
   // Only fetch profiles if user is subscribed
   useEffect(() => {
