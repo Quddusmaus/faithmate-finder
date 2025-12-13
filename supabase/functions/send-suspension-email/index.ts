@@ -3,10 +3,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const INTERNAL_WEBHOOK_SECRET = Deno.env.get("INTERNAL_WEBHOOK_SECRET");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-internal-secret",
 };
 
 interface SuspensionEmailRequest {
@@ -25,6 +26,15 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Validate internal webhook secret
+    const providedSecret = req.headers.get("x-internal-secret");
+    if (!INTERNAL_WEBHOOK_SECRET || providedSecret !== INTERNAL_WEBHOOK_SECRET) {
+      console.error("Unauthorized: Invalid or missing internal webhook secret");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const { user_id, action_type, reason, suspended_until }: SuspensionEmailRequest = await req.json();
     
     console.log(`Processing ${action_type} notification for user: ${user_id}`);
