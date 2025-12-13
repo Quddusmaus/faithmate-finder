@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Heart, ArrowLeft, LogOut, Settings, MessageCircle, Shield, Menu } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ProfileCard } from "@/components/ProfileCard";
 import { ProfileFilters } from "@/components/ProfileFilters";
 import { useToast } from "@/hooks/use-toast";
@@ -47,7 +47,7 @@ const Profiles = () => {
     interests: [] as string[],
   });
   const { toast } = useToast();
-  const navigate = useNavigate();
+  
   const { profile: currentUserProfile } = useCurrentUserProfile();
   const { canLike, tier, subscribed, isLoading: subscriptionLoading } = useLikeLimits();
   
@@ -62,12 +62,12 @@ const Profiles = () => {
   // Users will see contextual upgrade prompts instead of being redirected.
 
 
-  // Only fetch profiles if user is subscribed
+  // Fetch profiles once the user is authenticated (subscription not required)
   useEffect(() => {
-    if (subscribed) {
+    if (user) {
       fetchProfiles();
     }
-  }, [subscribed]);
+  }, [user]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -352,10 +352,10 @@ const Profiles = () => {
           />
         </div>
 
-        {(loading || subscriptionLoading || (user && !subscribed)) ? (
+        {loading ? (
           <div className="flex justify-center py-20">
             <div className="text-muted-foreground">
-              {subscriptionLoading ? "Checking subscription..." : "Loading profiles..."}
+              Loading profiles...
             </div>
           </div>
         ) : (
