@@ -2,10 +2,11 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const INTERNAL_WEBHOOK_SECRET = Deno.env.get("INTERNAL_WEBHOOK_SECRET");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-internal-secret",
 };
 
 interface NotificationEmailRequest {
@@ -24,6 +25,15 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Validate internal webhook secret
+    const providedSecret = req.headers.get("x-internal-secret");
+    if (!INTERNAL_WEBHOOK_SECRET || providedSecret !== INTERNAL_WEBHOOK_SECRET) {
+      console.error("Unauthorized: Invalid or missing internal webhook secret");
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const { type, recipient_user_id, sender_name, sender_user_id }: NotificationEmailRequest = await req.json();
     
     console.log(`Processing ${type} notification for user ${recipient_user_id}`);
