@@ -54,7 +54,7 @@ export const useWebRTC = ({ localUserId, remoteUserId, onCallEnded }: UseWebRTCP
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastCallConfigRef = useRef<{ videoEnabled: boolean; isInitiator: boolean } | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
 

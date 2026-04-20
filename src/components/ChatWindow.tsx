@@ -60,7 +60,7 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
   const channelRef = useRef<RealtimeChannel | null>(null);
   const presenceChannelRef = useRef<RealtimeChannel | null>(null);
   const reactionsChannelRef = useRef<RealtimeChannel | null>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { toast } = useToast();
 
   const {
@@ -161,7 +161,7 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
     setIsInCall(false);
   };
 
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     fetchMessages(true); // Show loading on initial fetch
