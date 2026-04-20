@@ -64,7 +64,10 @@
     "uploadPhotos": "Загрузить фото",
     "addPhoto": "Добавить фото",
     "removePhoto": "Удалить фото",
-    "years": "лет"
+    "years": "лет",
+    "interests": "Интересы и хобби",
+    "selectInterests": "Интересы и хобби",
+    "interestsAndActivities": "Интересы и занятия"
   },
   "profiles": {
     "browseProfiles": "Просмотр профилей",

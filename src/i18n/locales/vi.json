@@ -64,7 +64,10 @@
     "uploadPhotos": "Tải ảnh lên",
     "addPhoto": "Thêm ảnh",
     "removePhoto": "Xóa ảnh",
-    "years": "tuổi"
+    "years": "tuổi",
+    "interests": "Sở thích & thú vui",
+    "selectInterests": "Sở thích và thú vui",
+    "interestsAndActivities": "Sở thích & hoạt động"
   },
   "profiles": {
     "browseProfiles": "Duyệt hồ sơ",

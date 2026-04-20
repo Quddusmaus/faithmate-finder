@@ -64,7 +64,10 @@
     "uploadPhotos": "사진 업로드",
     "addPhoto": "사진 추가",
     "removePhoto": "사진 제거",
-    "years": "세"
+    "years": "세",
+    "interests": "관심사 및 취미",
+    "selectInterests": "관심사 및 취미",
+    "interestsAndActivities": "관심사 및 활동"
   },
   "profiles": {
     "browseProfiles": "프로필 둘러보기",

@@ -64,7 +64,10 @@
     "uploadPhotos": "上传照片",
     "addPhoto": "添加照片",
     "removePhoto": "删除照片",
-    "years": "岁"
+    "years": "岁",
+    "interests": "兴趣与爱好",
+    "selectInterests": "兴趣与爱好",
+    "interestsAndActivities": "兴趣与活动"
   },
   "profiles": {
     "browseProfiles": "浏览资料",
