@@ -64,7 +64,10 @@
     "uploadPhotos": "Télécharger des Photos",
     "addPhoto": "Ajouter une Photo",
     "removePhoto": "Supprimer la Photo",
-    "years": "ans"
+    "years": "ans",
+    "interests": "Intérêts et loisirs",
+    "selectInterests": "Intérêts et loisirs",
+    "interestsAndActivities": "Intérêts et activités"
   },
   "profiles": {
     "browseProfiles": "Parcourir les Profils",

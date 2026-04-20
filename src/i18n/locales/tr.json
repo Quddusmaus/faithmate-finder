@@ -64,7 +64,10 @@
     "uploadPhotos": "Fotoğraf Yükle",
     "addPhoto": "Fotoğraf Ekle",
     "removePhoto": "Fotoğraf Kaldır",
-    "years": "yaşında"
+    "years": "yaşında",
+    "interests": "İlgi alanları ve hobiler",
+    "selectInterests": "İlgi alanları ve hobiler",
+    "interestsAndActivities": "İlgi alanları ve aktiviteler"
   },
   "profiles": {
     "browseProfiles": "Profillere Göz At",

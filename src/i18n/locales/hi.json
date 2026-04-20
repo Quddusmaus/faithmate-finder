@@ -64,7 +64,10 @@
     "uploadPhotos": "फ़ोटो अपलोड करें",
     "addPhoto": "फ़ोटो जोड़ें",
     "removePhoto": "फ़ोटो हटाएं",
-    "years": "साल"
+    "years": "साल",
+    "interests": "रुचियाँ और शौक",
+    "selectInterests": "रुचियाँ और शौक",
+    "interestsAndActivities": "रुचियाँ और गतिविधियाँ"
   },
   "profiles": {
     "browseProfiles": "प्रोफ़ाइल ब्राउज़ करें",

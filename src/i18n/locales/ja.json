@@ -64,7 +64,10 @@
     "uploadPhotos": "写真をアップロード",
     "addPhoto": "写真を追加",
     "removePhoto": "写真を削除",
-    "years": "歳"
+    "years": "歳",
+    "interests": "興味と趣味",
+    "selectInterests": "興味と趣味",
+    "interestsAndActivities": "興味とアクティビティ"
   },
   "profiles": {
     "browseProfiles": "プロフィールを閲覧",

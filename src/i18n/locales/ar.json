@@ -64,7 +64,10 @@
     "uploadPhotos": "تحميل الصور",
     "addPhoto": "إضافة صورة",
     "removePhoto": "حذف صورة",
-    "years": "سنة"
+    "years": "سنة",
+    "interests": "الاهتمامات والهوايات",
+    "selectInterests": "الاهتمامات والهوايات",
+    "interestsAndActivities": "الاهتمامات والأنشطة"
   },
   "profiles": {
     "browseProfiles": "تصفح الملفات الشخصية",
