@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Heart, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { withTimeout } from "@/lib/safeAuth";
 import type { User, Session } from "@supabase/supabase-js";
 
 type AuthMode = "login" | "signup" | "forgot-password" | "update-password";
@@ -37,24 +38,18 @@ const Auth = () => {
   // to /profile-setup if the user has no profile yet).
   const redirectAfterLogin = async (userId: string) => {
     try {
-      const profilePromise = supabase
-        .from("profiles")
-        .select("id")
-        .eq("user_id", userId)
-        .maybeSingle();
-
-      const timeoutPromise = new Promise<{ data: null }>((resolve) =>
-        setTimeout(() => resolve({ data: null }), 3000)
+      const result = await withTimeout(
+        supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle(),
+        3000,
+        "Profile redirect check timed out",
       );
 
-      const result = (await Promise.race([profilePromise, timeoutPromise])) as {
-        data: { id: string } | null;
-      };
-
-      const target = result?.data ? "/profiles" : "/profile-setup";
-      // If we timed out (no data), default to /profiles which will route
-      // appropriately based on the actual profile state.
-      window.location.href = result?.data === null ? "/profiles" : target;
+      const target = result.data ? "/profiles" : "/profile-setup";
+      window.location.href = target;
     } catch (err) {
       console.error("Error checking profile, redirecting anyway:", err);
       window.location.href = "/profiles";

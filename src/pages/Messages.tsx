@@ -10,6 +10,7 @@ import { ChatWindow } from "@/components/ChatWindow";
 import { NotificationBell } from "@/components/NotificationBell";
 import { SuperLikesReceived } from "@/components/SuperLikesReceived";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { getUserWithTimeout, withTimeout } from "@/lib/safeAuth";
 import type { User } from "@supabase/supabase-js";
 
 interface Match {
@@ -54,31 +55,34 @@ const Messages = () => {
   }, [searchParams, matches]);
 
   const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      navigate("/auth");
-      return;
+    try {
+      const currentUser = await getUserWithTimeout(5000);
+      if (!currentUser) {
+        setLoading(false);
+        navigate("/auth", { replace: true });
+        return;
+      }
+      setUser(currentUser);
+    } catch (error) {
+      console.error('Messages auth check failed:', error);
+      setLoading(false);
+      navigate("/auth", { replace: true });
     }
-    setUser(user);
   };
 
   const fetchMatches = async () => {
     try {
       if (!user) return;
 
-      console.log('Messages: Fetching matches for user', user.id);
-      
-      const { data, error } = await supabase.rpc('get_user_matches', {
-        user_uuid: user.id
-      });
+      const { data, error } = await withTimeout(
+        supabase.rpc('get_user_matches', {
+          user_uuid: user.id
+        }),
+        8000,
+        'Matches request timed out',
+      );
 
       if (error) throw error;
-      
-      console.log('Messages: Received matches', data?.map(m => ({ 
-        name: m.name, 
-        unread_count: m.unread_count 
-      })));
-      
       setMatches(data || []);
     } catch (error: any) {
       console.error("Error fetching matches:", error);

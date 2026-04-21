@@ -14,6 +14,8 @@ import { useUnreadMessageCount } from "@/hooks/useUnreadMessageCount";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import { useLikeLimits } from "@/hooks/useLikeLimits";
+import { useSubscription } from "@/hooks/useSubscription";
+import { getUserWithTimeout, withTimeout } from "@/lib/safeAuth";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface Profile {
@@ -35,6 +37,8 @@ const Profiles = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authResolved, setAuthResolved] = useState(false);
+  const [hasFetchedProfiles, setHasFetchedProfiles] = useState(false);
   const { unreadCount: unreadMessageCount } = useUnreadMessageCount();
   const { isAdmin, isLoading: adminLoading } = useAdminStatus();
   const [filters, setFilters] = useState({
@@ -50,7 +54,8 @@ const Profiles = () => {
   const navigate = useNavigate();
   
   const { profile: currentUserProfile } = useCurrentUserProfile();
-  const { canLike, tier, subscribed, isLoading: subscriptionLoading } = useLikeLimits();
+  const { subscribed, tier, isLoading: subscriptionStatusLoading } = useSubscription();
+  const { canLike } = useLikeLimits();
   
   // Show upgrade banner only when like limit is reached (basic tier)
   const showLikeLimitBanner = user && subscribed && tier === 'basic' && !canLike;
@@ -59,29 +64,59 @@ const Profiles = () => {
     checkAuth();
   }, []);
 
-  // Enforce subscription paywall for non-admin users
   useEffect(() => {
-    if (!user || subscriptionLoading || adminLoading) return;
+    if (!authResolved) return;
 
-    if (!subscribed && !isAdmin) {
-      navigate('/subscription');
-    }
-  }, [user, subscribed, isAdmin, subscriptionLoading, adminLoading, navigate]);
-
-  // Fetch profiles only when user is allowed to browse
-  useEffect(() => {
-    if (user && !subscriptionLoading && !adminLoading && (subscribed || isAdmin)) {
-      fetchProfiles();
-    }
-  }, [user, subscribed, isAdmin, subscriptionLoading, adminLoading]);
-
-  const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      navigate('/auth');
+      setLoading(false);
       return;
     }
-    setUser(user);
+
+    if (subscriptionStatusLoading || adminLoading) {
+      return;
+    }
+
+    if (!subscribed && !isAdmin) {
+      setLoading(false);
+      navigate('/subscription', { replace: true });
+      return;
+    }
+
+    if (!hasFetchedProfiles) {
+      fetchProfiles();
+    }
+  }, [
+    authResolved,
+    user,
+    subscribed,
+    isAdmin,
+    subscriptionStatusLoading,
+    adminLoading,
+    hasFetchedProfiles,
+    navigate,
+  ]);
+
+  const checkAuth = async () => {
+    try {
+      const currentUser = await getUserWithTimeout(5000);
+      if (!currentUser) {
+        setLoading(false);
+        navigate('/auth', { replace: true });
+        return;
+      }
+      setUser(currentUser);
+    } catch (error) {
+      console.error('Profiles auth check failed:', error);
+      toast({
+        title: 'Session issue',
+        description: 'We could not verify your session. Please sign in again.',
+        variant: 'destructive',
+      });
+      setLoading(false);
+      navigate('/auth', { replace: true });
+    } finally {
+      setAuthResolved(true);
+    }
   };
 
   const handleSignOut = async () => {
@@ -95,41 +130,37 @@ const Profiles = () => {
 
   const fetchProfiles = async () => {
     try {
-      const currentUser = (await supabase.auth.getUser()).data.user;
-      
-      // Fetch demo profiles (public)
-      const demoResult = await supabase
-        .from("demo_profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const currentUser = await getUserWithTimeout(5000);
+
+      const [demoResult, profilesResult] = await Promise.all([
+        withTimeout(
+          supabase
+            .from("demo_profiles")
+            .select("*")
+            .order("created_at", { ascending: false }),
+          8000,
+          'Demo profiles request timed out',
+        ),
+        withTimeout(
+          supabase
+            .from("profiles")
+            .select("*")
+            .order("created_at", { ascending: false }),
+          8000,
+          'Profiles request timed out',
+        ),
+      ]);
 
       if (demoResult.error) {
         console.error("Error fetching demo profiles:", demoResult.error);
       }
 
-      // Fetch real profiles (requires authentication due to RLS)
-      const profilesResult = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
-
       if (profilesResult.error) {
         console.error("Error fetching profiles:", profilesResult.error);
-        // Don't throw - just use demo profiles if real profiles fail
       }
 
-      // Combine and filter out current user's profile from the list
-      const realProfiles = (profilesResult.data || []).filter(p => p.user_id !== currentUser?.id);
-      const allProfiles = [
-        ...(demoResult.data || []),
-        ...realProfiles
-      ];
-
-      console.log("Fetched profiles:", { 
-        demoCount: demoResult.data?.length || 0, 
-        realCount: realProfiles.length,
-        isAuthenticated: !!currentUser 
-      });
+      const realProfiles = (profilesResult.data || []).filter((p) => p.user_id !== currentUser?.id);
+      const allProfiles = [...(demoResult.data || []), ...realProfiles];
 
       setProfiles(allProfiles);
       setFilteredProfiles(allProfiles);
@@ -141,6 +172,7 @@ const Profiles = () => {
         variant: "destructive",
       });
     } finally {
+      setHasFetchedProfiles(true);
       setLoading(false);
     }
   };

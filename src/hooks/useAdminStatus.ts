@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getUserWithTimeout, withTimeout } from "@/lib/safeAuth";
 
 export const useAdminStatus = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -8,7 +9,7 @@ export const useAdminStatus = () => {
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = await getUserWithTimeout(5000);
         
         if (!user) {
           setIsAdmin(false);
@@ -16,12 +17,16 @@ export const useAdminStatus = () => {
           return;
         }
 
-        const { data, error } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .eq("role", "admin")
-          .maybeSingle();
+        const { data, error } = await withTimeout(
+          supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("role", "admin")
+            .maybeSingle(),
+          5000,
+          'Admin status check timed out',
+        );
 
         if (error) {
           console.error("Error checking admin status:", error);
@@ -40,6 +45,7 @@ export const useAdminStatus = () => {
     checkAdminStatus();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      setIsLoading(true);
       checkAdminStatus();
     });
 
