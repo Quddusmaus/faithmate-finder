@@ -15,6 +15,7 @@ import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getUserWithTimeout, withTimeout } from "@/lib/safeAuth";
 import type { User } from "@supabase/supabase-js";
 
 const ProfileSetup = () => {
@@ -52,53 +53,71 @@ const ProfileSetup = () => {
   }, []);
 
   const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    setUser(user);
-    
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (profile) {
-      setExistingProfile(profile);
-      setProfileData({
-        name: profile.name || "",
-        age: profile.age?.toString() || "",
-        gender: profile.gender || "",
-        location: profile.location || "",
-        lookingFor: profile.looking_for || "",
-        bio: profile.bio || "",
-        photoUrls: profile.photo_urls || [],
-        interests: profile.interests || [],
-      });
-      setIsVisible(profile.is_visible ?? true);
-      
-      if (profile.verified) {
-        setVerificationStatus("verified");
-      } else {
-        const { data: photoVerification } = await supabase
-          .from("photo_verifications")
-          .select("status")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        
-        if (photoVerification) {
-          setVerificationStatus(photoVerification.status);
-        }
+    try {
+      const currentUser = await getUserWithTimeout(5000);
+      if (!currentUser) {
+        navigate("/auth", { replace: true });
+        return;
       }
-    } else {
-      setProfileData(prev => ({
-        ...prev,
-        name: user.user_metadata?.name || "",
-      }));
+      setUser(currentUser);
+      
+      const { data: profile } = await withTimeout(
+        supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", currentUser.id)
+          .maybeSingle(),
+        8000,
+        "Profile load timed out",
+      );
+
+      if (profile) {
+        setExistingProfile(profile);
+        setProfileData({
+          name: profile.name || "",
+          age: profile.age?.toString() || "",
+          gender: profile.gender || "",
+          location: profile.location || "",
+          lookingFor: profile.looking_for || "",
+          bio: profile.bio || "",
+          photoUrls: profile.photo_urls || [],
+          interests: profile.interests || [],
+        });
+        setIsVisible(profile.is_visible ?? true);
+        
+        if (profile.verified) {
+          setVerificationStatus("verified");
+        } else {
+          const { data: photoVerification } = await withTimeout(
+            supabase
+              .from("photo_verifications")
+              .select("status")
+              .eq("user_id", currentUser.id)
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle(),
+            8000,
+            "Verification status load timed out",
+          );
+          
+          if (photoVerification) {
+            setVerificationStatus(photoVerification.status);
+          }
+        }
+      } else {
+        setProfileData((prev) => ({
+          ...prev,
+          name: currentUser.user_metadata?.name || "",
+        }));
+      }
+    } catch (error) {
+      console.error("Profile setup auth/profile load failed:", error);
+      toast({
+        title: "Error",
+        description: "We couldn't load your profile right now. Please try again.",
+        variant: "destructive",
+      });
+      navigate("/auth", { replace: true });
     }
   };
 

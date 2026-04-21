@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { useSubscription, SUBSCRIPTION_TIERS, SubscriptionTier } from '@/hooks/useSubscription';
-import { supabase } from '@/integrations/supabase/client';
+import { getSessionWithTimeout } from '@/lib/safeAuth';
 
 const tierIcons: Record<string, React.ReactNode> = {
   basic: <Zap className="h-6 w-6" />,
@@ -40,7 +40,6 @@ export default function Subscription() {
         description: 'Thank you for subscribing. Your premium features are now active.',
       });
       checkSubscription();
-      // Clear the URL params
       navigate('/subscription', { replace: true });
     } else if (canceled === 'true') {
       toast({
@@ -53,11 +52,14 @@ export default function Subscription() {
   }, [searchParams, navigate, checkSubscription]);
 
   useEffect(() => {
-    // Check if user is authenticated
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate('/auth');
+      try {
+        const session = await getSessionWithTimeout(5000);
+        if (!session) {
+          navigate('/auth', { replace: true });
+        }
+      } catch {
+        navigate('/auth', { replace: true });
       }
     };
     checkAuth();
