@@ -8,11 +8,14 @@ function timeoutPromise(ms: number, message: string): Promise<never> {
 }
 
 export async function withTimeout<T>(
-  promise: Promise<T>,
+  promise: PromiseLike<T>,
   ms: number,
   message: string,
 ): Promise<T> {
-  return Promise.race([promise, timeoutPromise(ms, message)]);
+  return Promise.race([
+    Promise.resolve(promise),
+    timeoutPromise(ms, message),
+  ]) as Promise<T>;
 }
 
 export async function getUserWithTimeout(ms = 5000): Promise<User | null> {
