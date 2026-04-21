@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getUserWithTimeout, withTimeout } from "@/lib/safeAuth";
 
 interface UserProfile {
   id: string;
@@ -14,21 +15,30 @@ export const useCurrentUserProfile = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
+      try {
+        const user = await getUserWithTimeout(5000);
+        
+        if (!user) {
+          setLoading(false);
+          return;
+        }
+
+        const { data } = await withTimeout(
+          supabase
+            .from("profiles")
+            .select("id, user_id, name, interests")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+          5000,
+          'Current profile request timed out',
+        );
+
+        setProfile(data);
+      } catch (error) {
+        console.error('Error fetching current user profile:', error);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, user_id, name, interests")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      setProfile(data);
-      setLoading(false);
     };
 
     fetchProfile();

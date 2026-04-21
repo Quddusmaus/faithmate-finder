@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubscription, SubscriptionTier } from '@/contexts/SubscriptionContext';
 import { toast } from '@/hooks/use-toast';
+import { getUserWithTimeout, withTimeout } from '@/lib/safeAuth';
 
 interface LikeLimits {
   maxLikes: number | null; // null means unlimited
@@ -32,14 +33,17 @@ export function useLikeLimits() {
 
   const fetchUsedLikes = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getUserWithTimeout(5000);
       if (!user) {
         setIsLoading(false);
         return;
       }
 
-      const { data, error } = await supabase
-        .rpc('get_today_like_count', { p_user_id: user.id });
+      const { data, error } = await withTimeout(
+        supabase.rpc('get_today_like_count', { p_user_id: user.id }),
+        5000,
+        'Like count request timed out',
+      );
 
       if (error) {
         console.error('Error fetching like count:', error);
@@ -65,13 +69,16 @@ export function useLikeLimits() {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getUserWithTimeout(5000);
       if (!user) {
         return false;
       }
 
-      const { data, error } = await supabase
-        .rpc('increment_like_count', { p_user_id: user.id });
+      const { data, error } = await withTimeout(
+        supabase.rpc('increment_like_count', { p_user_id: user.id }),
+        5000,
+        'Increment like request timed out',
+      );
 
       if (error) {
         console.error('Error incrementing like count:', error);
