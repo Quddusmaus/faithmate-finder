@@ -31,20 +31,33 @@ const Auth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const { toast } = useToast();
 
-  // Simple, reliable redirect after login - always use hard redirect
+  // Simple, reliable redirect after login - always use hard redirect.
+  // Uses a 3s timeout on the profile lookup so the UI never hangs if the
+  // query stalls. Defaults to /profiles on timeout (that page will redirect
+  // to /profile-setup if the user has no profile yet).
   const redirectAfterLogin = async (userId: string) => {
     try {
-      const { data: profile } = await supabase
+      const profilePromise = supabase
         .from("profiles")
         .select("id")
         .eq("user_id", userId)
         .maybeSingle();
 
-      const target = profile ? "/profiles" : "/profile-setup";
-      window.location.href = target;
+      const timeoutPromise = new Promise<{ data: null }>((resolve) =>
+        setTimeout(() => resolve({ data: null }), 3000)
+      );
+
+      const result = (await Promise.race([profilePromise, timeoutPromise])) as {
+        data: { id: string } | null;
+      };
+
+      const target = result?.data ? "/profiles" : "/profile-setup";
+      // If we timed out (no data), default to /profiles which will route
+      // appropriately based on the actual profile state.
+      window.location.href = result?.data === null ? "/profiles" : target;
     } catch (err) {
-      console.error("Error checking profile:", err);
-      window.location.href = "/profile-setup";
+      console.error("Error checking profile, redirecting anyway:", err);
+      window.location.href = "/profiles";
     }
   };
 
