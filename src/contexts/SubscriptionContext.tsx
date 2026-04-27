@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { getSessionWithTimeout, withTimeout } from '@/lib/safeAuth';
 
 export type SubscriptionTier = 'basic' | 'premium' | null;
 
@@ -55,7 +56,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   const checkSubscription = useCallback(async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getSessionWithTimeout(3000);
 
       if (!session) {
         setStatus({
@@ -68,20 +69,15 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       }
 
       // Add a safety timeout so we never get stuck on "Checking subscription..."
-      const invokePromise = supabase.functions.invoke('check-subscription', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Subscription check timeout')), 10000);
-      });
-
-      const { data, error } = await Promise.race([
-        invokePromise,
-        timeoutPromise,
-      ]) as any;
+      const { data, error } = await withTimeout(
+        supabase.functions.invoke('check-subscription', {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }),
+        10000,
+        'Subscription check timeout',
+      ) as any;
 
       if (error) {
         console.error('Error checking subscription:', error);
@@ -104,7 +100,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   const createCheckout = useCallback(async (tier: 'basic' | 'premium') => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getSessionWithTimeout(3000);
       
       if (!session) {
         toast({
@@ -142,7 +138,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   const openCustomerPortal = useCallback(async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getSessionWithTimeout(3000);
       
       if (!session) {
         toast({

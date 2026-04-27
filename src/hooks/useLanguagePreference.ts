@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
+import { getSessionWithTimeout } from '@/lib/safeAuth';
 
 export const useLanguagePreference = () => {
   const { i18n } = useTranslation();
@@ -24,8 +25,7 @@ export const useLanguagePreference = () => {
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getSessionWithTimeout(3000).then((session) => {
       setUserId(session?.user?.id ?? null);
       if (session?.user?.id) {
         loadLanguagePreference(session.user.id);

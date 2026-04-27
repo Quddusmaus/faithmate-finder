@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getUserWithTimeout, withTimeout } from "@/lib/safeAuth";
 
 /**
  * Custom hook for tracking unread message count with real-time updates.
@@ -17,9 +18,13 @@ export const useUnreadMessageCount = () => {
     try {
       console.log('useUnreadMessageCount: Fetching for user', uid);
       
-      const { data, error } = await supabase.rpc('get_user_matches', {
-        user_uuid: uid
-      });
+      const { data, error } = await withTimeout(
+        supabase.rpc('get_user_matches', {
+          user_uuid: uid
+        }),
+        8000,
+        'Unread count request timed out',
+      );
 
       if (error) {
         console.error('useUnreadMessageCount: Error fetching matches', error);
@@ -57,7 +62,7 @@ export const useUnreadMessageCount = () => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
     const initialize = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getUserWithTimeout(5000);
       
       if (!mounted) return;
       
