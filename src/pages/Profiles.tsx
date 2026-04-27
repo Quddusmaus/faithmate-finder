@@ -56,6 +56,7 @@ const Profiles = () => {
   
   const { profile: currentUserProfile } = useCurrentUserProfile();
   const { subscribed, tier, isLoading: subscriptionStatusLoading } = useSubscription();
+  const { isComped, isLoading: compLoading } = useCompStatus();
   const { canLike } = useLikeLimits();
   
   // Show upgrade banner only when like limit is reached (basic tier)
@@ -73,11 +74,11 @@ const Profiles = () => {
       return;
     }
 
-    if (subscriptionStatusLoading || adminLoading) {
+    if (subscriptionStatusLoading || adminLoading || compLoading) {
       return;
     }
 
-    if (!subscribed && !isAdmin) {
+    if (!subscribed && !isAdmin && !isComped) {
       setLoading(false);
       navigate('/subscription', { replace: true });
       return;
@@ -91,8 +92,10 @@ const Profiles = () => {
     user,
     subscribed,
     isAdmin,
+    isComped,
     subscriptionStatusLoading,
     adminLoading,
+    compLoading,
     hasFetchedProfiles,
     navigate,
   ]);
