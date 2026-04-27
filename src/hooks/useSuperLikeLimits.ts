@@ -40,7 +40,7 @@ export function useSuperLikeLimits() {
         return;
       }
 
-      const { data, error } = await withTimeout(
+      const { data, error } = await withTimeout<any>(
         supabase.rpc('get_today_super_like_count' as any, { p_user_id: user.id }) as any,
         5000,
         'Super Like count request timed out',
@@ -74,7 +74,7 @@ export function useSuperLikeLimits() {
         return false;
       }
 
-      const { data, error } = await withTimeout(
+      const { data, error } = await withTimeout<any>(
         supabase.rpc('increment_super_like_count' as any, { p_user_id: user.id }) as any,
         5000,
         'Increment Super Like request timed out',
