@@ -95,6 +95,30 @@ export type Database = {
         }
         Relationships: []
       }
+      comped_users: {
+        Row: {
+          created_at: string
+          granted_by: string | null
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       contact_submissions: {
         Row: {
           admin_notes: string | null
@@ -794,6 +818,7 @@ export type Database = {
         Args: { checker_id: string; target_id: string }
         Returns: boolean
       }
+      is_comped: { Args: { _user_id: string }; Returns: boolean }
       record_login_attempt: {
         Args: { p_email: string; p_success: boolean }
         Returns: undefined

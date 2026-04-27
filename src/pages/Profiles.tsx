@@ -15,6 +15,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import { useLikeLimits } from "@/hooks/useLikeLimits";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useCompStatus } from "@/hooks/useCompStatus";
 import { getUserWithTimeout, withTimeout } from "@/lib/safeAuth";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
@@ -55,6 +56,7 @@ const Profiles = () => {
   
   const { profile: currentUserProfile } = useCurrentUserProfile();
   const { subscribed, tier, isLoading: subscriptionStatusLoading } = useSubscription();
+  const { isComped, isLoading: compLoading } = useCompStatus();
   const { canLike } = useLikeLimits();
   
   // Show upgrade banner only when like limit is reached (basic tier)
@@ -72,11 +74,11 @@ const Profiles = () => {
       return;
     }
 
-    if (subscriptionStatusLoading || adminLoading) {
+    if (subscriptionStatusLoading || adminLoading || compLoading) {
       return;
     }
 
-    if (!subscribed && !isAdmin) {
+    if (!subscribed && !isAdmin && !isComped) {
       setLoading(false);
       navigate('/subscription', { replace: true });
       return;
@@ -90,8 +92,10 @@ const Profiles = () => {
     user,
     subscribed,
     isAdmin,
+    isComped,
     subscriptionStatusLoading,
     adminLoading,
+    compLoading,
     hasFetchedProfiles,
     navigate,
   ]);
