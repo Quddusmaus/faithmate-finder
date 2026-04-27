@@ -162,6 +162,10 @@ const Auth = () => {
           title: "Account created!",
           description: "Welcome to Unity Hearts.",
         });
+
+        // Redirect new users to profile setup
+        window.location.replace("/profile-setup");
+        return;
       }
     } catch (error: any) {
       toast({
