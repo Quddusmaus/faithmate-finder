@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubscription, SubscriptionTier } from '@/hooks/useSubscription';
 import { toast } from '@/hooks/use-toast';
+import { getUserWithTimeout, withTimeout } from '@/lib/safeAuth';
 
 interface CallLimits {
   maxCalls: number | null; // null means unlimited
@@ -32,14 +33,17 @@ export function useCallLimits() {
 
   const fetchUsedCalls = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getUserWithTimeout(5000);
       if (!user) {
         setIsLoading(false);
         return;
       }
 
-      const { data, error } = await supabase
-        .rpc('get_today_call_count', { p_user_id: user.id });
+      const { data, error } = await withTimeout(
+        supabase.rpc('get_today_call_count', { p_user_id: user.id }),
+        5000,
+        'Call count request timed out',
+      );
 
       if (error) {
         console.error('Error fetching call count:', error);
@@ -65,7 +69,7 @@ export function useCallLimits() {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getUserWithTimeout(5000);
       if (!user) {
         toast({
           title: 'Authentication required',
@@ -75,8 +79,11 @@ export function useCallLimits() {
         return false;
       }
 
-      const { data, error } = await supabase
-        .rpc('increment_call_count', { p_user_id: user.id });
+      const { data, error } = await withTimeout(
+        supabase.rpc('increment_call_count', { p_user_id: user.id }),
+        5000,
+        'Increment call request timed out',
+      );
 
       if (error) {
         console.error('Error incrementing call count:', error);
