@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
+import { getUserWithTimeout } from "@/lib/safeAuth";
 
 export type ErrorSeverity = "info" | "warning" | "error" | "critical";
 
@@ -15,7 +16,7 @@ interface ErrorLogData {
 
 export const logError = async (data: ErrorLogData): Promise<void> => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUserWithTimeout(3000);
     
     const errorLog = {
       user_id: user?.id || null,
