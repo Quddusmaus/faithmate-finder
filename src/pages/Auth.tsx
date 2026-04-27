@@ -132,9 +132,9 @@ const Auth = () => {
           description: rememberMe ? "Successfully signed in." : "Successfully signed in. Session will end when you close the browser.",
         });
 
-        // Redirect after successful login
+        // Redirect after successful login (immediate hard redirect)
         if (data?.user) {
-          await redirectAfterLogin(data.user.id);
+          redirectAfterLogin(data.user.id);
           return; // Stop execution, page is navigating
         }
       } else if (mode === "signup") {
