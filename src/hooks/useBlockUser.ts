@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { getUserWithTimeout } from '@/lib/safeAuth';
 
 export const useBlockUser = () => {
   const [isBlocking, setIsBlocking] = useState(false);
@@ -9,7 +10,7 @@ export const useBlockUser = () => {
   const blockUser = async (blockedUserId: string, blockedUserName: string) => {
     setIsBlocking(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getUserWithTimeout(5000);
       if (!user) {
         toast({
           title: 'Error',
@@ -63,7 +64,7 @@ export const useBlockUser = () => {
   const unblockUser = async (blockedUserId: string, blockedUserName: string) => {
     setIsBlocking(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getUserWithTimeout(5000);
       if (!user) {
         toast({
           title: 'Error',
@@ -103,7 +104,7 @@ export const useBlockUser = () => {
   const unmatch = async (matchedUserId: string, matchedUserName: string) => {
     setIsBlocking(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getUserWithTimeout(5000);
       if (!user) {
         toast({
           title: 'Error',
