@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
+import { getUserWithTimeout } from "@/lib/safeAuth";
 
 interface Notification {
   id: string;
@@ -56,7 +57,7 @@ export const NotificationBell = () => {
   }, []);
 
   const fetchNotifications = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getUserWithTimeout(5000);
     if (!user) {
       console.log('NotificationBell: No user logged in');
       return;
