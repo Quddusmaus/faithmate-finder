@@ -32,10 +32,6 @@ serve(async (req) => {
   try {
     logStep("Function started");
 
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    logStep("Stripe key verified");
-
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
     logStep("Authorization header found");
@@ -48,6 +44,31 @@ serve(async (req) => {
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
+
+    const { data: compedUser, error: compError } = await supabaseClient
+      .from("comped_users")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (compError) throw new Error(`Comp status error: ${compError.message}`);
+
+    if (compedUser) {
+      logStep("Comped user found, returning active comp subscription", { userId: user.id });
+      return new Response(JSON.stringify({
+        subscribed: true,
+        tier: "basic",
+        subscription_end: null,
+        comped: true,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    logStep("Stripe key verified");
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
