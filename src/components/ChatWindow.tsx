@@ -516,28 +516,6 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
         );
       });
 
-      // Send email notification to recipient (fire and forget)
-      // Get sender's profile name for the notification
-      const { data: senderProfile } = await supabase
-        .from("profiles")
-        .select("name")
-        .eq("user_id", user.id)
-        .single();
-
-      if (senderProfile?.name) {
-        supabase.functions.invoke("send-notification-email", {
-          body: {
-            type: "message",
-            recipient_user_id: match.match_id,
-            sender_name: senderProfile.name,
-            sender_user_id: user.id,
-          },
-        }).then(response => {
-          console.log("Email notification response:", response);
-        }).catch(err => {
-          console.error("Email notification error:", err);
-        });
-      }
     } catch (error: any) {
       console.error("Error sending message:", error);
       // Remove optimistic message on error
