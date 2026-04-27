@@ -30,6 +30,15 @@ export default function Subscription() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { subscribed, tier, subscriptionEnd, isLoading, createCheckout, openCustomerPortal, checkSubscription } = useSubscription();
+  const { isComped, isLoading: compLoading } = useCompStatus();
+
+  // Comped users bypass the paywall entirely
+  useEffect(() => {
+    if (!compLoading && isComped) {
+      navigate('/profiles', { replace: true });
+    }
+  }, [isComped, compLoading, navigate]);
+
 
   useEffect(() => {
     const success = searchParams.get('success');
