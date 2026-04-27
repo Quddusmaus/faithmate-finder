@@ -99,6 +99,7 @@ export const ProfileSetupWizard = ({
 
   const progress = (currentStep / STEPS.length) * 100;
   const currentStepData = STEPS[currentStep - 1];
+  const CurrentStepIcon = currentStepData.icon;
 
   return (
     <div className="space-y-6">
@@ -124,6 +125,7 @@ export const ProfileSetupWizard = ({
             return (
               <button
                 key={step.id}
+                type="button"
                 onClick={() => step.id <= currentStep && setCurrentStep(step.id)}
                 disabled={step.id > currentStep}
                 className={cn(
@@ -159,11 +161,13 @@ export const ProfileSetupWizard = ({
         </div>
       </div>
 
-      {/* Step Content */}
-      <Card className="animate-fade-in">
+      {/* Step Content - keyed by currentStep so React fully remounts between steps,
+          preventing reconciliation crashes ("removeChild ... not a child of this node")
+          when the dynamic icon and inputs change. */}
+      <Card key={currentStep} className="animate-fade-in">
         <CardHeader className="text-center pb-2">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <currentStepData.icon className="h-6 w-6 text-primary" />
+            <CurrentStepIcon className="h-6 w-6 text-primary" />
           </div>
           <CardTitle className="text-xl">{currentStepData.title}</CardTitle>
           <CardDescription>{currentStepData.description}</CardDescription>
