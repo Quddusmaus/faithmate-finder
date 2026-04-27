@@ -15,6 +15,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
+import { getUserWithTimeout } from "@/lib/safeAuth";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
@@ -77,7 +78,7 @@ const Contact = () => {
 
     try {
       // Get current user if logged in
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getUserWithTimeout(3000);
 
       const { error } = await supabase
         .from("contact_submissions")

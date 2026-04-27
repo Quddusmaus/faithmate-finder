@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubscription, SubscriptionTier } from '@/contexts/SubscriptionContext';
 import { toast } from '@/hooks/use-toast';
+import { getUserWithTimeout, withTimeout } from '@/lib/safeAuth';
 
 interface SuperLikeLimits {
   maxSuperLikes: number | null;
@@ -33,14 +34,17 @@ export function useSuperLikeLimits() {
 
   const fetchUsedSuperLikes = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getUserWithTimeout(5000);
       if (!user) {
         setIsLoading(false);
         return;
       }
 
-      const { data, error } = await (supabase
-        .rpc('get_today_super_like_count' as any, { p_user_id: user.id }) as any);
+      const { data, error } = await withTimeout<any>(
+        supabase.rpc('get_today_super_like_count' as any, { p_user_id: user.id }) as any,
+        5000,
+        'Super Like count request timed out',
+      );
 
       if (error) {
         console.error('Error fetching super like count:', error);
@@ -65,13 +69,16 @@ export function useSuperLikeLimits() {
     }
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getUserWithTimeout(5000);
       if (!user) {
         return false;
       }
 
-      const { data, error } = await (supabase
-        .rpc('increment_super_like_count' as any, { p_user_id: user.id }) as any);
+      const { data, error } = await withTimeout<any>(
+        supabase.rpc('increment_super_like_count' as any, { p_user_id: user.id }) as any,
+        5000,
+        'Increment Super Like request timed out',
+      );
 
       if (error) {
         console.error('Error incrementing super like count:', error);

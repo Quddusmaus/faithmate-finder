@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { getSessionWithTimeout, withTimeout } from '@/lib/safeAuth';
@@ -53,8 +53,13 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     subscriptionEnd: null,
     isLoading: true,
   });
+  const lastCheckedAtRef = useRef(0);
 
-  const checkSubscription = useCallback(async () => {
+  const checkSubscription = useCallback(async (force = false) => {
+    const now = Date.now();
+    if (!force && now - lastCheckedAtRef.current < 30000) return;
+    lastCheckedAtRef.current = now;
+
     try {
       const session = await getSessionWithTimeout(3000);
 
@@ -173,14 +178,14 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    checkSubscription();
+    checkSubscription(true);
 
     // Refresh subscription status every 60 seconds
-    const interval = setInterval(checkSubscription, 60000);
+    const interval = setInterval(() => checkSubscription(), 60000);
 
     // Also refresh on auth state change
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkSubscription();
+      checkSubscription(true);
     });
 
     return () => {

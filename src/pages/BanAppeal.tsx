@@ -10,6 +10,7 @@ import { Heart, AlertTriangle, Clock, CheckCircle, XCircle, ArrowLeft, Send } fr
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
+import { getUserWithTimeout } from "@/lib/safeAuth";
 
 interface Appeal {
   id: string;
@@ -41,7 +42,7 @@ const BanAppeal = () => {
 
   const checkUserAndFetchData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getUserWithTimeout(5000);
       
       if (!user) {
         navigate("/auth");
