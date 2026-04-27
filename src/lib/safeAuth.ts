@@ -19,6 +19,12 @@ export async function withTimeout<T>(
 }
 
 export async function getUserWithTimeout(ms = 5000): Promise<User | null> {
+  const session = await getSessionWithTimeout(Math.min(ms, 2000)).catch(() => null);
+
+  if (session?.user) {
+    return session.user;
+  }
+
   const { data, error } = await withTimeout(
     supabase.auth.getUser(),
     ms,
