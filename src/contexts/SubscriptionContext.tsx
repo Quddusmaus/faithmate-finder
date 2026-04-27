@@ -183,9 +183,20 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     // Refresh subscription status every 60 seconds
     const interval = setInterval(() => checkSubscription(), 60000);
 
-    // Also refresh on auth state change
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkSubscription(true);
+    // React to auth state changes without triggering a forced re-check on every
+    // TOKEN_REFRESHED event. A forced re-check during the brief window when the
+    // Supabase client is rotating its access token can return a null session and
+    // incorrectly set subscribed:false, which kicks authenticated users out of
+    // active pages. Instead: only force-check on a fresh sign-in (which needs up-
+    // to-date subscription data) and immediately clear state on sign-out.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        checkSubscription(true);
+      } else if (event === 'SIGNED_OUT') {
+        setStatus({ subscribed: false, tier: null, subscriptionEnd: null, isLoading: false });
+      }
+      // TOKEN_REFRESHED / INITIAL_SESSION: the periodic 60-second interval
+      // already keeps subscription status fresh; no forced re-check needed here.
     });
 
     return () => {

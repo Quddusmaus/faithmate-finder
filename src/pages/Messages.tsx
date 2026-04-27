@@ -36,7 +36,17 @@ const Messages = () => {
 
   useEffect(() => {
     checkAuth();
-  }, []);
+
+    // If the session genuinely expires while the user is in an active chat,
+    // redirect them to auth so they don't get stuck on a blank/broken page.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        navigate('/auth', { replace: true });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   useEffect(() => {
     if (user) {
