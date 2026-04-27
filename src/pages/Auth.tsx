@@ -36,8 +36,8 @@ const Auth = () => {
   // /profiles — that page handles redirecting to /profile-setup if no profile
   // exists. This avoids any chance of the auth screen freezing while we wait
   // on a profile lookup behind the preview proxy.
-  const redirectAfterLogin = (_userId: string) => {
-    window.location.href = "/profiles";
+  const redirectAfterLogin = () => {
+    window.location.replace("/profiles");
   };
 
   useEffect(() => {
@@ -55,12 +55,20 @@ const Auth = () => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+
+        if (mode === "login" && session?.user) {
+          redirectAfterLogin();
+        }
       }
     );
 
     getSessionWithTimeout(3000).then((session) => {
       setSession(session);
       setUser(session?.user ?? null);
+
+      if (mode === "login" && session?.user) {
+        redirectAfterLogin();
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -117,7 +125,7 @@ const Auth = () => {
           setTimeout(() => reject(new Error('Sign in timed out. Please check your internet connection and try again.')), 15000)
         );
         
-        const { error, data } = await Promise.race([signInPromise, timeoutPromise]) as any;
+        const { error } = await Promise.race([signInPromise, timeoutPromise]) as any;
 
         // Record the login attempt (don't block on this)
         Promise.resolve(supabase.rpc('record_login_attempt', {
@@ -132,11 +140,8 @@ const Auth = () => {
           description: rememberMe ? "Successfully signed in." : "Successfully signed in. Session will end when you close the browser.",
         });
 
-        // Redirect after successful login (immediate hard redirect)
-        if (data?.user) {
-          redirectAfterLogin(data.user.id);
-          return; // Stop execution, page is navigating
-        }
+        redirectAfterLogin();
+        return;
       } else if (mode === "signup") {
         const redirectUrl = `${window.location.origin}/`;
         
