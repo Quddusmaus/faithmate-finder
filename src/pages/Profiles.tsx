@@ -15,6 +15,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import { useLikeLimits } from "@/hooks/useLikeLimits";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useCompStatus } from "@/hooks/useCompStatus";
 import { getUserWithTimeout, withTimeout } from "@/lib/safeAuth";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
