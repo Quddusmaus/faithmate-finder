@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { useSubscription, SUBSCRIPTION_TIERS, SubscriptionTier } from '@/hooks/useSubscription';
+import { useCompStatus } from '@/hooks/useCompStatus';
 import { getSessionWithTimeout } from '@/lib/safeAuth';
 
 const tierIcons: Record<string, React.ReactNode> = {
