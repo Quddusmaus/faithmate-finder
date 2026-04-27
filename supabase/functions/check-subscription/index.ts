@@ -54,10 +54,10 @@ serve(async (req) => {
     if (compError) throw new Error(`Comp status error: ${compError.message}`);
 
     if (compedUser) {
-      logStep("Comped user found, returning active comp subscription", { userId: user.id });
+      logStep("Comped user found, returning premium comp subscription", { userId: user.id });
       return new Response(JSON.stringify({
         subscribed: true,
-        tier: "basic",
+        tier: "premium",
         subscription_end: null,
         comped: true,
       }), {
