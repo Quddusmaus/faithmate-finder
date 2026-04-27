@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, ArrowLeft } from "lucide-react";
+import { Heart, ArrowLeft, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getSessionWithTimeout, withTimeout } from "@/lib/safeAuth";
 import type { User, Session } from "@supabase/supabase-js";
 
-type AuthMode = "login" | "signup" | "forgot-password" | "update-password";
+type AuthMode = "login" | "signup" | "forgot-password" | "update-password" | "check-email";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -143,28 +143,30 @@ const Auth = () => {
         redirectAfterLogin();
         return;
       } else if (mode === "signup") {
-        const redirectUrl = `${window.location.origin}/`;
-        
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: redirectUrl,
-            data: {
-              name,
-            },
+            emailRedirectTo: `${window.location.origin}/auth`,
+            data: { name },
           },
         });
 
         if (error) throw error;
 
-        toast({
-          title: "Account created!",
-          description: "Welcome to Unity Hearts.",
-        });
+        // If a session was returned immediately, email confirmation is disabled —
+        // send the user straight to profile setup.
+        if (data.session) {
+          toast({
+            title: "Account created!",
+            description: "Welcome to Unity Hearts.",
+          });
+          window.location.replace("/profile-setup");
+          return;
+        }
 
-        // Redirect new users to profile setup
-        window.location.replace("/profile-setup");
+        // Email confirmation is required — show the "check your email" screen.
+        setMode("check-email");
         return;
       }
     } catch (error: any) {
@@ -261,31 +263,23 @@ const Auth = () => {
 
   const getCardTitle = () => {
     switch (mode) {
-      case "login":
-        return "Welcome Back";
-      case "signup":
-        return "Join Us";
-      case "forgot-password":
-        return "Reset Password";
-      case "update-password":
-        return "Set New Password";
-      default:
-        return "Welcome";
+      case "login": return "Welcome Back";
+      case "signup": return "Join Us";
+      case "forgot-password": return "Reset Password";
+      case "update-password": return "Set New Password";
+      case "check-email": return "Check Your Email";
+      default: return "Welcome";
     }
   };
 
   const getCardDescription = () => {
     switch (mode) {
-      case "login":
-        return "Sign in to continue your journey";
-      case "signup":
-        return "Create an account to start connecting";
-      case "forgot-password":
-        return "Enter your email to receive a reset link";
-      case "update-password":
-        return "Enter your new password below";
-      default:
-        return "";
+      case "login": return "Sign in to continue your journey";
+      case "signup": return "Create an account to start connecting";
+      case "forgot-password": return "Enter your email to receive a reset link";
+      case "update-password": return "Enter your new password below";
+      case "check-email": return "One more step before you can log in";
+      default: return "";
     }
   };
 
@@ -471,6 +465,65 @@ const Auth = () => {
                   </button>
                 </div>
               </form>
+            )}
+
+            {/* Check Email Screen */}
+            {mode === "check-email" && (
+              <div className="space-y-6 py-2 text-center">
+                <div className="flex justify-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                    <Mail className="h-8 w-8 text-primary" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm text-foreground font-medium">
+                    We sent a confirmation link to
+                  </p>
+                  <p className="text-sm font-semibold text-primary break-all">{email}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Click the link in the email to activate your account, then come back here to sign in.
+                  </p>
+                </div>
+                <div className="rounded-lg bg-muted p-4 text-left text-sm text-muted-foreground space-y-1">
+                  <p className="font-medium text-foreground">Didn't get the email?</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Check your spam or junk folder</li>
+                    <li>Make sure you entered the right address</li>
+                  </ul>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={loading}
+                    onClick={async () => {
+                      setLoading(true);
+                      try {
+                        const { error } = await supabase.auth.resend({
+                          type: "signup",
+                          email,
+                          options: { emailRedirectTo: `${window.location.origin}/auth` },
+                        });
+                        if (error) throw error;
+                        toast({ title: "Email resent", description: "Check your inbox again." });
+                      } catch (err: any) {
+                        toast({ title: "Error", description: err.message || "Could not resend email.", variant: "destructive" });
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                  >
+                    {loading ? "Sending…" : "Resend confirmation email"}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setMode("login")}
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    Back to sign in
+                  </button>
+                </div>
+              </div>
             )}
 
             {/* Update Password Form */}
