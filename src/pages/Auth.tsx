@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Heart, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { withTimeout } from "@/lib/safeAuth";
+import { getSessionWithTimeout, withTimeout } from "@/lib/safeAuth";
 import type { User, Session } from "@supabase/supabase-js";
 
 type AuthMode = "login" | "signup" | "forgot-password" | "update-password";
@@ -74,26 +74,9 @@ const Auth = () => {
       }
     );
 
-    // Check for existing session and clear stale tokens
-    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
-      // If there's an error (like invalid refresh token), sign out to clear stale data
-      if (error) {
-        console.log('Clearing stale session:', error.message);
-        await supabase.auth.signOut();
-        setSession(null);
-        setUser(null);
-        return;
-      }
-      
+    getSessionWithTimeout(3000).then((session) => {
       setSession(session);
       setUser(session?.user ?? null);
-
-    }).catch(async (err) => {
-      // Handle any unexpected errors by clearing session
-      console.log('Session check failed, clearing:', err);
-      await supabase.auth.signOut();
-      setSession(null);
-      setUser(null);
     });
 
     return () => subscription.unsubscribe();

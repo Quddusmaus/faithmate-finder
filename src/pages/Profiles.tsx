@@ -111,11 +111,6 @@ const Profiles = () => {
       setUser(currentUser);
     } catch (error) {
       console.error('Profiles auth check failed:', error);
-      toast({
-        title: 'Session issue',
-        description: 'We could not verify your session. Please sign in again.',
-        variant: 'destructive',
-      });
       setLoading(false);
       navigate('/auth', { replace: true });
     } finally {
