@@ -13,7 +13,6 @@ import { getSessionWithTimeout, withTimeout } from "@/lib/safeAuth";
 import type { User, Session } from "@supabase/supabase-js";
 
 type AuthMode = "login" | "signup" | "forgot-password" | "update-password";
-const SESSION_ONLY_AUTH_FLAG = "clearSessionOnClose";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -143,13 +142,6 @@ const Auth = () => {
         })).catch(e => console.error('Failed to record login attempt:', e));
 
         if (error) throw error;
-
-        // If "Remember me" is unchecked, mark session for clearing after the browser session ends.
-        if (!rememberMe && data?.session) {
-          localStorage.setItem(SESSION_ONLY_AUTH_FLAG, "true");
-        } else {
-          localStorage.removeItem(SESSION_ONLY_AUTH_FLAG);
-        }
 
         toast({
           title: "Welcome back!",
