@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Bell, Heart, X, Sparkles } from "lucide-react";
+import { Bell, Heart, MessageCircle, X, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import {
@@ -135,6 +135,8 @@ export const NotificationBell = () => {
         return <Heart className="h-4 w-4 text-pink-500" fill="currentColor" />;
       case 'match':
         return <Sparkles className="h-4 w-4 text-yellow-500" />;
+      case 'message':
+        return <MessageCircle className="h-4 w-4 text-primary" />;
       default:
         return <Bell className="h-4 w-4 text-primary" />;
     }
@@ -144,8 +146,8 @@ export const NotificationBell = () => {
     if (!notification.read) {
       markAsRead(notification.id);
     }
-    // Navigate to messages if it's a match notification
-    if (notification.type === 'match' && notification.related_user_id) {
+    // Navigate to the conversation for match and message notifications
+    if ((notification.type === 'match' || notification.type === 'message') && notification.related_user_id) {
       setOpen(false);
       navigate(`/messages?match=${notification.related_user_id}`);
     }
