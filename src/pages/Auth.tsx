@@ -32,28 +32,12 @@ const Auth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const { toast } = useToast();
 
-  // Simple, reliable redirect after login - always use hard redirect.
-  // Uses a 3s timeout on the profile lookup so the UI never hangs if the
-  // query stalls. Defaults to /profiles on timeout (that page will redirect
-  // to /profile-setup if the user has no profile yet).
-  const redirectAfterLogin = async (userId: string) => {
-    try {
-      const result = await withTimeout(
-        supabase
-          .from("profiles")
-          .select("id")
-          .eq("user_id", userId)
-          .maybeSingle(),
-        3000,
-        "Profile redirect check timed out",
-      );
-
-      const target = result.data ? "/profiles" : "/profile-setup";
-      window.location.href = target;
-    } catch (err) {
-      console.error("Error checking profile, redirecting anyway:", err);
-      window.location.href = "/profiles";
-    }
+  // Immediate, reliable redirect after login. Send the user straight to
+  // /profiles — that page handles redirecting to /profile-setup if no profile
+  // exists. This avoids any chance of the auth screen freezing while we wait
+  // on a profile lookup behind the preview proxy.
+  const redirectAfterLogin = (_userId: string) => {
+    window.location.href = "/profiles";
   };
 
   useEffect(() => {
