@@ -1,4 +1,17 @@
 import { Page } from "@playwright/test";
+import fs from "fs";
+import { USERS_FILE, TestUsers } from "../globalSetup";
+
+/** Returns the pre-created confirmed test users written by globalSetup. */
+export function readTestUsers(): TestUsers {
+  if (!fs.existsSync(USERS_FILE)) {
+    throw new Error(
+      `Test users file not found at ${USERS_FILE}. ` +
+        "Ensure SUPABASE_SERVICE_ROLE_KEY is set and globalSetup ran successfully.",
+    );
+  }
+  return JSON.parse(fs.readFileSync(USERS_FILE, "utf-8")) as TestUsers;
+}
 
 export const BASE = "http://localhost:8080";
 
