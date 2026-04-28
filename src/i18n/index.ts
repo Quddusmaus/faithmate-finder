@@ -16,6 +16,7 @@ import zh from './locales/zh.json';
 import ko from './locales/ko.json';
 import it from './locales/it.json';
 import tr from './locales/tr.json';
+import am from './locales/am.json';
 
 const resources = {
   en: { translation: en },
@@ -32,6 +33,7 @@ const resources = {
   ko: { translation: ko },
   it: { translation: it },
   tr: { translation: tr },
+  am: { translation: am },
 };
 
 i18n
@@ -40,7 +42,7 @@ i18n
   .init({
     resources,
     fallbackLng: 'en',
-    supportedLngs: ['en', 'es', 'fr', 'pt', 'hi', 'de', 'ru', 'vi', 'ar', 'ja', 'zh', 'ko', 'it', 'tr'],
+    supportedLngs: ['en', 'es', 'fr', 'pt', 'hi', 'de', 'ru', 'vi', 'ar', 'ja', 'zh', 'ko', 'it', 'tr', 'am'],
     detection: {
       order: ['navigator', 'htmlTag', 'localStorage', 'cookie'],
       caches: ['localStorage', 'cookie'],
@@ -67,4 +69,5 @@ export const languages = [
   { code: 'ko', name: 'Korean', nativeName: '한국어', flag: '🇰🇷' },
   { code: 'it', name: 'Italian', nativeName: 'Italiano', flag: '🇮🇹' },
   { code: 'tr', name: 'Turkish', nativeName: 'Türkçe', flag: '🇹🇷' },
+  { code: 'am', name: 'Amharic', nativeName: 'አማርኛ', flag: '🇪🇹' },
 ];

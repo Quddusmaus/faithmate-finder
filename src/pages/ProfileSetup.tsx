@@ -11,6 +11,7 @@ import { NotificationPreferences } from "@/components/NotificationPreferences";
 import { Loader2, BadgeCheck, Clock, ShieldCheck, Pause, Play, Heart, Users, MessageCircle, Shield, LogOut, Menu, Camera, Settings } from "lucide-react";
 import { PhotoVerification } from "@/components/PhotoVerification";
 import { GDPRTools } from "@/components/GDPRTools";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -425,6 +426,21 @@ const ProfileSetup = () => {
                     onCancel={() => setShowPhotoVerification(false)}
                   />
                 )}
+
+                {/* Language Preference */}
+                <Card className="border-muted">
+                  <CardContent className="pt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">Language</p>
+                        <p className="text-sm text-muted-foreground">
+                          Choose your preferred display language
+                        </p>
+                      </div>
+                      <LanguageSwitcher />
+                    </div>
+                  </CardContent>
+                </Card>
 
                 {/* Email Notification Preferences */}
                 <NotificationPreferences userId={user.id} />

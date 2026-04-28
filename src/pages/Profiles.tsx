@@ -30,6 +30,7 @@ interface Profile {
   looking_for: string | null;
   verified: boolean | null;
   interests?: string[];
+  preferred_language?: string | null;
 }
 
 const Profiles = () => {
@@ -50,6 +51,7 @@ const Profiles = () => {
     verifiedOnly: false,
     minCompatibility: 0,
     interests: [] as string[],
+    preferredLanguage: "all",
   });
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -220,6 +222,13 @@ const Profiles = () => {
       );
     }
 
+    // Language filter
+    if (filters.preferredLanguage !== "all") {
+      filtered = filtered.filter(
+        (profile) => profile.preferred_language === filters.preferredLanguage
+      );
+    }
+
     // Sort by compatibility score (highest first)
     const userInterests = currentUserProfile?.interests || [];
     
@@ -249,6 +258,7 @@ const Profiles = () => {
       verifiedOnly: false,
       minCompatibility: 0,
       interests: [],
+      preferredLanguage: "all",
     });
   };
 

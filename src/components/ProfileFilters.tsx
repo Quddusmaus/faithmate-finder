@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Search, SlidersHorizontal, X, Sparkles, ShieldCheck, Check } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AVAILABLE_INTERESTS } from "./InterestsSelector";
+import { languages } from "@/i18n";
 
 export interface FilterOptions {
   ageRange: [number, number];
@@ -19,6 +20,7 @@ export interface FilterOptions {
   verifiedOnly: boolean;
   minCompatibility: number;
   interests: string[];
+  preferredLanguage: string;
 }
 
 interface ProfileFiltersProps {
@@ -53,6 +55,7 @@ export const ProfileFilters = ({ filters, onFiltersChange, onClear }: ProfileFil
     filters.minCompatibility > 0,
     filters.interests.length > 0,
     filters.ageRange[0] !== 18 || filters.ageRange[1] !== 100,
+    filters.preferredLanguage !== "all",
   ].filter(Boolean).length;
 
   return (
@@ -212,6 +215,32 @@ export const ProfileFilters = ({ filters, onFiltersChange, onClear }: ProfileFil
                 <SelectItem value="female">Female</SelectItem>
                 <SelectItem value="Male">Male (legacy)</SelectItem>
                 <SelectItem value="Female">Female (legacy)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Language */}
+          <div className="space-y-2">
+            <Label htmlFor="preferredLanguage" className="text-sm font-medium text-foreground">
+              Preferred Language
+            </Label>
+            <Select
+              value={filters.preferredLanguage}
+              onValueChange={(value) => onFiltersChange({ ...filters, preferredLanguage: value })}
+            >
+              <SelectTrigger id="preferredLanguage" className="bg-background border-border">
+                <SelectValue placeholder="Any" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any Language</SelectItem>
+                {languages.map((lang) => (
+                  <SelectItem key={lang.code} value={lang.code}>
+                    <span className="flex items-center gap-2">
+                      <span>{lang.flag}</span>
+                      <span>{lang.nativeName}</span>
+                    </span>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
