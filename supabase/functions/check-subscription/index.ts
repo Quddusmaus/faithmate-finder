@@ -7,14 +7,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Product ID to tier name mapping
 const PRODUCT_TIERS: Record<string, string> = {
   "prod_TVxRMVOo4ggFGj": "basic",
   "prod_TVxS2qrvpWe0zd": "premium",
 };
 
+// Statuses that grant access when current_period_end is in the future.
+const ACCESS_STATUSES = ["active", "trialing", "past_due", "canceled"];
+
 const logStep = (step: string, details?: Record<string, unknown>) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
@@ -34,17 +36,17 @@ serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
-    logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
-    logStep("Authenticating user with token");
-    
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    logStep("User authenticated", { userId: user.id });
 
+    // ----------------------------------------------------------------
+    // 1. Comped users always get premium.
+    // ----------------------------------------------------------------
     const { data: compedUser, error: compError } = await supabaseClient
       .from("comped_users")
       .select("id")
@@ -54,76 +56,116 @@ serve(async (req) => {
     if (compError) throw new Error(`Comp status error: ${compError.message}`);
 
     if (compedUser) {
-      logStep("Comped user found, returning premium comp subscription", { userId: user.id });
-      return new Response(JSON.stringify({
+      logStep("Comped user — returning premium");
+      return json({ subscribed: true, tier: "premium", subscription_end: null, comped: true });
+    }
+
+    // ----------------------------------------------------------------
+    // 2. DB-first: check the subscriptions table written by the webhook.
+    // ----------------------------------------------------------------
+    const now = new Date().toISOString();
+    const { data: dbSub, error: dbError } = await supabaseClient
+      .from("subscriptions")
+      .select("tier, status, current_period_end")
+      .eq("user_id", user.id)
+      .in("status", ACCESS_STATUSES)
+      .gt("current_period_end", now)
+      .order("current_period_end", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (dbError) throw new Error(`DB subscription lookup error: ${dbError.message}`);
+
+    if (dbSub) {
+      logStep("Subscription found in DB", { tier: dbSub.tier, status: dbSub.status });
+      return json({
         subscribed: true,
-        tier: "premium",
-        subscription_end: null,
-        comped: true,
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
+        tier: dbSub.tier,
+        subscription_end: dbSub.current_period_end,
       });
     }
 
+    logStep("No active subscription in DB — falling back to Stripe");
+
+    // ----------------------------------------------------------------
+    // 3. Stripe fallback: live lookup, then write result to DB so the
+    //    next call hits the cache. This covers the window between a
+    //    completed checkout and the webhook arriving, and also lets
+    //    check-subscription self-heal if a webhook was ever missed.
+    // ----------------------------------------------------------------
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-    logStep("Stripe key verified");
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    const stripe = new Stripe(stripeKey, { apiVersion: "2024-12-10" });
+
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    
+
     if (customers.data.length === 0) {
-      logStep("No Stripe customer found, returning unsubscribed state");
-      return new Response(JSON.stringify({ 
-        subscribed: false,
-        tier: null,
-        subscription_end: null 
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+      logStep("No Stripe customer found — unsubscribed");
+      return json({ subscribed: false, tier: null, subscription_end: null });
     }
 
     const customerId = customers.data[0].id;
-    logStep("Found Stripe customer", { customerId });
+    logStep("Stripe customer found", { customerId });
 
-    const subscriptions = await stripe.subscriptions.list({
+    const stripeSubs = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
       limit: 1,
     });
-    
-    const hasActiveSub = subscriptions.data.length > 0;
-    let tier: string | null = null;
-    let subscriptionEnd: string | null = null;
 
-    if (hasActiveSub) {
-      const subscription = subscriptions.data[0];
-      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd });
-      
-      const productId = subscription.items.data[0].price.product as string;
-      tier = PRODUCT_TIERS[productId] || null;
-      logStep("Determined subscription tier", { productId, tier });
-    } else {
-      logStep("No active subscription found");
+    if (stripeSubs.data.length === 0) {
+      logStep("No active Stripe subscription");
+      return json({ subscribed: false, tier: null, subscription_end: null });
     }
 
-    return new Response(JSON.stringify({
-      subscribed: hasActiveSub,
-      tier: tier,
-      subscription_end: subscriptionEnd
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
+    const stripeSub = stripeSubs.data[0];
+    const productId = stripeSub.items.data[0].price.product as string;
+    const tier = PRODUCT_TIERS[productId] ?? "basic";
+    const subscriptionEnd = new Date(stripeSub.current_period_end * 1000).toISOString();
+
+    logStep("Active Stripe subscription found", {
+      subscriptionId: stripeSub.id,
+      tier,
+      subscriptionEnd,
     });
+
+    // Write to DB so subsequent checks are served from cache.
+    const { error: upsertError } = await supabaseClient
+      .from("subscriptions")
+      .upsert(
+        {
+          user_id: user.id,
+          stripe_customer_id: customerId,
+          stripe_subscription_id: stripeSub.id,
+          tier,
+          status: stripeSub.status,
+          current_period_end: subscriptionEnd,
+          cancel_at_period_end: stripeSub.cancel_at_period_end,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "stripe_subscription_id" }
+      );
+
+    if (upsertError) {
+      // Non-fatal: log and continue — the caller still gets the right answer.
+      logStep("WARNING: Failed to cache subscription in DB", { error: upsertError.message });
+    }
+
+    return json({ subscribed: true, tier, subscription_end: subscriptionEnd });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in check-subscription", { message: errorMessage });
+    logStep("ERROR", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
   }
 });
+
+function json(body: Record<string, unknown>) {
+  return new Response(JSON.stringify(body), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status: 200,
+  });
+}
