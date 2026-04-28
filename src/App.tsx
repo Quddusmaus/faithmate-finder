@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { CurrentUserProvider } from "@/contexts/CurrentUserContext";
 import Index from "./pages/Index";
 import Profiles from "./pages/Profiles";
 import Auth from "./pages/Auth";
@@ -25,8 +26,9 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <SubscriptionProvider>
-      <TooltipProvider>
+    <CurrentUserProvider>
+      <SubscriptionProvider>
+        <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -51,7 +53,8 @@ const App = () => (
           <InstallPromptBanner />
         </BrowserRouter>
       </TooltipProvider>
-    </SubscriptionProvider>
+      </SubscriptionProvider>
+    </CurrentUserProvider>
   </QueryClientProvider>
 );
 
