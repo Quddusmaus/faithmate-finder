@@ -53,7 +53,8 @@ const App = () => (
           <InstallPromptBanner />
         </BrowserRouter>
       </TooltipProvider>
-    </SubscriptionProvider>
+      </SubscriptionProvider>
+    </CurrentUserProvider>
   </QueryClientProvider>
 );
 
