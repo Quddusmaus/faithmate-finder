@@ -78,7 +78,7 @@ export const useUnreadMessageCount = () => {
       // Subscribe to real-time message changes
       // This will trigger on new messages (INSERT) and when messages are read (UPDATE)
       channel = supabase
-        .channel('unread-messages-count')
+        .channel(`unread-messages-${user.id}`)
         .on(
           'postgres_changes',
           {

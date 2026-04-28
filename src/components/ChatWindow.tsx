@@ -391,7 +391,7 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
 
   const subscribeToReactions = () => {
     reactionsChannelRef.current = supabase
-      .channel(`reactions:${match.match_id}`)
+      .channel(`reactions:${user.id}:${match.match_id}`)
       .on(
         'postgres_changes',
         {
