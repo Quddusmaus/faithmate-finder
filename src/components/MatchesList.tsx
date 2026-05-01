@@ -61,7 +61,7 @@ export const MatchesList = ({ matches, loading, selectedMatchId, onSelectMatch }
           >
             <Avatar className="h-12 w-12">
               <AvatarImage src={match.photo_urls?.[0]} alt={match.name} />
-              <AvatarFallback>{match.name[0]}</AvatarFallback>
+              <AvatarFallback>{match.name?.[0] ?? "?"}</AvatarFallback>
             </Avatar>
 
             <div className="flex-1 overflow-hidden">

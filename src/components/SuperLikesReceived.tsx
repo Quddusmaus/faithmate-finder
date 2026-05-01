@@ -211,7 +211,7 @@ export const SuperLikesReceived = ({ currentUserId, onLikeBack }: SuperLikesRece
                     <Avatar className="h-16 w-16 ring-2 ring-amber-500 ring-offset-2 ring-offset-background">
                       <AvatarImage src={superLiker.photo_urls?.[0]} alt={superLiker.name} />
                       <AvatarFallback className="bg-amber-100 text-amber-700">
-                        {superLiker.name[0]}
+                        {superLiker.name?.[0] ?? "?"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="absolute -bottom-1 -right-1 bg-amber-500 rounded-full p-1">

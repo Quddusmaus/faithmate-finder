@@ -177,6 +177,9 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
 
       // Request media permissions first
       console.log("[DAILY-CALL] Requesting media permissions...");
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("Camera/microphone not supported on this device or browser");
+      }
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: videoEnabled,
@@ -227,6 +230,9 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
 
       // Request media permissions first
       console.log("[DAILY-CALL] Requesting media permissions for receiver...");
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("Camera/microphone not supported on this device or browser");
+      }
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: invitation.videoEnabled,

@@ -21,6 +21,7 @@ import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
 import CookieConsent from "./components/CookieConsent";
 import InstallPromptBanner from "./components/InstallPromptBanner";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -32,25 +33,27 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/profiles" element={<Profiles />} />
-            <Route path="/profile-setup" element={<ProfileSetup />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/appeal" element={<BanAppeal />} />
-            <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/install" element={<Install />} />
-            <Route path="/safety" element={<SafetyTips />} />
-            <Route path="/subscription" element={<Subscription />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <CookieConsent />
-          <InstallPromptBanner />
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/profiles" element={<Profiles />} />
+              <Route path="/profile-setup" element={<ProfileSetup />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/appeal" element={<BanAppeal />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/install" element={<Install />} />
+              <Route path="/safety" element={<SafetyTips />} />
+              <Route path="/subscription" element={<Subscription />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <CookieConsent />
+            <InstallPromptBanner />
+          </ErrorBoundary>
         </BrowserRouter>
       </TooltipProvider>
       </SubscriptionProvider>

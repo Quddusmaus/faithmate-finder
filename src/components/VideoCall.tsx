@@ -97,7 +97,7 @@ export const VideoCall = ({
             <div className="text-center">
               <Avatar className="h-32 w-32 mx-auto mb-4">
                 <AvatarImage src={matchPhoto} alt={matchName} />
-                <AvatarFallback className="text-4xl">{matchName[0]}</AvatarFallback>
+                <AvatarFallback className="text-4xl">{matchName?.[0] ?? "?"}</AvatarFallback>
               </Avatar>
               <h2 className="text-2xl font-semibold text-foreground">{matchName}</h2>
               {isConnecting && (
