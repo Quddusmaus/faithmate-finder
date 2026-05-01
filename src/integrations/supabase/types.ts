@@ -824,6 +824,10 @@ export type Database = {
         Args: { p_email: string; p_success: boolean }
         Returns: undefined
       }
+      update_internal_webhook_secret: {
+        Args: { p_secret: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
