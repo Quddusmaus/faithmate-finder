@@ -23,3 +23,4 @@ verify_jwt = false
 
 [functions.customer-portal]
 verify_jwt = false
+
