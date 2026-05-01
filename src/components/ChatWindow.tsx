@@ -558,7 +558,7 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
 
         <Avatar className="h-10 w-10">
           <AvatarImage src={match.photo_urls?.[0]} alt={match.name} />
-          <AvatarFallback>{match.name[0]}</AvatarFallback>
+          <AvatarFallback>{match.name?.[0] ?? "?"}</AvatarFallback>
         </Avatar>
 
         <div className="flex-1">
