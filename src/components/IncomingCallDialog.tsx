@@ -28,7 +28,7 @@ export const IncomingCallDialog = ({
           <div className="relative mx-auto w-24 h-24 mb-4">
             <Avatar className="w-24 h-24 ring-4 ring-primary/20 animate-pulse">
               <AvatarImage src={callerPhoto} alt={callerName} />
-              <AvatarFallback className="text-3xl">{callerName[0]}</AvatarFallback>
+              <AvatarFallback className="text-3xl">{callerName?.[0] ?? "?"}</AvatarFallback>
             </Avatar>
             <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-2">
               {videoEnabled ? (
