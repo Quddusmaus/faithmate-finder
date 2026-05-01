@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Capacitor generated platforms (open in Xcode/Android Studio separately)
+ios/
+android/
