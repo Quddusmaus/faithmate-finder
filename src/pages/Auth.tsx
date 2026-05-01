@@ -32,12 +32,26 @@ const Auth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const { toast } = useToast();
 
-  // Immediate, reliable redirect after login. Send the user straight to
-  // /profiles — that page handles redirecting to /profile-setup if no profile
-  // exists. This avoids any chance of the auth screen freezing while we wait
-  // on a profile lookup behind the preview proxy.
-  const redirectAfterLogin = () => {
-    window.location.replace("/profiles");
+  // After login, send the user to /profile-setup if they have no profile yet,
+  // otherwise to /profiles. Per project rule: hard redirect (no React Router
+  // navigate) and check profile existence before deciding the destination.
+  const redirectAfterLogin = async () => {
+    try {
+      const { data: { user: u } } = await supabase.auth.getUser();
+      if (!u) {
+        window.location.replace("/profiles");
+        return;
+      }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", u.id)
+        .maybeSingle();
+      window.location.replace(profile ? "/profiles" : "/profile-setup");
+    } catch {
+      // On any failure, fall back to /profiles (its own guards will handle it).
+      window.location.replace("/profiles");
+    }
   };
 
   useEffect(() => {
