@@ -780,6 +780,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: boolean
       }
+      get_internal_webhook_secret: { Args: never; Returns: string }
       get_today_call_count: { Args: { p_user_id: string }; Returns: number }
       get_today_like_count: { Args: { p_user_id: string }; Returns: number }
       get_today_super_like_count: {
