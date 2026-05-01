@@ -24,5 +24,3 @@ verify_jwt = false
 [functions.customer-portal]
 verify_jwt = false
 
-[functions.sync-webhook-secret]
-verify_jwt = false
