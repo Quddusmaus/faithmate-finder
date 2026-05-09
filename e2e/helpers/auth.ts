@@ -24,7 +24,9 @@ export async function dismissCookieBanner(page: Page): Promise<void> {
         "unity-hearts-cookie-consent",
         JSON.stringify({ essential: true, analytics: true, marketing: true, timestamp: new Date().toISOString() }),
       );
-    } catch {}
+    } catch {
+      /* ignore storage errors */
+    }
   };
   await page.addInitScript(script);
   await page.evaluate(script).catch(() => {});
