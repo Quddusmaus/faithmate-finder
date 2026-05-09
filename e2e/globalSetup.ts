@@ -17,8 +17,8 @@ import path from "path";
 
 export const USERS_FILE = path.join(os.tmpdir(), "e2e-users.json");
 
-const SUPABASE_URL = (process.env.VITE_SUPABASE_URL ?? "").trim();
-const SERVICE_ROLE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").trim();
+const SUPABASE_URL = (process.env.VITE_SUPABASE_URL ?? "").replace(/\s/g, "");
+const SERVICE_ROLE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").replace(/\s/g, "");
 
 export interface TestUser {
   id: string;
