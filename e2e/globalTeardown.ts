@@ -9,8 +9,8 @@ import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import { USERS_FILE, TestUsers } from "./globalSetup";
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL ?? "";
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+const SUPABASE_URL = (process.env.VITE_SUPABASE_URL ?? "").replace(/\s/g, "");
+const SERVICE_ROLE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").replace(/\s/g, "");
 
 export default async function globalTeardown() {
   if (!fs.existsSync(USERS_FILE)) {
@@ -29,6 +29,11 @@ export default async function globalTeardown() {
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
+
+  // Remove comped access before deleting the auth user (FK constraint)
+  if (users.userA) {
+    await admin.from("comped_users").delete().eq("user_id", users.userA.id);
+  }
 
   for (const [tag, user] of Object.entries(users)) {
     const { error } = await (admin.auth as any).admin.deleteUser(user.id);

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { BASE, uniqueEmail, signUp, signIn } from "./helpers/auth";
+import { BASE, uniqueEmail, signUp, signIn, readTestUsers } from "./helpers/auth";
 
 test.describe("Profiles browse — auth gate", () => {
   test("unauthenticated user redirected to /auth", async ({ page }) => {
@@ -40,45 +40,33 @@ test.describe("Profiles browse — authenticated non-subscriber", () => {
 
 test.describe("Profiles browse — subscribed or comped user", () => {
   test.setTimeout(60000);
-  const email = uniqueEmail();
 
   test.beforeEach(async ({ page }) => {
-    const { landed } = await signUp(page, email);
-    if (landed !== "/profile-setup") await signIn(page, email);
+    const { userA } = readTestUsers();
+    await signIn(page, userA.email, userA.password);
     await page.goto(`${BASE}/profiles`);
-    // Wait for initial URL, then allow up to 5s for subscription redirect to fire
-    await page.waitForURL(/\/(profiles|subscription)/, { timeout: 15000 });
-    await page.waitForTimeout(3000);
-    await page.waitForURL(/\/(profiles|subscription)/, { timeout: 5000 }).catch(() => {});
-    if (new URL(page.url()).pathname === "/subscription") {
-      test.skip(true, "User is not subscribed/comped — skipping profiles tests");
-    }
+    await page.waitForURL(/\/profiles/, { timeout: 20000 });
   });
 
   test("profiles page heading visible", async ({ page }) => {
-    if (new URL(page.url()).pathname !== "/profiles") return;
     await expect(page.getByText(/discover your match/i)).toBeVisible({ timeout: 10000 });
   });
 
   test("filter panel toggle works", async ({ page }) => {
-    if (new URL(page.url()).pathname !== "/profiles") return;
     const filterToggle = page.getByRole("button").filter({ has: page.locator("svg") }).first();
     await expect(filterToggle).toBeVisible({ timeout: 8000 });
-    // Filter panel collapses/expands without crash
     await filterToggle.click();
     await page.waitForTimeout(500);
   });
 
   test("profile count summary visible", async ({ page }) => {
     await page.waitForTimeout(2000);
-    if (new URL(page.url()).pathname !== "/profiles") return;
     const countText = page.getByText(/showing \d+ of \d+ profiles/i);
     const visible = await countText.isVisible({ timeout: 20000 }).catch(() => false);
     expect(visible || true).toBeTruthy();
   });
 
   test("profile cards render or empty state shown", async ({ page }) => {
-    if (new URL(page.url()).pathname !== "/profiles") return;
     await page.waitForTimeout(3000);
     const cards = page.locator("[class*='card']").first();
     const emptyMsg = page.getByText(/no profiles|check back soon/i);
@@ -87,9 +75,7 @@ test.describe("Profiles browse — subscribed or comped user", () => {
   });
 
   test("notification bell visible in nav", async ({ page }) => {
-    if (new URL(page.url()).pathname !== "/profiles") return;
     await expect(page.locator("nav").first()).toBeVisible();
-    // Bell icon should exist somewhere in nav
     const bell = page.locator("nav button svg").first();
     await expect(bell).toBeVisible({ timeout: 8000 });
   });

@@ -70,6 +70,17 @@ export default async function globalSetup() {
     createConfirmedUser(admin, makeEmail("userB"), "User B"),
   ]);
 
+  // Grant User A comped access so the profiles browse tests can run without a subscription
+  const { error: compedError } = await admin.from("comped_users").insert({
+    user_id: userA.id,
+    reason: "E2E test user",
+  });
+  if (compedError) {
+    console.warn(`[globalSetup] Could not grant User A comped access: ${compedError.message}`);
+  } else {
+    console.log(`  User A granted comped access`);
+  }
+
   const users: TestUsers = { userA, userB };
   fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
   console.log(`\n[globalSetup] Created test users → ${USERS_FILE}`);
