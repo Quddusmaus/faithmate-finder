@@ -38,7 +38,7 @@ test.describe("Ban Appeal page — authenticated user", () => {
   });
 
   test("appeal history section renders without crash", async ({ page }) => {
-    await expect(page.getByText("Unity Hearts").first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Uniting Hearts").first()).toBeVisible({ timeout: 10000 });
     const crash = page.getByText(/something went wrong/i);
     expect(await crash.isVisible().catch(() => false)).toBeFalsy();
   });

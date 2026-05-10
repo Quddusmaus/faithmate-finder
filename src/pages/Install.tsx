@@ -14,7 +14,7 @@ const Install = () => {
     if (success) {
       toast({
         title: "App installed!",
-        description: "Unity Hearts has been added to your home screen.",
+        description: "Uniting Hearts has been added to your home screen.",
       });
     }
   };
@@ -25,7 +25,7 @@ const Install = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-primary" fill="currentColor" />
-            <span className="text-xl sm:text-2xl font-bold text-foreground">Unity Hearts</span>
+            <span className="text-xl sm:text-2xl font-bold text-foreground">Uniting Hearts</span>
           </Link>
           <Link to="/">
             <Button variant="ghost" size="sm">
@@ -43,10 +43,10 @@ const Install = () => {
               <Smartphone className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
             </div>
             <h1 className="text-2xl sm:text-4xl font-bold text-foreground mb-3 sm:mb-4">
-              Install Unity Hearts
+              Install Uniting Hearts
             </h1>
             <p className="text-base sm:text-lg text-muted-foreground px-2">
-              Add Unity Hearts to your home screen for quick access and a native app experience
+              Add Uniting Hearts to your home screen for quick access and a native app experience
             </p>
           </div>
 
@@ -56,7 +56,7 @@ const Install = () => {
                 <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
                 <h2 className="text-xl font-semibold text-foreground mb-2">Already Installed!</h2>
                 <p className="text-muted-foreground mb-4">
-                  Unity Hearts is already installed on your device. You can find it on your home screen.
+                  Uniting Hearts is already installed on your device. You can find it on your home screen.
                 </p>
                 <Link to="/profiles">
                   <Button className="bg-primary hover:bg-primary/90">
@@ -70,7 +70,7 @@ const Install = () => {
               <CardHeader className="text-center">
                 <CardTitle className="text-xl sm:text-2xl">Ready to Install</CardTitle>
                 <CardDescription>
-                  Click the button below to add Unity Hearts to your home screen
+                  Click the button below to add Uniting Hearts to your home screen
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -111,7 +111,7 @@ const Install = () => {
               <CardHeader className="text-center">
                 <CardTitle className="text-xl sm:text-2xl">Install on iPhone/iPad</CardTitle>
                 <CardDescription>
-                  Follow these steps to add Unity Hearts to your home screen
+                  Follow these steps to add Uniting Hearts to your home screen
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -165,7 +165,7 @@ const Install = () => {
               <CardHeader className="text-center">
                 <CardTitle className="text-xl sm:text-2xl">Install on Android</CardTitle>
                 <CardDescription>
-                  Follow these steps to add Unity Hearts to your home screen
+                  Follow these steps to add Uniting Hearts to your home screen
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">

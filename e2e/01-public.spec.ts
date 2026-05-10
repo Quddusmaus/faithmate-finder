@@ -4,7 +4,7 @@ import { BASE } from "./helpers/auth";
 test.describe("Public pages", () => {
   test("landing page — hero, branding, CTAs", async ({ page }) => {
     await page.goto(BASE);
-    await expect(page.getByText("Unity Hearts").first()).toBeVisible();
+    await expect(page.getByText("Uniting Hearts").first()).toBeVisible();
     await expect(page.getByRole("link", { name: /get started/i }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: /sign.?in|log.?in/i }).first()).toBeVisible();
   });

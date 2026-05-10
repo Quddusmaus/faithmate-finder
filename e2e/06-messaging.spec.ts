@@ -24,8 +24,8 @@ test.describe("Messages — authenticated user", () => {
     expect(new URL(page.url()).pathname).toBe("/messages");
   });
 
-  test("Unity Hearts branding in nav", async ({ page }) => {
-    await expect(page.getByText("Unity Hearts").first()).toBeVisible({ timeout: 8000 });
+  test("Uniting Hearts branding in nav", async ({ page }) => {
+    await expect(page.getByText("Uniting Hearts").first()).toBeVisible({ timeout: 8000 });
   });
 
   test("messages page renders content after load", async ({ page }) => {
@@ -35,7 +35,7 @@ test.describe("Messages — authenticated user", () => {
     const crash = page.getByText(/something went wrong|unexpected error/i);
     expect(await crash.isVisible().catch(() => false)).toBeFalsy();
     // At minimum the nav/branding should be visible
-    await expect(page.getByText("Unity Hearts").first()).not.toBeHidden({ timeout: 5000 });
+    await expect(page.getByText("Uniting Hearts").first()).not.toBeHidden({ timeout: 5000 });
   });
 
   test("My Profile nav link is visible", async ({ page }) => {

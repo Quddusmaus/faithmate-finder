@@ -137,7 +137,7 @@ const Messages = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-primary" fill="currentColor" />
-            <span className="text-lg sm:text-2xl font-bold text-foreground">Unity Hearts</span>
+            <span className="text-lg sm:text-2xl font-bold text-foreground">Uniting Hearts</span>
           </Link>
           
           {/* Desktop Navigation */}
