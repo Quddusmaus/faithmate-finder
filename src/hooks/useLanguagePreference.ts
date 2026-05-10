@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { getSessionWithTimeout } from '@/lib/safeAuth';
+import { RTL_LANGUAGES } from '@/i18n';
+
+function applyDocumentDirection(lang: string) {
+  document.documentElement.dir = RTL_LANGUAGES.has(lang) ? 'rtl' : 'ltr';
+  document.documentElement.lang = lang;
+}
 
 export const useLanguagePreference = () => {
   const { i18n } = useTranslation();
@@ -52,6 +58,7 @@ export const useLanguagePreference = () => {
 
       if (data?.preferred_language) {
         i18n.changeLanguage(data.preferred_language);
+        applyDocumentDirection(data.preferred_language);
       }
     } catch (error) {
       console.error('Error loading language preference:', error);
@@ -63,6 +70,7 @@ export const useLanguagePreference = () => {
   const saveLanguagePreference = async (languageCode: string) => {
     // Always change the language locally
     i18n.changeLanguage(languageCode);
+    applyDocumentDirection(languageCode);
 
     // If user is logged in, save to database
     if (userId) {
