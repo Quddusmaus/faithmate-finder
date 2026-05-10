@@ -79,7 +79,7 @@ test.describe("Profile setup wizard", () => {
 
   test("profile setup nav — branding link visible", async ({ page }) => {
     await expect(page.locator("nav").first()).toBeVisible({ timeout: 20000 });
-    // Heart icon link is always visible; "Unity Hearts" text uses `hidden xs:inline` so may be CSS-hidden
+    // Heart icon link is always visible; "Uniting Hearts" text uses `hidden xs:inline` so may be CSS-hidden
     const navBrand = page.locator("nav a").filter({ has: page.locator("svg") }).first();
     await expect(navBrand).toBeVisible({ timeout: 10000 });
   });

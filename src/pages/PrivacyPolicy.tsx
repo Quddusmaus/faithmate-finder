@@ -9,7 +9,7 @@ const PrivacyPolicy = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Heart className="h-8 w-8 text-primary" fill="currentColor" />
-            <span className="text-2xl font-bold text-foreground">Unity Hearts</span>
+            <span className="text-2xl font-bold text-foreground">Uniting Hearts</span>
           </Link>
           <Link to="/">
             <Button variant="ghost" className="gap-2">
@@ -34,7 +34,7 @@ const PrivacyPolicy = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Introduction</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Unity Hearts (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy. 
+                Uniting Hearts (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy. 
                 This Privacy Policy explains how we collect, use, disclose, and safeguard your 
                 information when you use our dating and matchmaking platform. Please read this 
                 policy carefully to understand our practices regarding your personal data.
@@ -157,7 +157,7 @@ const PrivacyPolicy = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">10. Children&apos;s Privacy</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Unity Hearts is not intended for users under 18 years of age. We do not knowingly 
+                Uniting Hearts is not intended for users under 18 years of age. We do not knowingly 
                 collect personal information from children. If we become aware that we have 
                 collected personal information from a child under 18, we will take steps to 
                 delete that information.
@@ -205,7 +205,7 @@ const PrivacyPolicy = () => {
             <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link to="/contact" className="hover:text-primary transition-colors">Contact Us</Link>
           </div>
-          <p>&copy; 2024 Unity Hearts.</p>
+          <p>&copy; 2024 Uniting Hearts.</p>
         </div>
       </footer>
     </div>

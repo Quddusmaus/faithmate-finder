@@ -34,7 +34,7 @@ const InstallPromptBanner = () => {
     if (success) {
       toast({
         title: "App installed!",
-        description: "Unity Hearts has been added to your home screen.",
+        description: "Uniting Hearts has been added to your home screen.",
       });
     }
   };
@@ -69,7 +69,7 @@ const InstallPromptBanner = () => {
           </div>
           <div className="min-w-0">
             <p className="font-semibold text-primary-foreground text-sm sm:text-base truncate">
-              Install Unity Hearts
+              Install Uniting Hearts
             </p>
             {isIOS ? (
               <p className="text-xs sm:text-sm text-primary-foreground/80 flex items-center gap-1 flex-wrap">

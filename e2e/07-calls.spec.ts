@@ -21,7 +21,7 @@ test.describe("Call UI — messages page elements", () => {
     // If VideoCall or CallButton throw on import, page will show error boundary
     const errorBoundary = page.getByText(/something went wrong/i);
     expect(await errorBoundary.isVisible().catch(() => false)).toBeFalsy();
-    await expect(page.getByText("Unity Hearts").first()).toBeVisible();
+    await expect(page.getByText("Uniting Hearts").first()).toBeVisible();
   });
 
   test("no unhandled JS errors from call components at page load", async ({ page }) => {

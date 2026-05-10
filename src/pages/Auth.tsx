@@ -173,7 +173,7 @@ const Auth = () => {
         if (data.session) {
           toast({
             title: "Account created!",
-            description: "Welcome to Unity Hearts.",
+            description: "Welcome to Uniting Hearts.",
           });
           window.location.replace("/profile-setup");
           return;
@@ -304,7 +304,7 @@ const Auth = () => {
         <div className="mb-6 sm:mb-8 text-center">
           <Link to="/" className="inline-flex items-center gap-2">
             <Heart className="h-8 w-8 sm:h-10 sm:w-10 text-primary" fill="currentColor" />
-            <span className="text-2xl sm:text-3xl font-bold text-foreground">Unity Hearts</span>
+            <span className="text-2xl sm:text-3xl font-bold text-foreground">Uniting Hearts</span>
           </Link>
         </div>
 

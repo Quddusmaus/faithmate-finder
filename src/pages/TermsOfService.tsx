@@ -9,7 +9,7 @@ const TermsOfService = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Heart className="h-8 w-8 text-primary" fill="currentColor" />
-            <span className="text-2xl font-bold text-foreground">Unity Hearts</span>
+            <span className="text-2xl font-bold text-foreground">Uniting Hearts</span>
           </Link>
           <Link to="/">
             <Button variant="ghost" className="gap-2">
@@ -34,8 +34,8 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Acceptance of Terms</h2>
               <p className="text-muted-foreground leading-relaxed">
-                By accessing or using Unity Hearts, you agree to be bound by these Terms of Service. 
-                If you do not agree to these terms, please do not use our service. Unity Hearts is a 
+                By accessing or using Uniting Hearts, you agree to be bound by these Terms of Service. 
+                If you do not agree to these terms, please do not use our service. Uniting Hearts is a 
                 dating and matchmaking platform designed for members of the Baháʼí community seeking 
                 meaningful connections.
               </p>
@@ -44,7 +44,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">2. Eligibility</h2>
               <p className="text-muted-foreground leading-relaxed">
-                You must be at least 18 years old to use Unity Hearts. By using our service, you 
+                You must be at least 18 years old to use Uniting Hearts. By using our service, you 
                 represent and warrant that you are at least 18 years of age and have the legal 
                 capacity to enter into these Terms of Service. You must also be legally permitted 
                 to use dating services in your jurisdiction.
@@ -54,7 +54,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">3. Account Registration</h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
-                To use Unity Hearts, you must create an account and provide accurate, complete, 
+                To use Uniting Hearts, you must create an account and provide accurate, complete, 
                 and current information. You are responsible for:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2">
@@ -68,7 +68,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">4. User Conduct</h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
-                As a member of Unity Hearts, you agree to:
+                As a member of Uniting Hearts, you agree to:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                 <li>Treat all users with respect and dignity</li>
@@ -99,7 +99,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">6. Safety and Security</h2>
               <p className="text-muted-foreground leading-relaxed">
-                While we strive to create a safe environment, Unity Hearts cannot guarantee the 
+                While we strive to create a safe environment, Uniting Hearts cannot guarantee the 
                 conduct of any user. We encourage you to exercise caution when interacting with 
                 others and to report any suspicious behavior. Always meet in public places for 
                 initial meetings and inform someone you trust about your plans.
@@ -119,7 +119,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">8. Disclaimer of Warranties</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Unity Hearts is provided &quot;as is&quot; without warranties of any kind. We do not 
+                Uniting Hearts is provided &quot;as is&quot; without warranties of any kind. We do not 
                 guarantee that you will find a match, that the service will be uninterrupted, 
                 or that other users&apos; information is accurate. Use of the service is at your 
                 own risk.
@@ -129,7 +129,7 @@ const TermsOfService = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">9. Limitation of Liability</h2>
               <p className="text-muted-foreground leading-relaxed">
-                To the maximum extent permitted by law, Unity Hearts shall not be liable for any 
+                To the maximum extent permitted by law, Uniting Hearts shall not be liable for any 
                 indirect, incidental, special, consequential, or punitive damages arising out of 
                 your use of the service, including but not limited to emotional distress, loss of 
                 data, or personal injury.
@@ -141,7 +141,7 @@ const TermsOfService = () => {
               <p className="text-muted-foreground leading-relaxed">
                 We may modify these Terms of Service at any time. We will notify users of 
                 significant changes via email or through the platform. Your continued use of 
-                Unity Hearts after changes constitutes acceptance of the modified terms.
+                Uniting Hearts after changes constitutes acceptance of the modified terms.
               </p>
             </section>
 
@@ -165,7 +165,7 @@ const TermsOfService = () => {
             <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link to="/contact" className="hover:text-primary transition-colors">Contact Us</Link>
           </div>
-          <p>&copy; 2024 Unity Hearts.</p>
+          <p>&copy; 2024 Uniting Hearts.</p>
         </div>
       </footer>
     </div>

@@ -222,7 +222,7 @@ const ProfileSetup = () => {
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-primary">
             <Heart className="h-6 w-6 sm:h-7 sm:w-7" />
-            <span className="hidden xs:inline">Unity Hearts</span>
+            <span className="hidden xs:inline">Uniting Hearts</span>
           </Link>
           
           {/* Desktop Navigation */}

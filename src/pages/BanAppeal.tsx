@@ -147,7 +147,7 @@ const BanAppeal = () => {
             <div className="flex items-center gap-4">
               <Link to="/" className="flex items-center gap-2">
                 <Heart className="h-8 w-8 text-primary" fill="currentColor" />
-                <span className="text-2xl font-bold text-foreground">Unity Hearts</span>
+                <span className="text-2xl font-bold text-foreground">Uniting Hearts</span>
               </Link>
             </div>
             <Link to="/">

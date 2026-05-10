@@ -1,5 +1,5 @@
 /**
- * Comprehensive end-to-end test suite for Unity Hearts / FaithMate Finder.
+ * Comprehensive end-to-end test suite for Uniting Hearts / FaithMate Finder.
  *
  * Flows covered:
  *  1. Public pages  — landing, footer links, 404
@@ -47,7 +47,7 @@ test.describe("Public pages", () => {
   test("landing page renders hero and navigation", async ({ page }) => {
     await page.goto(BASE);
     // Branding
-    await expect(page.getByText("Unity Hearts").first()).toBeVisible();
+    await expect(page.getByText("Uniting Hearts").first()).toBeVisible();
     // Hero CTA buttons
     await expect(page.getByRole("link", { name: /get started/i }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: /log.?in|sign.?in/i }).first()).toBeVisible();
@@ -279,7 +279,7 @@ test.describe("Messages page", () => {
     await page.waitForTimeout(4000);
     expect(new URL(page.url()).pathname).toBe("/messages");
     // Nav branding visible
-    await expect(page.getByText("Unity Hearts")).toBeVisible();
+    await expect(page.getByText("Uniting Hearts")).toBeVisible();
     // Sidebar placeholder visible when no matches
     await expect(
       page.getByText(/select a match|no matches|start chatting/i).or(

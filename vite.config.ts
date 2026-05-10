@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "pwa-192x192.png", "pwa-512x512.png"],
       manifest: {
-        name: "Unity Hearts - Baháʼí Dating",
-        short_name: "Unity Hearts",
+        name: "Uniting Hearts - Baháʼí Dating",
+        short_name: "Uniting Hearts",
         description: "Find meaningful connections in the Baháʼí community",
         theme_color: "#2a9d8f",
         background_color: "#f7f5f0",

@@ -72,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
     let emailHtml: string;
 
     if (action_type === "ban") {
-      subject = "Important: Your Unity Hearts Account Has Been Suspended";
+      subject = "Important: Your Uniting Hearts Account Has Been Suspended";
       emailHtml = `
         <!DOCTYPE html>
         <html>
@@ -86,7 +86,7 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
           <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
             <p style="font-size: 16px;">Dear ${userName},</p>
-            <p style="font-size: 16px;">We regret to inform you that your Unity Hearts account has been <strong>permanently suspended</strong> due to a violation of our community guidelines.</p>
+            <p style="font-size: 16px;">We regret to inform you that your Uniting Hearts account has been <strong>permanently suspended</strong> due to a violation of our community guidelines.</p>
             
             <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 4px;">
               <p style="margin: 0; font-weight: bold; color: #991b1b;">Reason for Suspension:</p>
@@ -104,7 +104,7 @@ const handler = async (req: Request): Promise<Response> => {
             
             <p style="font-size: 14px; color: #666; margin-top: 30px;">
               Best regards,<br>
-              <strong>The Unity Hearts Team</strong>
+              <strong>The Uniting Hearts Team</strong>
             </p>
           </div>
         </body>
@@ -118,7 +118,7 @@ const handler = async (req: Request): Promise<Response> => {
         day: 'numeric' 
       }) : "a specified date";
 
-      subject = "Important: Your Unity Hearts Account Has Been Temporarily Suspended";
+      subject = "Important: Your Uniting Hearts Account Has Been Temporarily Suspended";
       emailHtml = `
         <!DOCTYPE html>
         <html>
@@ -132,7 +132,7 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
           <div style="background: #fff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
             <p style="font-size: 16px;">Dear ${userName},</p>
-            <p style="font-size: 16px;">Your Unity Hearts account has been <strong>temporarily suspended</strong> due to a violation of our community guidelines.</p>
+            <p style="font-size: 16px;">Your Uniting Hearts account has been <strong>temporarily suspended</strong> due to a violation of our community guidelines.</p>
             
             <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px;">
               <p style="margin: 0; font-weight: bold; color: #92400e;">Reason for Suspension:</p>
@@ -155,7 +155,7 @@ const handler = async (req: Request): Promise<Response> => {
             
             <p style="font-size: 14px; color: #666; margin-top: 30px;">
               Best regards,<br>
-              <strong>The Unity Hearts Team</strong>
+              <strong>The Uniting Hearts Team</strong>
             </p>
           </div>
         </body>
@@ -164,7 +164,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const emailResponse = await resend.emails.send({
-      from: "Unity Hearts <hello@contact.unityhearts.app>",
+      from: "Uniting Hearts <hello@contact.unityhearts.app>",
       to: [userEmail],
       subject: subject,
       html: emailHtml,

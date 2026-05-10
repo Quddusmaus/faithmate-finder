@@ -55,7 +55,7 @@ const handler = async (req: Request): Promise<Response> => {
     const recipientEmail = userData.user.email;
     console.log(`Sending welcome email to ${recipientEmail}`);
 
-    const subject = `Welcome to Unity Hearts, ${name}! 💕`;
+    const subject = `Welcome to Uniting Hearts, ${name}! 💕`;
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -69,7 +69,7 @@ const handler = async (req: Request): Promise<Response> => {
             <span style="font-size: 56px;">💕</span>
           </div>
           <h1 style="color: #1f2937; font-size: 28px; text-align: center; margin-bottom: 24px;">
-            Welcome to Unity Hearts!
+            Welcome to Uniting Hearts!
           </h1>
           <p style="color: #4b5563; font-size: 16px; line-height: 1.7; text-align: center;">
             Hi <strong>${name}</strong>,
@@ -101,7 +101,7 @@ const handler = async (req: Request): Promise<Response> => {
           
           <div style="border-top: 1px solid #e5e7eb; margin-top: 32px; padding-top: 24px;">
             <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
-              Unity Hearts - Find your perfect match in the Baháʼí community
+              Uniting Hearts - Find your perfect match in the Baháʼí community
             </p>
             <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 8px;">
               If you didn't create this account, please ignore this email.
@@ -120,7 +120,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Unity Hearts <hello@contact.unityhearts.app>",
+        from: "Uniting Hearts <hello@contact.unityhearts.app>",
         to: [recipientEmail],
         subject,
         html: htmlContent,

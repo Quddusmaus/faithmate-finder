@@ -128,7 +128,7 @@ const Contact = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Heart className="h-8 w-8 text-primary" fill="currentColor" />
-            <span className="text-2xl font-bold text-foreground">Unity Hearts</span>
+            <span className="text-2xl font-bold text-foreground">Uniting Hearts</span>
           </Link>
           <Link to="/">
             <Button variant="ghost" className="gap-2">
@@ -293,7 +293,7 @@ const Contact = () => {
             <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link to="/contact" className="hover:text-primary transition-colors">Contact Us</Link>
           </div>
-          <p>&copy; 2024 Unity Hearts.</p>
+          <p>&copy; 2024 Uniting Hearts.</p>
         </div>
       </footer>
     </div>
