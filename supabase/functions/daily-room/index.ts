@@ -100,11 +100,7 @@ serve(async (req) => {
           enable_knocking: false,
           start_video_off: !videoEnabled,
           start_audio_off: false,
-          // Max 2 participants for 1:1 calls
           max_participants: 2,
-          // Enable recording if needed later
-          enable_recording: "cloud",
-          // Better quality settings
           enable_prejoin_ui: false,
           enable_network_ui: true,
           enable_screenshare: false,
