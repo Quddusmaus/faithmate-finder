@@ -160,7 +160,9 @@ const Profiles = () => {
         console.error("Error fetching profiles:", profilesResult.error);
       }
 
-      const realProfiles = (profilesResult.data || []).filter((p) => p.user_id !== currentUser?.id);
+      const realProfiles = (profilesResult.data || []).filter(
+        (p) => p.user_id !== currentUser?.id && p.is_visible && p.status === "active"
+      );
       const allProfiles = [...(demoResult.data || []), ...realProfiles];
 
       setProfiles(allProfiles);
