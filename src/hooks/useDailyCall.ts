@@ -31,12 +31,38 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
   const callObjectRef = useRef<DailyCall | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
+  const expiryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const warningTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearExpiryTimers = useCallback(() => {
+    if (expiryTimerRef.current) clearTimeout(expiryTimerRef.current);
+    if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+    expiryTimerRef.current = null;
+    warningTimerRef.current = null;
+  }, []);
+
+  // Warn at 55 min, auto-end at 58 min (room hard-expires at 60 min)
+  const startExpiryTimers = useCallback((onEnd: () => void) => {
+    clearExpiryTimers();
+    warningTimerRef.current = setTimeout(() => {
+      toast.warning("Your call will end in 5 minutes (60-minute limit).");
+    }, 55 * 60 * 1000);
+    expiryTimerRef.current = setTimeout(() => {
+      toast.info("Call ended — 60-minute limit reached.");
+      onEnd();
+    }, 58 * 60 * 1000);
+  }, [clearExpiryTimers]);
+
   const cleanup = useCallback(() => {
-    console.log("Cleaning up Daily call");
-    
+    clearExpiryTimers();
+
     if (callObjectRef.current) {
-      callObjectRef.current.leave();
-      callObjectRef.current.destroy();
+      try {
+        callObjectRef.current.leave();
+        callObjectRef.current.destroy();
+      } catch {
+        // ignore errors during cleanup
+      }
       callObjectRef.current = null;
     }
 
@@ -122,40 +148,13 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
     setIsVideoOff(!videoEnabled);
 
     try {
-      console.log("[DAILY-CALL] Starting call initiation...");
-      console.log("[DAILY-CALL] Caller:", localUserId);
-      console.log("[DAILY-CALL] Receiver:", remoteUserId);
-      console.log("[DAILY-CALL] Video enabled:", videoEnabled);
-      
-      // Create room via edge function
-      console.log("[DAILY-CALL] Invoking daily-room edge function...");
       const { data, error } = await supabase.functions.invoke("daily-room", {
-        body: {
-          callerUserId: localUserId,
-          receiverUserId: remoteUserId,
-          videoEnabled,
-        },
+        body: { callerUserId: localUserId, receiverUserId: remoteUserId, videoEnabled },
       });
 
-      if (error) {
-        console.error("[DAILY-CALL] Edge function error:", error);
-        throw new Error(error?.message || "Failed to create room");
-      }
-      
-      if (!data) {
-        console.error("[DAILY-CALL] No data returned from edge function");
-        throw new Error("No data returned from room creation");
-      }
+      if (error) throw new Error(error?.message || "Failed to create room");
+      if (!data) throw new Error("No data returned from room creation");
 
-      console.log("[DAILY-CALL] Room created successfully:", {
-        roomName: data.roomName,
-        roomUrl: data.roomUrl,
-        hasCallerToken: !!data.callerToken,
-        hasReceiverToken: !!data.receiverToken,
-      });
-
-      // Send call invitation to receiver via call_signals table
-      console.log("[DAILY-CALL] Sending call invitation signal...");
       const { error: signalError } = await supabase.from("call_signals").insert({
         caller_id: localUserId,
         receiver_id: remoteUserId,
@@ -168,33 +167,18 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
         },
       });
 
-      if (signalError) {
-        console.error("[DAILY-CALL] Signal insert error:", signalError);
-        throw new Error("Failed to send call invitation: " + signalError.message);
-      }
-      
-      console.log("[DAILY-CALL] Call invitation sent successfully");
+      if (signalError) throw new Error("Failed to send call invitation: " + signalError.message);
 
-      // Request media permissions first
-      console.log("[DAILY-CALL] Requesting media permissions...");
       if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error("Camera/microphone not supported on this device or browser");
       }
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: videoEnabled,
-          audio: true,
-        });
-        // Stop the test stream
+        const stream = await navigator.mediaDevices.getUserMedia({ video: videoEnabled, audio: true });
         stream.getTracks().forEach(track => track.stop());
-        console.log("[DAILY-CALL] Media permissions granted");
       } catch (mediaError: any) {
-        console.error("[DAILY-CALL] Media permission error:", mediaError);
         throw new Error("Please allow camera/microphone access to make calls");
       }
 
-      // Create and join the call
-      console.log("[DAILY-CALL] Creating Daily call object...");
       const callObject = DailyIframe.createCallObject({
         url: data.roomUrl,
         token: data.callerToken,
@@ -204,12 +188,17 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
 
       setupCallObject(callObject);
 
-      console.log("[DAILY-CALL] Joining call...");
-      await callObject.join();
-      console.log("[DAILY-CALL] Successfully joined call as caller");
+      await Promise.race([
+        callObject.join(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Call join timed out after 30 seconds")), 30000)
+        ),
+      ]);
+
+      startExpiryTimers(() => { cleanup(); onCallEnded?.(); });
 
     } catch (error: any) {
-      console.error("[DAILY-CALL] Error initiating call:", error);
+      console.error("Failed to start call:", error);
       toast.error("Failed to start call: " + error.message);
       cleanup();
       throw error;
@@ -222,14 +211,6 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
     setPendingInvitation(null);
 
     try {
-      console.log("[DAILY-CALL] Accepting call...");
-      console.log("[DAILY-CALL] Room:", invitation.roomName);
-      console.log("[DAILY-CALL] URL:", invitation.roomUrl);
-      console.log("[DAILY-CALL] Has token:", !!invitation.token);
-      console.log("[DAILY-CALL] Video enabled:", invitation.videoEnabled);
-
-      // Request media permissions first
-      console.log("[DAILY-CALL] Requesting media permissions for receiver...");
       if (!navigator.mediaDevices?.getUserMedia) {
         throw new Error("Camera/microphone not supported on this device or browser");
       }
@@ -239,13 +220,10 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
           audio: true,
         });
         stream.getTracks().forEach(track => track.stop());
-        console.log("[DAILY-CALL] Media permissions granted for receiver");
       } catch (mediaError: any) {
-        console.error("[DAILY-CALL] Media permission error for receiver:", mediaError);
         throw new Error("Please allow camera/microphone access to join calls");
       }
 
-      console.log("[DAILY-CALL] Creating Daily call object for receiver...");
       const callObject = DailyIframe.createCallObject({
         url: invitation.roomUrl,
         token: invitation.token,
@@ -255,12 +233,16 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
 
       setupCallObject(callObject);
 
-      console.log("[DAILY-CALL] Receiver joining call...");
-      await callObject.join();
-      console.log("[DAILY-CALL] Receiver successfully joined call");
+      await Promise.race([
+        callObject.join(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Call join timed out after 30 seconds")), 30000)
+        ),
+      ]);
+
+      startExpiryTimers(() => { cleanup(); onCallEnded?.(); });
 
     } catch (error: any) {
-      console.error("[DAILY-CALL] Error accepting call:", error);
       toast.error("Failed to join call: " + error.message);
       cleanup();
       throw error;

@@ -470,6 +470,18 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
     const content = newMessage.trim();
     if (!content || sending) return;
 
+    const { data: allowed, error: rateLimitError } = await supabase.rpc("check_message_rate_limit", {
+      p_user_id: user.id,
+    });
+    if (rateLimitError || !allowed) {
+      toast({
+        title: "Slow down",
+        description: "You're sending messages too quickly. Please wait a moment.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Stop typing indicator
     updateTypingStatus(false);
     if (typingTimeoutRef.current) {
