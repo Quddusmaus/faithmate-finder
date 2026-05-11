@@ -16,8 +16,16 @@ interface NotificationEmailRequest {
   sender_user_id: string;
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 const handler = async (req: Request): Promise<Response> => {
-  console.log("Received notification email request");
   
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -34,7 +42,8 @@ const handler = async (req: Request): Promise<Response> => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const { type, recipient_user_id, sender_name, sender_user_id }: NotificationEmailRequest = await req.json();
+    const { type, recipient_user_id, sender_name: rawSenderName, sender_user_id }: NotificationEmailRequest = await req.json();
+    const sender_name = escapeHtml(rawSenderName ?? "");
     
     console.log(`Processing ${type} notification for user ${recipient_user_id}`);
 

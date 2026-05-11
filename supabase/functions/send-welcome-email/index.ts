@@ -14,6 +14,15 @@ interface WelcomeEmailRequest {
   name: string;
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 const handler = async (req: Request): Promise<Response> => {
   console.log("Received welcome email request");
   
@@ -32,7 +41,8 @@ const handler = async (req: Request): Promise<Response> => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const { user_id, name }: WelcomeEmailRequest = await req.json();
+    const { user_id, name: rawName }: WelcomeEmailRequest = await req.json();
+    const name = escapeHtml(rawName ?? "");
     
     console.log(`Processing welcome email for user ${user_id} (${name})`);
 

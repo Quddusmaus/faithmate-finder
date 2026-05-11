@@ -17,6 +17,15 @@ interface SuspensionEmailRequest {
   suspended_until?: string;
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 const handler = async (req: Request): Promise<Response> => {
   console.log("send-suspension-email function called");
 
@@ -35,7 +44,8 @@ const handler = async (req: Request): Promise<Response> => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const { user_id, action_type, reason, suspended_until }: SuspensionEmailRequest = await req.json();
+    const { user_id, action_type, reason: rawReason, suspended_until }: SuspensionEmailRequest = await req.json();
+    const reason = escapeHtml(rawReason ?? "");
     
     console.log(`Processing ${action_type} notification for user: ${user_id}`);
 
@@ -66,7 +76,7 @@ const handler = async (req: Request): Promise<Response> => {
       .eq("user_id", user_id)
       .maybeSingle();
 
-    const userName = profileData?.name || "User";
+    const userName = escapeHtml(profileData?.name || "User");
 
     let subject: string;
     let emailHtml: string;
