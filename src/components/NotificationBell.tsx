@@ -43,7 +43,6 @@ export const NotificationBell = () => {
           table: 'notifications'
         },
         (payload) => {
-          console.log('New notification:', payload);
           const newNotification = payload.new as Notification;
           setNotifications(prev => [newNotification, ...prev]);
           setUnreadCount(prev => prev + 1);
@@ -58,12 +57,7 @@ export const NotificationBell = () => {
 
   const fetchNotifications = async () => {
     const user = await getUserWithTimeout(5000);
-    if (!user) {
-      console.log('NotificationBell: No user logged in');
-      return;
-    }
-
-    console.log('NotificationBell: Fetching notifications for user', user.id);
+    if (!user) return;
 
     const { data, error } = await supabase
       .from('notifications')
@@ -78,8 +72,6 @@ export const NotificationBell = () => {
     }
 
     const unread = data?.filter(n => !n.read).length || 0;
-    console.log('NotificationBell: Fetched', data?.length, 'notifications,', unread, 'unread');
-
     setNotifications(data || []);
     setUnreadCount(unread);
   };

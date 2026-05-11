@@ -91,8 +91,7 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
   }, []);
 
   const setupCallObject = useCallback((callObject: DailyCall) => {
-    callObject.on("joined-meeting", (event) => {
-      console.log("Joined meeting:", event);
+    callObject.on("joined-meeting", () => {
       setIsConnecting(false);
       setIsConnected(true);
 
@@ -103,7 +102,6 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
     });
 
     callObject.on("participant-joined", (event: DailyEventObjectParticipant | undefined) => {
-      console.log("Participant joined:", event?.participant?.user_id);
       if (event?.participant && !event.participant.local) {
         updateParticipantTracks(event.participant, false);
       }
@@ -116,7 +114,6 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
     });
 
     callObject.on("participant-left", (event) => {
-      console.log("Participant left:", event?.participant?.user_id);
       if (event?.participant && !event.participant.local) {
         setRemoteVideoTrack(null);
         setRemoteAudioTrack(null);
@@ -128,7 +125,6 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
     });
 
     callObject.on("left-meeting", () => {
-      console.log("Left meeting");
       cleanup();
       onCallEnded?.();
     });
@@ -295,9 +291,7 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
   // Listen for incoming calls and call events
   useEffect(() => {
     const channelId = `daily-calls:${localUserId}-${remoteUserId}`;
-    console.log("[DAILY-CALL] Setting up realtime subscription:", channelId);
-    console.log("[DAILY-CALL] Listening for signals where receiver_id =", localUserId);
-    
+
     channelRef.current = supabase
       .channel(channelId)
       .on(
@@ -310,23 +304,14 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
         },
         async (payload) => {
           const signal = payload.new as any;
-          console.log("[DAILY-CALL] Received realtime signal:", {
-            type: signal.signal_type,
-            callerId: signal.caller_id,
-            receiverId: signal.receiver_id,
-            expectedCaller: remoteUserId,
-          });
 
           if (signal.signal_type === "daily-invite" && signal.caller_id === remoteUserId) {
-            console.log("[DAILY-CALL] Incoming call invitation received!");
-            // Incoming call from the person we're chatting with
             setPendingInvitation({
               ...signal.signal_data,
               callerId: signal.caller_id,
             });
           } else if (signal.signal_type === "call-end" || signal.signal_type === "call-reject") {
             if (signal.caller_id === remoteUserId) {
-              console.log("[DAILY-CALL] Call ended/rejected by remote user");
               toast.info(signal.signal_type === "call-reject" ? "Call was declined" : "Call ended");
               cleanup();
               onCallEnded?.();
@@ -334,12 +319,9 @@ export const useDailyCall = ({ localUserId, remoteUserId, onCallEnded }: UseDail
           }
         }
       )
-      .subscribe((status) => {
-        console.log("[DAILY-CALL] Subscription status:", status);
-      });
+      .subscribe();
 
     return () => {
-      console.log("[DAILY-CALL] Cleaning up subscription");
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
       }

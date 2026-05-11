@@ -16,8 +16,6 @@ export const useUnreadMessageCount = () => {
 
   const fetchUnreadCount = useCallback(async (uid: string) => {
     try {
-      console.log('useUnreadMessageCount: Fetching for user', uid);
-      
       const { data, error } = await withTimeout(
         supabase.rpc('get_user_matches', {
           user_uuid: uid
@@ -41,12 +39,6 @@ export const useUnreadMessageCount = () => {
         }, 
         0
       );
-      
-      console.log('useUnreadMessageCount: Total unread =', totalUnread, 'from matches:', data?.map((m: any) => ({ 
-        name: m.name, 
-        unread: m.unread_count,
-        parsed: parseInt(String(m.unread_count || 0), 10)
-      })));
       
       setUnreadCount(totalUnread);
     } catch (error) {
@@ -86,17 +78,13 @@ export const useUnreadMessageCount = () => {
             schema: 'public',
             table: 'messages',
           },
-          (payload) => {
-            console.log('useUnreadMessageCount: Message change detected', payload.eventType);
-            // Refetch count when any message changes
+          () => {
             if (user.id) {
               fetchUnreadCount(user.id);
             }
           }
         )
-        .subscribe((status) => {
-          console.log('useUnreadMessageCount: Subscription status', status);
-        });
+        .subscribe();
     };
 
     initialize();

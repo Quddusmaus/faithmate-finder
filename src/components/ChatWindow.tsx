@@ -180,7 +180,6 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
     // Refresh messages when tab becomes visible (recover from lost subscription)
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        console.log("Tab became visible, refreshing messages");
         fetchMessages();
       }
     };
@@ -281,8 +280,6 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
   }, [messages.length]);
 
   const subscribeToMessages = () => {
-    console.log("Setting up message subscription for conversation:", match.match_id);
-    
     channelRef.current = supabase
       .channel(`messages:${match.match_id}:${user.id}`)
       .on(
@@ -293,43 +290,31 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
           table: 'messages'
         },
         (payload) => {
-          console.log("Realtime INSERT received:", payload.new);
           const newMsg = payload.new as Message;
-          // Check if this message is relevant to this conversation
-          const isRelevant = 
+          const isRelevant =
             (newMsg.sender_id === match.match_id && newMsg.receiver_id === user.id) ||
             (newMsg.sender_id === user.id && newMsg.receiver_id === match.match_id);
-          
-          if (!isRelevant) {
-            console.log("Message not relevant to this conversation, ignoring");
-            return;
-          }
-          
-          console.log("Adding message to conversation");
+
+          if (!isRelevant) return;
+
           setMessages((current) => {
-            // Check if already present by ID
             if (current.some((msg) => msg.id === newMsg.id)) {
-              console.log("Message already exists, skipping");
               return current;
             }
-            
-            // Check for optimistic message with same content (sent by current user)
-            // and replace it with the real message
+
             if (newMsg.sender_id === user.id) {
               const optimisticIndex = current.findIndex(
-                (msg) => msg.id.startsWith('optimistic-') && 
+                (msg) => msg.id.startsWith('optimistic-') &&
                          msg.content === newMsg.content &&
                          msg.sender_id === newMsg.sender_id
               );
               if (optimisticIndex !== -1) {
-                console.log("Replacing optimistic message with real one");
                 const updated = [...current];
                 updated[optimisticIndex] = newMsg;
                 return updated;
               }
             }
-            
-            console.log("Appending new message");
+
             return [...current, newMsg];
           });
           
@@ -362,9 +347,7 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
           );
         }
       )
-      .subscribe((status) => {
-        console.log("Message subscription status:", status);
-      });
+      .subscribe();
   };
 
   const subscribeToPresence = () => {
