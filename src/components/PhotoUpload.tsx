@@ -19,17 +19,22 @@ export const PhotoUpload = ({ userId, existingPhotos, onPhotosChange }: PhotoUpl
     try {
       setUploading(true);
 
-      // Validate file
-      if (!file.type.startsWith('image/')) {
-        throw new Error('Please upload an image file');
+      const ALLOWED_TYPES: Record<string, string> = {
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp",
+        "image/heic": "heic",
+        "image/heif": "heif",
+      };
+      const fileExt = ALLOWED_TYPES[file.type];
+      if (!fileExt) {
+        throw new Error("Please upload a JPEG, PNG, or WebP image");
       }
 
       if (file.size > 5 * 1024 * 1024) {
         throw new Error('Image size must be less than 5MB');
       }
 
-      // Create unique filename
-      const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/${Date.now()}.${fileExt}`;
 
       // Upload to Supabase Storage
