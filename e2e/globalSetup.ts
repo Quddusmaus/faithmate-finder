@@ -81,6 +81,17 @@ export default async function globalSetup() {
     console.log(`  User A granted comped access`);
   }
 
+  // Create minimal profiles so messages FK constraint (sender_id → profiles) is satisfied
+  const { error: profileError } = await admin.from("profiles").insert([
+    { user_id: userA.id, name: "E2E User A" },
+    { user_id: userB.id, name: "E2E User B" },
+  ]);
+  if (profileError) {
+    console.warn(`[globalSetup] Could not create profiles: ${profileError.message}`);
+  } else {
+    console.log(`  Profiles created for User A and User B`);
+  }
+
   const users: TestUsers = { userA, userB };
   fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
   console.log(`\n[globalSetup] Created test users → ${USERS_FILE}`);
