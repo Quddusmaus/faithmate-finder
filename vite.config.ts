@@ -1,11 +1,35 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 
+// Public Supabase client credentials. Safe to commit (publishable/anon key,
+// protected by RLS). Used as a fallback so the production bundle is never
+// shipped without them, even if the deploy environment fails to inject .env.
+const SUPABASE_URL_FALLBACK = "https://nyhlwamvqjmaxpmqxzah.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY_FALLBACK =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55aGx3YW12cWptYXhwbXF4emFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxNzA2MjYsImV4cCI6MjA3OTc0NjYyNn0.X8C5C0DoR0Vpm8NXouuuzjSU8e6yH2bhyb58QcKclcU";
+const SUPABASE_PROJECT_ID_FALLBACK = "nyhlwamvqjmaxpmqxzah";
+
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+  const SUPABASE_URL = env.VITE_SUPABASE_URL || SUPABASE_URL_FALLBACK;
+  const SUPABASE_PUBLISHABLE_KEY =
+    env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    env.VITE_SUPABASE_ANON_KEY ||
+    SUPABASE_PUBLISHABLE_KEY_FALLBACK;
+  const SUPABASE_PROJECT_ID =
+    env.VITE_SUPABASE_PROJECT_ID || SUPABASE_PROJECT_ID_FALLBACK;
+
+  return ({
+  define: {
+    "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(SUPABASE_URL),
+    "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(SUPABASE_PUBLISHABLE_KEY),
+    "import.meta.env.VITE_SUPABASE_ANON_KEY": JSON.stringify(SUPABASE_PUBLISHABLE_KEY),
+    "import.meta.env.VITE_SUPABASE_PROJECT_ID": JSON.stringify(SUPABASE_PROJECT_ID),
+  },
   server: {
     host: "::",
     port: 8080,
@@ -94,4 +118,5 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-}));
+});
+});
