@@ -11,7 +11,7 @@ import { setupFetchInterceptor } from "@/lib/apiErrorLogger";
 setupGlobalErrorHandlers();
 
 
-// Setup fetch interceptor to automatically log failed API requests
+// Setup fetch interceptor to automatically log failed API requests.
 setupFetchInterceptor();
 
 createRoot(document.getElementById("root")!).render(
