@@ -10,7 +10,8 @@ import { setupFetchInterceptor } from "@/lib/apiErrorLogger";
 // Setup global error handlers for uncaught errors and promise rejections
 setupGlobalErrorHandlers();
 
-// Setup fetch interceptor to automatically log failed API requests
+
+// Setup fetch interceptor to automatically log failed API requests.
 setupFetchInterceptor();
 
 createRoot(document.getElementById("root")!).render(
