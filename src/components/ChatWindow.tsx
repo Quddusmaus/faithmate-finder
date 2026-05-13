@@ -281,6 +281,9 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
   }, [messages.length]);
 
   const subscribeToMessages = () => {
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
     channelRef.current = supabase
       .channel(`messages:${match.match_id}:${user.id}`)
       .on(
