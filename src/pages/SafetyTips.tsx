@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -91,6 +92,25 @@ const SafetyTips = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
+      <Helmet>
+        <title>Safety Tips — Uniting Hearts</title>
+        <meta name="description" content="Stay safe while dating online. Tips for messaging, meeting in person, protecting privacy, recognizing red flags, and video call safety." />
+        <link rel="canonical" href="https://unityhearts.app/safety" />
+        <meta property="og:title" content="Safety Tips — Uniting Hearts" />
+        <meta property="og:description" content="Tips for messaging, meeting in person, privacy, red flags, and video call safety on Uniting Hearts." />
+        <meta property="og:url" content="https://unityhearts.app/safety" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: safetyCategories.flatMap((cat) =>
+            cat.tips.map((tip) => ({
+              "@type": "Question",
+              name: `${cat.title}: ${tip.split(" ").slice(0, 6).join(" ")}…`,
+              acceptedAnswer: { "@type": "Answer", text: tip },
+            }))
+          ),
+        })}</script>
+      </Helmet>
       {/* Header */}
       <div className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Heart, Globe, Users, Settings, Menu, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -15,6 +16,14 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
+      <Helmet>
+        <title>Uniting Hearts — Baháʼí Dating & Matchmaking Community</title>
+        <meta name="description" content="Baháʼí dating and matchmaking. Meet like-minded Baháʼí singles seeking meaningful relationships rooted in unity and spiritual growth." />
+        <link rel="canonical" href="https://unityhearts.app/" />
+        <meta property="og:title" content="Uniting Hearts — Baháʼí Dating & Matchmaking" />
+        <meta property="og:description" content="Connect with Baháʼí singles seeking meaningful relationships based on shared values and spiritual growth." />
+        <meta property="og:url" content="https://unityhearts.app/" />
+      </Helmet>
       {/* Navigation */}
       <nav className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <div className="flex items-center justify-between">
