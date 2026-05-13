@@ -355,6 +355,9 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
   };
 
   const subscribeToPresence = () => {
+    if (presenceChannelRef.current) {
+      supabase.removeChannel(presenceChannelRef.current);
+    }
     presenceChannelRef.current = supabase
       .channel(`typing:${[user.id, match.match_id].sort().join('-')}`)
       .on('presence', { event: 'sync' }, () => {
