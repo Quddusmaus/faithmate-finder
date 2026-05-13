@@ -95,6 +95,14 @@ export default function Subscription() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Subscription Plans — Uniting Hearts</title>
+        <meta name="description" content="Choose a Uniting Hearts plan to unlock browsing, messaging, and premium matchmaking features for the Baháʼí community." />
+        <link rel="canonical" href="https://unityhearts.app/subscription" />
+        <meta property="og:title" content="Subscription Plans — Uniting Hearts" />
+        <meta property="og:description" content="Plans and pricing for Uniting Hearts premium access." />
+        <meta property="og:url" content="https://unityhearts.app/subscription" />
+      </Helmet>
       <div className="container max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
           <Link to="/profiles" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors">

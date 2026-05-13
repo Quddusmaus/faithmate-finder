@@ -125,6 +125,14 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
+      <Helmet>
+        <title>Contact — Uniting Hearts</title>
+        <meta name="description" content="Get in touch with the Uniting Hearts team for support, feedback, or questions about our Baháʼí matchmaking community." />
+        <link rel="canonical" href="https://unityhearts.app/contact" />
+        <meta property="og:title" content="Contact — Uniting Hearts" />
+        <meta property="og:description" content="Reach the Uniting Hearts team for support and questions." />
+        <meta property="og:url" content="https://unityhearts.app/contact" />
+      </Helmet>
       <nav className="container mx-auto px-6 py-6">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
