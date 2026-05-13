@@ -61,6 +61,7 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
   const presenceChannelRef = useRef<RealtimeChannel | null>(null);
   const reactionsChannelRef = useRef<RealtimeChannel | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sendingRef = useRef(false);
   const { toast } = useToast();
 
   const {
@@ -280,6 +281,9 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
   }, [messages.length]);
 
   const subscribeToMessages = () => {
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
     channelRef.current = supabase
       .channel(`messages:${match.match_id}:${user.id}`)
       .on(
@@ -351,6 +355,9 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
   };
 
   const subscribeToPresence = () => {
+    if (presenceChannelRef.current) {
+      supabase.removeChannel(presenceChannelRef.current);
+    }
     presenceChannelRef.current = supabase
       .channel(`typing:${[user.id, match.match_id].sort().join('-')}`)
       .on('presence', { event: 'sync' }, () => {
@@ -373,6 +380,9 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
   };
 
   const subscribeToReactions = () => {
+    if (reactionsChannelRef.current) {
+      supabase.removeChannel(reactionsChannelRef.current);
+    }
     reactionsChannelRef.current = supabase
       .channel(`reactions:${user.id}:${match.match_id}`)
       .on(
@@ -449,9 +459,17 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (sendingRef.current) return;
+    sendingRef.current = true;
+
     const content = newMessage.trim();
-    if (!content || sending) return;
+    if (!content) {
+      sendingRef.current = false;
+      return;
+    }
+
+    setSending(true);
 
     const { data: allowed, error: rateLimitError } = await supabase.rpc("check_message_rate_limit", {
       p_user_id: user.id,
@@ -462,6 +480,8 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
         description: "You're sending messages too quickly. Please wait a moment.",
         variant: "destructive",
       });
+      sendingRef.current = false;
+      setSending(false);
       return;
     }
 
@@ -481,10 +501,9 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
       created_at: new Date().toISOString(),
       read_at: null,
     };
-    
+
     setMessages((current) => [...current, optimisticMessage]);
     setNewMessage("");
-    setSending(true);
 
     try {
       const { data, error } = await supabase
@@ -498,7 +517,7 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
         .single();
 
       if (error) throw error;
-      
+
       // Replace optimistic message with real one, or ensure it exists
       setMessages((current) => {
         // If realtime already added this message, just remove optimistic if still there
@@ -521,6 +540,7 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
         variant: "destructive",
       });
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   };
