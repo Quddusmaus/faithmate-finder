@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Heart, Globe, Users, Settings, Menu, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
