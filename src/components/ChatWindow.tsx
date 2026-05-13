@@ -61,6 +61,7 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
   const presenceChannelRef = useRef<RealtimeChannel | null>(null);
   const reactionsChannelRef = useRef<RealtimeChannel | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sendingRef = useRef(false);
   const { toast } = useToast();
 
   const {
