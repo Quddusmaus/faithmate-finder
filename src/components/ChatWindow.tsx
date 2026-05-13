@@ -380,6 +380,9 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
   };
 
   const subscribeToReactions = () => {
+    if (reactionsChannelRef.current) {
+      supabase.removeChannel(reactionsChannelRef.current);
+    }
     reactionsChannelRef.current = supabase
       .channel(`reactions:${user.id}:${match.match_id}`)
       .on(
