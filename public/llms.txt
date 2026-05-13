@@ -1,0 +1,16 @@
+# Uniting Hearts
+
+> Baháʼí dating and matchmaking community helping singles find meaningful connections rooted in shared values, unity, and spiritual growth.
+
+Uniting Hearts is a faith-based dating platform for members of the Baháʼí community worldwide. Members create profiles, browse matches, message after mutual interest, and video-call within the app. Subscriptions unlock browsing and messaging.
+
+## Pages
+
+- [Home](/): Overview of Uniting Hearts and how it works.
+- [Sign in / Sign up](/auth): Create an account or log in.
+- [Subscription](/subscription): Plans and pricing for premium access.
+- [Safety Tips](/safety): Guidance for safe online dating and meeting in person.
+- [Install](/install): Install Uniting Hearts as a PWA on your device.
+- [Contact](/contact): Get in touch with the Uniting Hearts team.
+- [Terms of Service](/terms): Terms governing use of the platform.
+- [Privacy Policy](/privacy): How we handle your personal data.
