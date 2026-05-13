@@ -24,7 +24,7 @@ All colors MUST be HSL.
     --secondary-foreground: 220 20% 20%;
 
     --muted: 40 30% 92%;
-    --muted-foreground: 220 15% 45%;
+    --muted-foreground: 220 15% 35%;
 
     --accent: 45 90% 55%;
     --accent-foreground: 220 20% 20%;
@@ -37,7 +37,7 @@ All colors MUST be HSL.
     --ring: 180 60% 35%;
 
     --radius: 1rem;
-    
+
     /* Custom gradients */
     --gradient-hero: linear-gradient(135deg, hsl(180, 60%, 35%), hsl(180, 55%, 45%));
     --gradient-card: linear-gradient(to bottom, hsl(0, 0%, 100%), hsl(40, 30%, 98%));
@@ -87,7 +87,7 @@ All colors MUST be HSL.
     --border: 220 20% 20%;
     --input: 220 20% 20%;
     --ring: 180 55% 45%;
-    
+
     --gradient-hero: linear-gradient(135deg, hsl(180, 55%, 30%), hsl(180, 50%, 40%));
     --gradient-card: linear-gradient(to bottom, hsl(220, 22%, 13%), hsl(220, 20%, 15%));
     --sidebar-background: 240 5.9% 10%;
