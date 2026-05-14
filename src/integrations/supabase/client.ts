@@ -5,12 +5,27 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+// Safari throws a SecurityError when localStorage is blocked (e.g. "Block All
+// Cookies" or certain privacy/corporate network policies). Referencing it
+// directly at module-init time crashes the entire JS bundle before React
+// mounts. Fall back to undefined so Supabase uses in-memory storage instead.
+function safeLocalStorage(): Storage | undefined {
+  try {
+    const key = '__sb_storage_test__';
+    localStorage.setItem(key, '1');
+    localStorage.removeItem(key);
+    return localStorage;
+  } catch {
+    return undefined;
+  }
+}
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
+    storage: safeLocalStorage(),
     persistSession: true,
     autoRefreshToken: true,
   }

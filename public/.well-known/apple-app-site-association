@@ -1,0 +1,16 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "REPLACE_WITH_YOUR_TEAM_ID.app.unityhearts",
+        "paths": ["*"]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "REPLACE_WITH_YOUR_TEAM_ID.app.unityhearts"
+    ]
+  }
+}

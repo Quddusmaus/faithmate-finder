@@ -22,6 +22,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => {
     // Default to true, or read from localStorage if previously set
     const saved = localStorage.getItem("rememberMe");
@@ -157,6 +158,16 @@ const Auth = () => {
         redirectAfterLogin();
         return;
       } else if (mode === "signup") {
+        if (!ageConfirmed) {
+          toast({
+            title: "Age confirmation required",
+            description: "You must confirm you are 18 or older to create an account.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -425,10 +436,22 @@ const Auth = () => {
                   />
                 </div>
 
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="age-confirm"
+                    checked={ageConfirmed}
+                    onCheckedChange={(checked) => setAgeConfirmed(checked === true)}
+                    className="mt-0.5"
+                  />
+                  <Label htmlFor="age-confirm" className="text-sm leading-snug cursor-pointer">
+                    I confirm I am 18 years of age or older
+                  </Label>
+                </div>
+
                 <Button
                   type="submit"
                   className="w-full bg-primary hover:bg-primary/90"
-                  disabled={loading}
+                  disabled={loading || !ageConfirmed}
                 >
                   {loading ? "Please wait..." : "Create Account"}
                 </Button>
