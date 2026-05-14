@@ -24,6 +24,14 @@ export default defineConfig(({ mode }) => {
     env.VITE_SUPABASE_PROJECT_ID || SUPABASE_PROJECT_ID_FALLBACK;
 
   return ({
+  build: {
+    target: ['es2020', 'safari14'],
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'safari14',
+    },
+  },
   define: {
     "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(SUPABASE_URL),
     "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(SUPABASE_PUBLISHABLE_KEY),
