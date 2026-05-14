@@ -33,6 +33,7 @@ export default defineConfig(({ mode }) => {
     },
   },
   define: {
+    "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(SUPABASE_URL),
     "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(SUPABASE_PUBLISHABLE_KEY),
     "import.meta.env.VITE_SUPABASE_ANON_KEY": JSON.stringify(SUPABASE_PUBLISHABLE_KEY),
     "import.meta.env.VITE_SUPABASE_PROJECT_ID": JSON.stringify(SUPABASE_PROJECT_ID),
