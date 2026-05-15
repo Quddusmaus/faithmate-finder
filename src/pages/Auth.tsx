@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,10 @@ import { Heart, ArrowLeft, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getSessionWithTimeout, withTimeout } from "@/lib/safeAuth";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import type { User, Session } from "@supabase/supabase-js";
+
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 type AuthMode = "login" | "signup" | "forgot-password" | "update-password" | "check-email";
 
@@ -31,7 +34,14 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
   const { toast } = useToast();
+
+  const resetCaptcha = () => {
+    setCaptchaToken("");
+    turnstileRef.current?.reset();
+  };
 
   // After login, send the user to /profile-setup if they have no profile yet,
   // otherwise to /profiles. Per project rule: hard redirect (no React Router
@@ -135,6 +145,7 @@ const Auth = () => {
         const signInPromise = supabase.auth.signInWithPassword({
           email,
           password,
+          options: { captchaToken },
         });
         const timeoutPromise = new Promise((_, reject) => 
           setTimeout(() => reject(new Error('Sign in timed out. Please check your internet connection and try again.')), 15000)
@@ -174,6 +185,7 @@ const Auth = () => {
           options: {
             emailRedirectTo: `${window.location.origin}/auth`,
             data: { name },
+            captchaToken,
           },
         });
 
@@ -202,6 +214,7 @@ const Auth = () => {
       });
     } finally {
       setLoading(false);
+      resetCaptcha();
     }
   };
 
@@ -214,6 +227,7 @@ const Auth = () => {
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
+        captchaToken,
       });
 
       if (error) throw error;
@@ -233,6 +247,7 @@ const Auth = () => {
       });
     } finally {
       setLoading(false);
+      resetCaptcha();
     }
   };
 
@@ -285,6 +300,20 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  const renderCaptcha = () =>
+    TURNSTILE_SITE_KEY ? (
+      <div className="flex justify-center">
+        <Turnstile
+          ref={turnstileRef}
+          siteKey={TURNSTILE_SITE_KEY}
+          onSuccess={setCaptchaToken}
+          onError={() => setCaptchaToken("")}
+          onExpire={() => setCaptchaToken("")}
+          options={{ theme: "auto" }}
+        />
+      </div>
+    ) : null;
 
   const getCardTitle = () => {
     switch (mode) {
@@ -376,6 +405,8 @@ const Auth = () => {
                   </button>
                 </div>
 
+                {renderCaptcha()}
+
                 <Button
                   type="submit"
                   className="w-full bg-primary hover:bg-primary/90"
@@ -448,6 +479,8 @@ const Auth = () => {
                   </Label>
                 </div>
 
+                {renderCaptcha()}
+
                 <Button
                   type="submit"
                   className="w-full bg-primary hover:bg-primary/90"
@@ -482,6 +515,8 @@ const Auth = () => {
                     required
                   />
                 </div>
+
+                {renderCaptcha()}
 
                 <Button
                   type="submit"
