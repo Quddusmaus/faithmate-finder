@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Heart, ArrowLeft, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { getSessionWithTimeout, withTimeout } from "@/lib/safeAuth";
+import { getSessionWithTimeout, getUserWithTimeout, withTimeout } from "@/lib/safeAuth";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -46,18 +46,25 @@ const Auth = () => {
   // After login, send the user to /profile-setup if they have no profile yet,
   // otherwise to /profiles. Per project rule: hard redirect (no React Router
   // navigate) and check profile existence before deciding the destination.
+  // All async calls are time-bounded so the redirect always fires — without
+  // timeouts a slow getUser() can leave the user stuck on /auth after seeing
+  // the "Welcome back" toast.
   const redirectAfterLogin = async () => {
     try {
-      const { data: { user: u } } = await supabase.auth.getUser();
+      const u = await getUserWithTimeout(3000);
       if (!u) {
         window.location.replace("/profiles");
         return;
       }
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("user_id", u.id)
-        .maybeSingle();
+      const { data: profile } = await withTimeout(
+        supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", u.id)
+          .maybeSingle(),
+        3000,
+        "Profile lookup timed out",
+      );
       window.location.replace(profile ? "/profiles" : "/profile-setup");
     } catch {
       // On any failure, fall back to /profiles (its own guards will handle it).
