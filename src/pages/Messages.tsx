@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Heart, ArrowLeft, Menu, Settings } from "lucide-react";
+import { Heart, ArrowLeft, Menu, Settings, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { MatchesList } from "@/components/MatchesList";
@@ -149,6 +149,12 @@ const Messages = () => {
                 Browse Profiles
               </Button>
             </Link>
+            <Link to="/writings">
+              <Button variant="outline" size="sm">
+                <BookOpen className="mr-2 h-4 w-4" />
+                Writings
+              </Button>
+            </Link>
             <Link to="/profile-setup">
               <Button variant="outline" size="sm">My Profile</Button>
             </Link>
@@ -169,6 +175,12 @@ const Messages = () => {
                     <Button variant="ghost" className="w-full justify-start">
                       <ArrowLeft className="mr-2 h-4 w-4" />
                       Browse Profiles
+                    </Button>
+                  </Link>
+                  <Link to="/writings" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full justify-start">
+                      <BookOpen className="mr-2 h-4 w-4" />
+                      Writings
                     </Button>
                   </Link>
                   <Link to="/profile-setup" onClick={() => setMobileMenuOpen(false)}>

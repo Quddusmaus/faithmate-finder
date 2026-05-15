@@ -18,6 +18,7 @@ import Contact from "./pages/Contact";
 import Install from "./pages/Install";
 import SafetyTips from "./pages/SafetyTips";
 import Subscription from "./pages/Subscription";
+import Writings from "./pages/Writings";
 import NotFound from "./pages/NotFound";
 import CookieConsent from "./components/CookieConsent";
 import InstallPromptBanner from "./components/InstallPromptBanner";
@@ -49,6 +50,7 @@ const App = () => (
               <Route path="/install" element={<Install />} />
               <Route path="/safety" element={<SafetyTips />} />
               <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
+              <Route path="/writings" element={<ProtectedRoute><Writings /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
