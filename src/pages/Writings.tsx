@@ -46,7 +46,7 @@ const Writings = () => {
         </div>
       </div>
 
-      <main className="container mx-auto px-4 py-8 max-w-3xl">
+      <main className="container mx-auto px-4 py-8 max-w-3xl pb-[calc(5rem+env(safe-area-inset-bottom,0px))] md:pb-8">
         {/* Hero */}
         <section className="mb-10 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">

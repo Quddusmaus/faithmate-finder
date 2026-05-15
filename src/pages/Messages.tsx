@@ -132,7 +132,7 @@ const Messages = () => {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="flex h-screen flex-col bg-background pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0">
       <nav className="border-b border-border bg-card px-4 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">

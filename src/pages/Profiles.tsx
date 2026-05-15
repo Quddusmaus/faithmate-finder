@@ -399,7 +399,7 @@ const Profiles = () => {
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] md:pb-12">
         {showLikeLimitBanner && <SubscriptionBanner type="likes" />}
         
         <div className="mb-8 sm:mb-12 text-center">

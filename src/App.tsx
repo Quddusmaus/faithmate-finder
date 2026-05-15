@@ -24,6 +24,7 @@ import CookieConsent from "./components/CookieConsent";
 import InstallPromptBanner from "./components/InstallPromptBanner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { BottomNav } from "./components/BottomNav";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
             </Routes>
             <CookieConsent />
             <InstallPromptBanner />
+            <BottomNav />
           </ErrorBoundary>
         </BrowserRouter>
       </TooltipProvider>

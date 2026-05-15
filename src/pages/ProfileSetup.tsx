@@ -296,7 +296,7 @@ const ProfileSetup = () => {
         </div>
       </nav>
 
-      <div className="p-4 sm:p-6">
+      <div className="p-4 sm:p-6 pb-[calc(5rem+env(safe-area-inset-bottom,0px))] md:pb-6">
         <div className="mx-auto max-w-2xl py-6 sm:py-12">
           {/* Page Header */}
           <div className="text-center mb-8">
