@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import CookieConsent from "./components/CookieConsent";
 import InstallPromptBanner from "./components/InstallPromptBanner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -37,17 +38,17 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/profiles" element={<Profiles />} />
-              <Route path="/profile-setup" element={<ProfileSetup />} />
-              <Route path="/messages" element={<Messages />} />
+              <Route path="/profile-setup" element={<ProtectedRoute><ProfileSetup /></ProtectedRoute>} />
+              <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/appeal" element={<BanAppeal />} />
+              <Route path="/admin" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
+              <Route path="/appeal" element={<ProtectedRoute><BanAppeal /></ProtectedRoute>} />
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/install" element={<Install />} />
               <Route path="/safety" element={<SafetyTips />} />
-              <Route path="/subscription" element={<Subscription />} />
+              <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
