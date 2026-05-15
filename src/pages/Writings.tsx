@@ -15,13 +15,13 @@ const Writings = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
       <Helmet>
-        <title>Guidance & Writings — Uniting Hearts</title>
+        <title>From the Writings — Uniting Hearts</title>
         <meta
           name="description"
           content="A curated collection of Baháʼí writings on love, marriage, and relationships — guidance for knowing yourself, seeking well, uniting, and building together."
         />
         <link rel="canonical" href="https://unityhearts.app/writings" />
-        <meta property="og:title" content="Guidance & Writings — Uniting Hearts" />
+        <meta property="og:title" content="From the Writings — Uniting Hearts" />
         <meta
           property="og:description"
           content="Baháʼí teachings on love & marriage."
@@ -40,7 +40,7 @@ const Writings = () => {
             </Button>
             <div className="flex items-center gap-2">
               <BookOpen className="h-6 w-6 text-primary" />
-              <h1 className="text-xl font-bold">Guidance & Writings</h1>
+              <h1 className="text-xl font-bold">From the Writings</h1>
             </div>
           </div>
         </div>
@@ -53,7 +53,7 @@ const Writings = () => {
             <Heart className="h-7 w-7 text-primary" fill="currentColor" />
           </div>
           <h2 className="font-serif text-3xl sm:text-4xl font-semibold tracking-tight text-foreground">
-            Guidance & Writings
+            From the Writings
           </h2>
           <p className="mt-2 text-base sm:text-lg text-muted-foreground">
             Baháʼí teachings on love & marriage

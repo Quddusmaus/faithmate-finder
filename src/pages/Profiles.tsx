@@ -311,7 +311,7 @@ const Profiles = () => {
                 <Link to="/writings">
                   <Button variant="outline" size="sm">
                     <BookOpen className="mr-1 lg:mr-2 h-4 w-4" />
-                    <span className="hidden lg:inline">Writings</span>
+                    <span className="hidden lg:inline">From the Writings</span>
                   </Button>
                 </Link>
                 <Link to="/profile-setup">
@@ -373,7 +373,7 @@ const Profiles = () => {
                       <Link to="/writings" onClick={() => setMobileMenuOpen(false)}>
                         <Button variant="outline" className="w-full justify-start">
                           <BookOpen className="mr-2 h-4 w-4" />
-                          Writings
+                          From the Writings
                         </Button>
                       </Link>
                       <Link to="/profile-setup" onClick={() => setMobileMenuOpen(false)}>

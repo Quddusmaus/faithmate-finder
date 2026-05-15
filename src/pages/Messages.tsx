@@ -152,7 +152,7 @@ const Messages = () => {
             <Link to="/writings">
               <Button variant="outline" size="sm">
                 <BookOpen className="mr-2 h-4 w-4" />
-                Writings
+                From the Writings
               </Button>
             </Link>
             <Link to="/profile-setup">
@@ -180,7 +180,7 @@ const Messages = () => {
                   <Link to="/writings" onClick={() => setMobileMenuOpen(false)}>
                     <Button variant="outline" className="w-full justify-start">
                       <BookOpen className="mr-2 h-4 w-4" />
-                      Writings
+                      From the Writings
                     </Button>
                   </Link>
                   <Link to="/profile-setup" onClick={() => setMobileMenuOpen(false)}>
