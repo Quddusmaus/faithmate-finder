@@ -134,18 +134,21 @@ const Writings = () => {
           <p className="mt-1 text-sm text-muted-foreground">
             Articles & reflections from BahaiTeachings.org
           </p>
-          <ul className="mt-4 space-y-2">
+          <ul className="mt-4 space-y-4">
             {furtherReading.map((item) => (
               <li key={item.url}>
                 <a
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-primary hover:underline"
+                  className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline"
                 >
                   {item.title}
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
+                {item.description && (
+                  <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
+                )}
               </li>
             ))}
           </ul>
