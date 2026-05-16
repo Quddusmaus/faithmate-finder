@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Heart, ArrowLeft, LogOut, Settings, MessageCircle, Shield, Menu, BookOpen } from "lucide-react";
+import { Heart, ArrowLeft, LogOut, Settings, MessageCircle, Shield, Menu } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ProfileCard } from "@/components/ProfileCard";
 import { ProfileFilters } from "@/components/ProfileFilters";
@@ -308,12 +308,6 @@ const Profiles = () => {
                     )}
                   </Button>
                 </Link>
-                <Link to="/writings">
-                  <Button variant="outline" size="sm">
-                    <BookOpen className="mr-1 lg:mr-2 h-4 w-4" />
-                    <span className="hidden lg:inline">From the Writings</span>
-                  </Button>
-                </Link>
                 <Link to="/profile-setup">
                   <Button variant="outline" size="sm">
                     <Settings className="mr-1 lg:mr-2 h-4 w-4" />
@@ -368,12 +362,6 @@ const Profiles = () => {
                               {unreadMessageCount}
                             </Badge>
                           )}
-                        </Button>
-                      </Link>
-                      <Link to="/writings" onClick={() => setMobileMenuOpen(false)}>
-                        <Button variant="outline" className="w-full justify-start">
-                          <BookOpen className="mr-2 h-4 w-4" />
-                          From the Writings
                         </Button>
                       </Link>
                       <Link to="/profile-setup" onClick={() => setMobileMenuOpen(false)}>
