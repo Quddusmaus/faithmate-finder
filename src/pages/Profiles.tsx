@@ -292,17 +292,17 @@ const Profiles = () => {
                 {isAdmin && (
                   <Link to="/admin">
                     <Button variant="outline" size="sm" className="gap-1 lg:gap-2">
-                      <Shield className="h-4 w-4" />
-                      <span className="hidden lg:inline">Admin</span>
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span>Admin</span>
                     </Button>
                   </Link>
                 )}
                 <Link to="/messages">
                   <Button variant="outline" size="sm" className="relative">
-                    <MessageCircle className="mr-1 lg:mr-2 h-4 w-4" />
-                    <span className="hidden lg:inline">Messages</span>
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    <span>Messages</span>
                     {unreadMessageCount > 0 && (
-                      <Badge className="ml-1 lg:ml-2 bg-destructive text-destructive-foreground text-xs">
+                      <Badge className="ml-2 bg-destructive text-destructive-foreground text-xs">
                         {unreadMessageCount}
                       </Badge>
                     )}
@@ -310,19 +310,19 @@ const Profiles = () => {
                 </Link>
                 <Link to="/writings">
                   <Button variant="outline" size="sm">
-                    <BookOpen className="mr-1 lg:mr-2 h-4 w-4" />
-                    <span className="hidden lg:inline">From the Writings</span>
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    <span>From the Writings</span>
                   </Button>
                 </Link>
                 <Link to="/profile-setup">
                   <Button variant="outline" size="sm">
-                    <Settings className="mr-1 lg:mr-2 h-4 w-4" />
-                    <span className="hidden lg:inline">My Profile</span>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>My Profile</span>
                   </Button>
                 </Link>
                 <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                  <LogOut className="mr-1 lg:mr-2 h-4 w-4" />
-                  <span className="hidden lg:inline">Sign Out</span>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign Out</span>
                 </Button>
               </>
             ) : (
