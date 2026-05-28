@@ -59,8 +59,16 @@ const Auth = () => {
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const accessToken = hashParams.get("access_token");
     const type = hashParams.get("type");
-    
-    if (type === "recovery" && accessToken) {
+    const hashError = hashParams.get("error");
+    const hashErrorDesc = hashParams.get("error_description");
+
+    if (hashError) {
+      const msg = hashErrorDesc
+        ? decodeURIComponent(hashErrorDesc.replace(/\+/g, " "))
+        : "The link is invalid or has expired. Please request a new one.";
+      toast({ title: "Link error", description: msg, variant: "destructive" });
+      window.location.hash = "";
+    } else if (type === "recovery" && accessToken) {
       setMode("update-password");
     }
 
