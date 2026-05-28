@@ -155,7 +155,23 @@ const Auth = () => {
           p_success: !error
         })).catch(e => console.error('Failed to record login attempt:', e));
 
-        if (error) throw error;
+        if (error) {
+          // Email not confirmed — capture the address and drop them onto the
+          // check-email screen so they can resend without a dead-end error banner.
+          if (
+            error.message?.toLowerCase().includes("email not confirmed") ||
+            error.message?.toLowerCase().includes("email address not confirmed")
+          ) {
+            setMode("check-email");
+            toast({
+              title: "Please confirm your email",
+              description: "Check your inbox for the confirmation link, or resend it below.",
+            });
+            setLoading(false);
+            return;
+          }
+          throw error;
+        }
 
         toast({
           title: "Welcome back!",
