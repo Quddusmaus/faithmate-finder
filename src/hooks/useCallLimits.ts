@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubscription, SubscriptionTier } from '@/hooks/useSubscription';
+import { useCurrentUser } from '@/contexts/CurrentUserContext';
 import { toast } from '@/hooks/use-toast';
 import { getUserWithTimeout, withTimeout } from '@/lib/safeAuth';
 
@@ -20,16 +21,19 @@ const TIER_CALL_LIMITS: Record<string, number | null> = {
 
 export function useCallLimits() {
   const { tier, subscribed, isLoading: subscriptionLoading } = useSubscription();
+  const { isComped } = useCurrentUser();
   const [usedCalls, setUsedCalls] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  const maxCalls = subscribed && tier ? TIER_CALL_LIMITS[tier] : 0;
-  
-  const remainingCalls = maxCalls === null 
-    ? null 
+  const hasAccess = subscribed || isComped;
+  // Comped users get unlimited calls (premium level); subscribers follow their tier
+  const maxCalls = !hasAccess ? 0 : (subscribed && tier ? TIER_CALL_LIMITS[tier] : null);
+
+  const remainingCalls = maxCalls === null
+    ? null
     : Math.max(0, maxCalls - usedCalls);
-  
-  const canMakeCall = maxCalls === null || (maxCalls > 0 && usedCalls < maxCalls);
+
+  const canMakeCall = hasAccess && (maxCalls === null || usedCalls < maxCalls);
 
   const fetchUsedCalls = useCallback(async () => {
     try {

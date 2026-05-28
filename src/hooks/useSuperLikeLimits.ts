@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubscription, SubscriptionTier } from '@/contexts/SubscriptionContext';
+import { useCurrentUser } from '@/contexts/CurrentUserContext';
 import { toast } from '@/hooks/use-toast';
 import { getUserWithTimeout, withTimeout } from '@/lib/safeAuth';
 
@@ -20,17 +21,19 @@ const TIER_SUPER_LIKE_LIMITS: Record<string, number | null> = {
 
 export function useSuperLikeLimits() {
   const { tier, subscribed, isLoading: subscriptionLoading } = useSubscription();
+  const { isComped } = useCurrentUser();
   const [usedSuperLikes, setUsedSuperLikes] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Only subscribers get super likes
-  const maxSuperLikes = subscribed && tier ? TIER_SUPER_LIKE_LIMITS[tier] : 0;
-  
-  const remainingSuperLikes = maxSuperLikes === null 
-    ? null 
+  const hasAccess = subscribed || isComped;
+  // Comped users get premium-level limits (5/day); subscribers follow their tier
+  const maxSuperLikes = !hasAccess ? 0 : (subscribed && tier ? TIER_SUPER_LIKE_LIMITS[tier] : TIER_SUPER_LIKE_LIMITS['premium']);
+
+  const remainingSuperLikes = maxSuperLikes === null
+    ? null
     : Math.max(0, maxSuperLikes - usedSuperLikes);
-  
-  const canSuperLike = subscribed && (maxSuperLikes === null || usedSuperLikes < maxSuperLikes);
+
+  const canSuperLike = hasAccess && (maxSuperLikes === null || usedSuperLikes < maxSuperLikes);
 
   const fetchUsedSuperLikes = useCallback(async () => {
     try {

@@ -17,6 +17,7 @@ import { CompatibilityBadge } from "./CompatibilityBadge";
 import { calculateCompatibility } from "@/hooks/useCurrentUserProfile";
 import { useLikeLimits } from "@/hooks/useLikeLimits";
 import { useSuperLikeLimits } from "@/hooks/useSuperLikeLimits";
+import { useCurrentUser } from "@/contexts/CurrentUserContext";
 import { Link } from "react-router-dom";
 import {
   Tooltip,
@@ -54,6 +55,8 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
   const { toast } = useToast();
   const { canLike, remainingLikes, maxLikes, incrementLikeCount, tier, subscribed } = useLikeLimits();
   const { canSuperLike, remainingSuperLikes, maxSuperLikes, incrementSuperLikeCount } = useSuperLikeLimits();
+  const { isComped } = useCurrentUser();
+  const hasAccess = subscribed || isComped;
   const imageUrl = profile.photo_urls[0] || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400";
 
   const compatibility = useMemo(() => {
@@ -219,7 +222,7 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
       return;
     }
 
-    if (!subscribed) {
+    if (!hasAccess) {
       toast({
         title: "Premium feature",
         description: "Super Likes are available for subscribers only.",
@@ -341,14 +344,14 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button 
-                          variant={superLiked ? "default" : "outline"} 
-                          size="icon" 
+                        <Button
+                          variant={superLiked ? "default" : "outline"}
+                          size="icon"
                           onClick={handleSuperLike}
-                          disabled={superLiking || superLiked || !subscribed}
-                          className={superLiked 
-                            ? "bg-amber-500 text-white hover:bg-amber-600" 
-                            : subscribed 
+                          disabled={superLiking || superLiked || !hasAccess}
+                          className={superLiked
+                            ? "bg-amber-500 text-white hover:bg-amber-600"
+                            : hasAccess
                               ? "border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-white"
                               : "border-muted text-muted-foreground"
                           }
@@ -357,10 +360,10 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        {!subscribed 
-                          ? "Subscribe to send Super Likes" 
-                          : superLiked 
-                            ? "Super Like sent!" 
+                        {!hasAccess
+                          ? "Subscribe to send Super Likes"
+                          : superLiked
+                            ? "Super Like sent!"
                             : `Super Like (${remainingSuperLikes ?? 0} left)`
                         }
                       </TooltipContent>
@@ -459,7 +462,7 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
                 )}
                 
                 {/* Super Like Button */}
-                {subscribed && !superLiked && (
+                {hasAccess && !superLiked && (
                   <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
                     <span className="flex items-center gap-1">
                       <Star className="h-3 w-3 text-amber-500" />
@@ -467,23 +470,23 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
                     </span>
                   </div>
                 )}
-                
-                <Button 
+
+                <Button
                   onClick={handleSuperLike}
-                  disabled={superLiking || superLiked || !subscribed}
+                  disabled={superLiking || superLiked || !hasAccess}
                   className={`w-full ${
-                    superLiked 
-                      ? 'bg-amber-500 hover:bg-amber-600 text-white' 
-                      : subscribed
+                    superLiked
+                      ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                      : hasAccess
                         ? 'bg-amber-500 hover:bg-amber-600 text-white'
                         : 'bg-muted text-muted-foreground'
                   }`}
                 >
                   <Star className={`mr-2 h-4 w-4 ${superLiked ? 'fill-current' : ''}`} />
-                  {superLiked 
-                    ? 'Super Like Sent!' 
-                    : subscribed 
-                      ? 'Send Super Like ⭐' 
+                  {superLiked
+                    ? 'Super Like Sent!'
+                    : hasAccess
+                      ? 'Send Super Like ⭐'
                       : 'Subscribe for Super Likes'
                   }
                 </Button>
