@@ -26,6 +26,38 @@ interface CurrentUserState {
 const CurrentUserContext = createContext<CurrentUserState | null>(null);
 
 const QUERY_TIMEOUT = 3000;
+const QUERY_ATTEMPTS = 3;
+
+type QueryResult<T> = { data: T | null; error: unknown };
+
+/**
+ * Run a Supabase lookup with a per-attempt timeout, retrying on transient
+ * failure (timeout / network / RLS hiccup). A successful response that simply
+ * has no matching row (data: null, error: null) is NOT retried — that's a
+ * legitimate "no record" answer. Returns null only after every attempt fails,
+ * so callers can tell "definitely absent" from "could not determine".
+ */
+async function queryWithRetry<T>(
+  run: () => PromiseLike<QueryResult<T>>,
+  label: string,
+  attempts = QUERY_ATTEMPTS,
+): Promise<QueryResult<T> | null> {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const res = await withTimeout(run(), QUERY_TIMEOUT, `${label} timed out`);
+      if (res.error) throw res.error;
+      return res;
+    } catch (e) {
+      if (attempt === attempts) {
+        console.error(`CurrentUser: ${label} failed after ${attempts} attempts`, e);
+        return null;
+      }
+      // Brief linear backoff before retrying.
+      await new Promise((resolve) => setTimeout(resolve, 300 * attempt));
+    }
+  }
+  return null;
+}
 
 export function CurrentUserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -55,46 +87,39 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
 
       setUser(currentUser);
 
-      // Run all three lookups in parallel — each fails fast on its own timeout
-      // so a single slow query never blocks the others.
+      // Run all three lookups in parallel — each retries on its own transient
+      // failure so a single slow/flaky query never silently resolves to a
+      // false negative (which, for comp status, would wrongly gate a comped
+      // user behind the paywall).
       const [profileRes, adminRes, compRes] = await Promise.all([
-        withTimeout(
-          supabase
-            .from("profiles")
-            .select("id, user_id, name, interests")
-            .eq("user_id", currentUser.id)
-            .maybeSingle(),
-          QUERY_TIMEOUT,
-          "Profile request timed out",
-        ).catch((e) => {
-          console.error("CurrentUser: profile fetch failed", e);
-          return { data: null, error: e } as any;
-        }),
-        withTimeout(
-          supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", currentUser.id)
-            .eq("role", "admin")
-            .maybeSingle(),
-          QUERY_TIMEOUT,
-          "Admin status check timed out",
-        ).catch((e) => {
-          console.error("CurrentUser: admin check failed", e);
-          return { data: null, error: e } as any;
-        }),
-        withTimeout(
-          supabase
-            .from("comped_users")
-            .select("id")
-            .eq("user_id", currentUser.id)
-            .maybeSingle(),
-          QUERY_TIMEOUT,
-          "Comp status check timed out",
-        ).catch((e) => {
-          console.error("CurrentUser: comp check failed", e);
-          return { data: null, error: e } as any;
-        }),
+        queryWithRetry(
+          () =>
+            supabase
+              .from("profiles")
+              .select("id, user_id, name, interests")
+              .eq("user_id", currentUser.id)
+              .maybeSingle(),
+          "Profile request",
+        ),
+        queryWithRetry(
+          () =>
+            supabase
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", currentUser.id)
+              .eq("role", "admin")
+              .maybeSingle(),
+          "Admin status check",
+        ),
+        queryWithRetry(
+          () =>
+            supabase
+              .from("comped_users")
+              .select("id")
+              .eq("user_id", currentUser.id)
+              .maybeSingle(),
+          "Comp status check",
+        ),
       ]);
 
       if (cancelled) return;
