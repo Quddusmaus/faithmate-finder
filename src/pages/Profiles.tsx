@@ -76,6 +76,11 @@ const Profiles = () => {
       return;
     }
 
+    // Never decide whether to gate until subscription, admin AND comp status have
+    // all resolved. The comp guard (compLoading) is the critical one: isComped is
+    // false until the comped_users lookup returns, so redirecting while it is still
+    // in flight would wrongly send a comped user to the paywall. Waiting on
+    // compLoading closes that race definitively.
     if (subscriptionStatusLoading || adminLoading || compLoading) {
       return;
     }

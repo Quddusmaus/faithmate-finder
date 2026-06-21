@@ -20,6 +20,11 @@ interface CurrentUserState {
   profileLoading: boolean;
   adminLoading: boolean;
   compLoading: boolean;
+  // True until the comped_users lookup has definitively resolved. Consumers that
+  // gate on comp status (the paywall) MUST wait for this to be false before
+  // acting, otherwise a comped user loses the race (isComped is false until the
+  // query returns) and gets wrongly redirected to the subscription page.
+  isCompLoading: boolean;
   refresh: () => void;
 }
 
@@ -65,6 +70,10 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isComped, setIsComped] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  // Dedicated comp-status loading flag. Starts true and is only flipped to false
+  // once the comped_users query has resolved (found or not), so the paywall guard
+  // never reads a premature isComped=false while the lookup is still in flight.
+  const [isCompLoading, setIsCompLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -72,26 +81,49 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
 
     const load = async () => {
       setIsLoading(true);
+      setIsCompLoading(true);
       const currentUser = await getUserWithTimeout(3000);
 
       if (cancelled) return;
 
       if (!currentUser) {
+        // Auth has resolved to "no user". There is nothing to look up, so clear
+        // every loading flag (including comp) — ProtectedRoute will redirect to
+        // /auth from here.
         setUser(null);
         setProfile(null);
         setIsAdmin(false);
         setIsComped(false);
         setIsLoading(false);
+        setIsCompLoading(false);
         return;
       }
 
       setUser(currentUser);
 
-      // Run all three lookups in parallel — each retries on its own transient
-      // failure so a single slow/flaky query never silently resolves to a
-      // false negative (which, for comp status, would wrongly gate a comped
-      // user behind the paywall).
-      const [profileRes, adminRes, compRes] = await Promise.all([
+      // Comp status resolves on its own (not bundled into the Promise.all below)
+      // so the paywall guard, which keys off isCompLoading, releases the moment
+      // comp status is known — independent of the potentially slower profile and
+      // admin lookups. It still retries on transient failure so a flaky lookup
+      // never resolves to a false negative that would wrongly gate a comped user.
+      queryWithRetry(
+        () =>
+          supabase
+            .from("comped_users")
+            .select("id")
+            .eq("user_id", currentUser.id)
+            .maybeSingle(),
+        "Comp status check",
+      ).then((compRes) => {
+        if (cancelled) return;
+        setIsComped(!!compRes?.data);
+        setIsCompLoading(false);
+      });
+
+      // Profile and admin lookups run in parallel — each retries on its own
+      // transient failure so a single slow/flaky query never silently resolves
+      // to a false negative.
+      const [profileRes, adminRes] = await Promise.all([
         queryWithRetry(
           () =>
             supabase
@@ -111,22 +143,12 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
               .maybeSingle(),
           "Admin status check",
         ),
-        queryWithRetry(
-          () =>
-            supabase
-              .from("comped_users")
-              .select("id")
-              .eq("user_id", currentUser.id)
-              .maybeSingle(),
-          "Comp status check",
-        ),
       ]);
 
       if (cancelled) return;
 
       setProfile((profileRes?.data as CurrentUserProfile) ?? null);
       setIsAdmin(!!adminRes?.data);
-      setIsComped(!!compRes?.data);
       setIsLoading(false);
     };
 
@@ -139,6 +161,7 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
         setIsAdmin(false);
         setIsComped(false);
         setIsLoading(false);
+        setIsCompLoading(false);
       } else if (event === "SIGNED_IN") {
         setRefreshKey((k) => k + 1);
       }
@@ -162,7 +185,8 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
         isLoading,
         profileLoading: isLoading,
         adminLoading: isLoading,
-        compLoading: isLoading,
+        compLoading: isCompLoading,
+        isCompLoading,
         refresh,
       }}
     >
@@ -183,6 +207,7 @@ export function useCurrentUser() {
       profileLoading: true,
       adminLoading: true,
       compLoading: true,
+      isCompLoading: true,
       refresh: () => {},
     } as CurrentUserState;
   }
