@@ -1,8 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
-import { getSessionWithTimeout, withTimeout } from '@/lib/safeAuth';
-import { PAYWALL_ENABLED } from '@/config/features';
+import { createContext, useContext, ReactNode } from 'react';
 
 export type SubscriptionTier = 'basic' | 'premium' | null;
 
@@ -47,188 +43,31 @@ export const SUBSCRIPTION_TIERS = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Payments are DISABLED. Stripe has been removed (rejected by the payment
+// processor); Apple/Google in-app purchases will replace it later. Until then
+// every authenticated user gets full premium access with zero payment gating.
+//
+// This provider reports a static "subscribed: premium" state and never calls any
+// payment edge functions (check-subscription / create-checkout / customer-portal),
+// so there are no Stripe network calls and no paywall redirects anywhere.
+// ─────────────────────────────────────────────────────────────────────────────
+const FULL_ACCESS: SubscriptionStatus = {
+  subscribed: true,
+  tier: 'premium',
+  subscriptionEnd: null,
+  isLoading: false,
+};
+
+const noop = async () => {};
+
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
-  // With the paywall disabled every signed-in user gets full access. Reporting
-  // the premium tier here means every downstream limit hook and upgrade prompt
-  // resolves to "unlimited / nothing to upgrade" without any of them needing to
-  // know the flag exists.
-  const [status, setStatus] = useState<SubscriptionStatus>(
-    PAYWALL_ENABLED
-      ? {
-          subscribed: false,
-          tier: null,
-          subscriptionEnd: null,
-          isLoading: true,
-        }
-      : {
-          subscribed: true,
-          tier: 'premium',
-          subscriptionEnd: null,
-          isLoading: false,
-        }
-  );
-  const lastCheckedAtRef = useRef(0);
-
-  const checkSubscription = useCallback(async (force = false) => {
-    // Paywall off: never call the Stripe-backed edge function. There is no
-    // subscription to check and the user already has full access.
-    if (!PAYWALL_ENABLED) return;
-
-    const now = Date.now();
-    if (!force && now - lastCheckedAtRef.current < 30000) return;
-    lastCheckedAtRef.current = now;
-
-    try {
-      const session = await getSessionWithTimeout(3000);
-
-      if (!session) {
-        setStatus({
-          subscribed: false,
-          tier: null,
-          subscriptionEnd: null,
-          isLoading: false,
-        });
-        return;
-      }
-
-      // Add a safety timeout so we never get stuck on "Checking subscription..."
-      const { data, error } = await withTimeout(
-        supabase.functions.invoke('check-subscription', {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        }),
-        10000,
-        'Subscription check timeout',
-      ) as any;
-
-      if (error) {
-        console.error('Error checking subscription:', error);
-        // Don't crash - just set default values
-        setStatus(prev => ({ ...prev, isLoading: false }));
-        return;
-      }
-
-      setStatus({
-        subscribed: data?.subscribed ?? false,
-        tier: data?.tier ?? null,
-        subscriptionEnd: data?.subscription_end ?? null,
-        isLoading: false,
-      });
-    } catch (error) {
-      console.error('Error checking subscription:', error);
-      setStatus(prev => ({ ...prev, isLoading: false }));
-    }
-  }, []);
-
-  const createCheckout = useCallback(async (tier: 'basic' | 'premium') => {
-    try {
-      const session = await getSessionWithTimeout(3000);
-      
-      if (!session) {
-        toast({
-          title: 'Authentication required',
-          description: 'Please sign in to subscribe.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { tier },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data.url) {
-        // Redirect in same tab to avoid popup blockers
-        window.location.href = data.url;
-      }
-    } catch (error) {
-      console.error('Error creating checkout:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create checkout session. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  }, []);
-
-  const openCustomerPortal = useCallback(async () => {
-    try {
-      const session = await getSessionWithTimeout(3000);
-      
-      if (!session) {
-        toast({
-          title: 'Authentication required',
-          description: 'Please sign in to manage your subscription.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke('customer-portal', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data.url) {
-        window.open(data.url, '_blank');
-      }
-    } catch (error) {
-      console.error('Error opening customer portal:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to open subscription management. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    checkSubscription(true);
-
-    // Refresh subscription status every 60 seconds
-    const interval = setInterval(() => checkSubscription(), 60000);
-
-    // React to auth state changes without triggering a forced re-check on every
-    // TOKEN_REFRESHED event. A forced re-check during the brief window when the
-    // Supabase client is rotating its access token can return a null session and
-    // incorrectly set subscribed:false, which kicks authenticated users out of
-    // active pages. Instead: only force-check on a fresh sign-in (which needs up-
-    // to-date subscription data) and immediately clear state on sign-out.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') {
-        checkSubscription(true);
-      } else if (event === 'SIGNED_OUT') {
-        setStatus({ subscribed: false, tier: null, subscriptionEnd: null, isLoading: false });
-      }
-      // TOKEN_REFRESHED / INITIAL_SESSION: the periodic 60-second interval
-      // already keeps subscription status fresh; no forced re-check needed here.
-    });
-
-    return () => {
-      clearInterval(interval);
-      subscription.unsubscribe();
-    };
-  }, [checkSubscription]);
-
   return (
     <SubscriptionContext.Provider value={{
-      ...status,
-      checkSubscription,
-      createCheckout,
-      openCustomerPortal,
+      ...FULL_ACCESS,
+      checkSubscription: noop,
+      createCheckout: noop,
+      openCustomerPortal: noop,
     }}>
       {children}
     </SubscriptionContext.Provider>
@@ -238,12 +77,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 export function useSubscription() {
   const context = useContext(SubscriptionContext);
   if (!context) {
-    // Return default values when used outside provider (for backward compatibility)
+    // Used outside the provider — still grant full access, no payment calls.
     return {
-      subscribed: false,
-      tier: null as SubscriptionTier,
-      subscriptionEnd: null,
-      isLoading: true,
+      ...FULL_ACCESS,
       checkSubscription: async () => {},
       createCheckout: async () => {},
       openCustomerPortal: async () => {},
