@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef, Re
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { getSessionWithTimeout, withTimeout } from '@/lib/safeAuth';
+import { PAYWALL_ENABLED } from '@/config/features';
 
 export type SubscriptionTier = 'basic' | 'premium' | null;
 
@@ -47,15 +48,32 @@ export const SUBSCRIPTION_TIERS = {
 };
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
-  const [status, setStatus] = useState<SubscriptionStatus>({
-    subscribed: false,
-    tier: null,
-    subscriptionEnd: null,
-    isLoading: true,
-  });
+  // With the paywall disabled every signed-in user gets full access. Reporting
+  // the premium tier here means every downstream limit hook and upgrade prompt
+  // resolves to "unlimited / nothing to upgrade" without any of them needing to
+  // know the flag exists.
+  const [status, setStatus] = useState<SubscriptionStatus>(
+    PAYWALL_ENABLED
+      ? {
+          subscribed: false,
+          tier: null,
+          subscriptionEnd: null,
+          isLoading: true,
+        }
+      : {
+          subscribed: true,
+          tier: 'premium',
+          subscriptionEnd: null,
+          isLoading: false,
+        }
+  );
   const lastCheckedAtRef = useRef(0);
 
   const checkSubscription = useCallback(async (force = false) => {
+    // Paywall off: never call the Stripe-backed edge function. There is no
+    // subscription to check and the user already has full access.
+    if (!PAYWALL_ENABLED) return;
+
     const now = Date.now();
     if (!force && now - lastCheckedAtRef.current < 30000) return;
     lastCheckedAtRef.current = now;
