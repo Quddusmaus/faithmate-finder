@@ -64,7 +64,11 @@ Note one asymmetry: with the flag off everyone is `premium`, and premium super-l
 
 Playwright, `testDir: ./e2e`, `workers: 1`, `fullyParallel: false`, retries 1, baseURL `http://localhost:8080`. `webServer` auto-starts `npm run dev` and reuses an existing server.
 
-`e2e/globalSetup.ts` creates confirmed test users against the live Supabase project using `SUPABASE_SERVICE_ROLE_KEY`. **If that project is unreachable, globalSetup throws, zero tests run, and the process can still exit 0** — always check the run output for actual test counts rather than trusting the exit code.
+`e2e/globalSetup.ts` creates confirmed test users against the live Supabase project using `SUPABASE_SERVICE_ROLE_KEY`. **If that project is unreachable, globalSetup throws and zero tests run** — Playwright exits 1, but the failure looks like a stack trace rather than a test report, so check the output for an actual test count before concluding anything passed. Beware of shell pipelines (`npm test | tail`) masking the exit code.
+
+**The suite writes to whatever database it points at.** `globalSetup` creates 2 users and `globalTeardown` deletes those 2 — but the specs themselves call `signUp` ~20 more times and nothing cleans those up. Since there is currently no separate test project, pointing `.env` at the live project and running the full suite injects fake profiles into production. Run only `01-public.spec.ts` (the sole account-free spec) unless a throwaway project is configured.
+
+CI (`.github/workflows/e2e.yml`) runs the full suite from GitHub secrets. Those secrets carry the same stale project ref, so CI has been failing at globalSetup rather than testing anything.
 
 Specs are numbered `01-public` through `13-signout`. `10-admin` needs `E2E_ADMIN_EMAIL`/`E2E_ADMIN_PASSWORD` for its full suite.
 
