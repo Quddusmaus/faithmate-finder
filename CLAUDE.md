@@ -50,15 +50,19 @@ Several fixes in this codebase exist because state resolved to a premature falsy
 - `CurrentUserContext` tracks a separate `isCompLoading` alongside `isLoading` so consumers never read a premature `isComped=false` while the comp lookup is still in flight.
 - `client.ts` accesses `localStorage` through a `try`/`catch` helper — Safari with "Block All Cookies" throws `SecurityError` at module-init and crashes the whole bundle before React mounts.
 
-### The paywall kill switch
+### Payments are removed — there is no paywall
 
-`src/config/features.ts` exports `PAYWALL_ENABLED`, currently **`false`** because the Stripe application was declined and no user can pay.
+Stripe was rejected twice by the payment processor and has been **deleted**, not disabled. Apple/Google in-app purchases are the intended path, which will require a native wrapper (Capacitor or similar) — a PWA cannot do IAP on its own.
 
-With it off, `SubscriptionProvider` seeds a static `subscribed: true / tier: 'premium'` state and `checkSubscription` early-returns, so **no Stripe edge function is ever called**. Everything downstream (`useLikeLimits`, `useCallLimits`, `useSuperLikeLimits`, `ProfileCard` banners) derives from `subscribed`/`tier` and resolves to unlimited-and-nothing-to-upgrade on its own — those consumers do not know the flag exists, and should stay that way. `/subscription` redirects to `/profiles`.
+`SubscriptionProvider` is now a static shim: it exports a constant `FULL_ACCESS` (`subscribed: true, tier: 'premium'`) and `checkSubscription` / `createCheckout` / `openCustomerPortal` are all `noop`. There is no state, no effect, no network call. `useSubscription` returns full access even when called outside the provider.
 
-Nothing was deleted to disable payments: tier definitions, the comp system (`comped_users` + `useCompStatus`), checkout/portal paths, and `stripe-webhook` all remain intact so a future processor can be wired in by reimplementing `createCheckout`/`openCustomerPortal` and flipping the flag. **Do not "clean up" the Stripe code** — it is dormant by design.
+Everything downstream (`useLikeLimits`, `useCallLimits`, `useSuperLikeLimits`, `ProfileCard` banners) derives from `subscribed`/`tier`, so every member resolves to unlimited-and-nothing-to-upgrade without knowing payments ever existed. Keep it that way — do not reintroduce gating in the consumers.
 
-Note one asymmetry: with the flag off everyone is `premium`, and premium super-likes are capped at 5/day (`useSuperLikeLimits.ts`), while likes and calls are unlimited.
+The four payment edge functions still exist as inert stubs so nothing 404s: `create-checkout` and `customer-portal` return **410 Gone**, `check-subscription` returns full access, `stripe-webhook` acknowledges and ignores. **None of them import Stripe.** `/subscription` is kept as a route so old links resolve, and renders a plain "You have full access — nothing to purchase" page.
+
+Deliberately left in place: the `comped_users` table and `useCompStatus` (harmless now that everyone has access), the `SUBSCRIPTION_TIERS` definitions, and the `stripe_customer_id` / `stripe_subscription_id` columns in `types.ts` — those are generated from the DB schema, and the tables were not migrated.
+
+One asymmetry to know: because everyone is `premium`, super-likes are capped at 5/day (`useSuperLikeLimits.ts`), while likes and calls are unlimited.
 
 ## E2E tests
 

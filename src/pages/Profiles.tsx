@@ -15,7 +15,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import { useLikeLimits } from "@/hooks/useLikeLimits";
 import { useSubscription } from "@/hooks/useSubscription";
-import { useCompStatus } from "@/hooks/useCompStatus";
 import { getUserWithTimeout, withTimeout } from "@/lib/safeAuth";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
@@ -42,7 +41,7 @@ const Profiles = () => {
   const [authResolved, setAuthResolved] = useState(false);
   const [hasFetchedProfiles, setHasFetchedProfiles] = useState(false);
   const { unreadCount: unreadMessageCount } = useUnreadMessageCount();
-  const { isAdmin, isLoading: adminLoading } = useAdminStatus();
+  const { isAdmin } = useAdminStatus();
   const [filters, setFilters] = useState({
     ageRange: [18, 100] as [number, number],
     location: "",
@@ -57,8 +56,7 @@ const Profiles = () => {
   const navigate = useNavigate();
   
   const { profile: currentUserProfile } = useCurrentUserProfile();
-  const { subscribed, tier, isLoading: subscriptionStatusLoading } = useSubscription();
-  const { isComped, isLoading: compLoading } = useCompStatus();
+  const { subscribed, tier } = useSubscription();
   const { canLike } = useLikeLimits();
   
   // Show upgrade banner only when like limit is reached (basic tier)
@@ -68,6 +66,8 @@ const Profiles = () => {
     checkAuth();
   }, []);
 
+  // Payments are disabled — there is no paywall. Any authenticated user gets
+  // full access, so once auth resolves we just load profiles.
   useEffect(() => {
     if (!authResolved) return;
 
@@ -76,36 +76,10 @@ const Profiles = () => {
       return;
     }
 
-    // Never decide whether to gate until subscription, admin AND comp status have
-    // all resolved. The comp guard (compLoading) is the critical one: isComped is
-    // false until the comped_users lookup returns, so redirecting while it is still
-    // in flight would wrongly send a comped user to the paywall. Waiting on
-    // compLoading closes that race definitively.
-    if (subscriptionStatusLoading || adminLoading || compLoading) {
-      return;
-    }
-
-    if (!subscribed && !isAdmin && !isComped) {
-      setLoading(false);
-      navigate('/subscription', { replace: true });
-      return;
-    }
-
     if (!hasFetchedProfiles) {
       fetchProfiles();
     }
-  }, [
-    authResolved,
-    user,
-    subscribed,
-    isAdmin,
-    isComped,
-    subscriptionStatusLoading,
-    adminLoading,
-    compLoading,
-    hasFetchedProfiles,
-    navigate,
-  ]);
+  }, [authResolved, user, hasFetchedProfiles]);
 
   const checkAuth = async () => {
     try {

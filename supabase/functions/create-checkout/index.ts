@@ -1,27 +1,13 @@
+// DISABLED: Stripe has been removed (rejected by the payment processor). There is
+// no paywall — every authenticated user has full access — so checkout is never
+// needed. Payments will move to Apple/Google in-app purchases later. This stub
+// stays in place so the function endpoint resolves instead of 404ing; it does not
+// import Stripe and cannot create a charge.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@18.5.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-// Subscription tiers with their Stripe price IDs
-const SUBSCRIPTION_TIERS = {
-  basic: {
-    price_id: "price_1SYvWhFlLANlilHtnx9IM0PO",
-    product_id: "prod_TVxRMVOo4ggFGj",
-  },
-  premium: {
-    price_id: "price_1SYvX9FlLANlilHtTarAiK35",
-    product_id: "prod_TVxS2qrvpWe0zd",
-  },
-};
-
-const logStep = (step: string, details?: Record<string, unknown>) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[CREATE-CHECKOUT] ${step}${detailsStr}`);
 };
 
 serve(async (req) => {
@@ -29,86 +15,11 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+  return new Response(
+    JSON.stringify({ error: "Payments are disabled. All members have full access." }),
+    {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 410,
+    },
   );
-
-  try {
-    logStep("Function started");
-
-    const { tier } = await req.json();
-    logStep("Received tier", { tier });
-
-    if (!tier || !SUBSCRIPTION_TIERS[tier as keyof typeof SUBSCRIPTION_TIERS]) {
-      throw new Error(`Invalid tier: ${tier}. Valid tiers: basic, premium`);
-    }
-
-    const selectedTier = SUBSCRIPTION_TIERS[tier as keyof typeof SUBSCRIPTION_TIERS];
-    logStep("Selected tier", { selectedTier });
-
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Authentication required" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      });
-    }
-    const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
-
-    if (!user?.email) {
-      return new Response(JSON.stringify({ error: "Authentication required" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      });
-    }
-    logStep("User authenticated", { userId: user.id, email: user.email });
-
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2025-08-27.basil",
-    });
-
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-      logStep("Found existing Stripe customer", { customerId });
-    }
-
-    const origin = req.headers.get("origin") || "https://lovable.dev";
-    
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      customer_email: customerId ? undefined : user.email,
-      line_items: [
-        {
-          price: selectedTier.price_id,
-          quantity: 1,
-        },
-      ],
-      mode: "subscription",
-      success_url: `${origin}/subscription?success=true`,
-      cancel_url: `${origin}/subscription?canceled=true`,
-      metadata: {
-        user_id: user.id,
-        tier: tier,
-      },
-    });
-
-    logStep("Checkout session created", { sessionId: session.id, url: session.url });
-
-    return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
-  }
 });
