@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { useSubscription, SUBSCRIPTION_TIERS, SubscriptionTier } from '@/hooks/useSubscription';
 import { useCompStatus } from '@/hooks/useCompStatus';
+import { PAYWALL_ENABLED } from '@/config/features';
 import { getSessionWithTimeout } from '@/lib/safeAuth';
 
 const tierIcons: Record<string, React.ReactNode> = {
@@ -39,6 +40,13 @@ export default function Subscription() {
       navigate('/profiles', { replace: true });
     }
   }, [isComped, compLoading, navigate]);
+
+  // Paywall off: there is nothing to sell, so this page has nothing to show.
+  useEffect(() => {
+    if (!PAYWALL_ENABLED) {
+      navigate('/profiles', { replace: true });
+    }
+  }, [navigate]);
 
 
   useEffect(() => {

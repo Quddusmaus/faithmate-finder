@@ -8,7 +8,11 @@ test.describe("Profiles browse — auth gate", () => {
   });
 });
 
-test.describe("Profiles browse — authenticated non-subscriber", () => {
+// The paywall was removed — every authenticated member has full access, so a
+// freshly signed-up user is never redirected to /subscription when visiting
+// /profiles. (They may still land on /profile-setup if their profile is
+// incomplete; the only thing we assert is that no paywall gate fires.)
+test.describe("Profiles browse — authenticated user (full access)", () => {
   const email = uniqueEmail();
 
   test.beforeEach(async ({ page }) => {
@@ -16,25 +20,18 @@ test.describe("Profiles browse — authenticated non-subscriber", () => {
     if (landed !== "/profile-setup") await signIn(page, email);
   });
 
-  test("non-subscriber redirected to /subscription", async ({ page }) => {
+  test("reaches profiles without a paywall redirect", async ({ page }) => {
     await page.goto(`${BASE}/profiles`);
-    await page.waitForURL(/\/(subscription|profiles)/, { timeout: 15000 });
+    await page.waitForURL(/\/(profiles|profile-setup)/, { timeout: 15000 });
     const path = new URL(page.url()).pathname;
-    if (path === "/subscription") {
-      await expect(page.getByRole("heading", { name: /choose your plan/i })).toBeVisible();
-    } else {
-      // Comped or admin account — check profiles page loaded
-      await expect(page.getByText(/discover your match/i)).toBeVisible();
-    }
+    expect(path).not.toBe("/subscription");
   });
 
-  test("subscription page accessible from profiles gate", async ({ page }) => {
-    await page.goto(`${BASE}/profiles`);
-    await page.waitForURL(/\/(subscription|profiles)/, { timeout: 15000 });
-    const path = new URL(page.url()).pathname;
-    if (path === "/subscription") {
-      await expect(page.getByText(/basic|premium/i).first()).toBeVisible();
-    }
+  test("subscription route shows no-op full-access page (no plans)", async ({ page }) => {
+    await page.goto(`${BASE}/subscription`);
+    await page.waitForURL(`${BASE}/subscription`, { timeout: 15000 });
+    await expect(page.getByRole("heading", { name: /full access/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/choose your plan/i)).toHaveCount(0);
   });
 });
 
