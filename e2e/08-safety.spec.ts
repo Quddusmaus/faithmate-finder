@@ -4,7 +4,8 @@
  * The /appeal page is public — we can test that directly.
  */
 import { test, expect } from "@playwright/test";
-import { BASE, uniqueEmail, signUp, signIn } from "./helpers/auth";
+import { BASE, createTestUser, signIn } from "./helpers/auth";
+import type { TestUser } from "./globalSetup";
 
 test.describe("Ban Appeal page — unauthenticated redirect", () => {
   test("unauthenticated user is redirected to /auth from /appeal", async ({ page }) => {
@@ -25,11 +26,14 @@ test.describe("Ban Appeal page — unauthenticated redirect", () => {
 });
 
 test.describe("Ban Appeal page — authenticated user", () => {
-  const email = uniqueEmail();
+  let user: TestUser;
+
+  test.beforeAll(async () => {
+    user = await createTestUser("appeal", { profile: true });
+  });
 
   test.beforeEach(async ({ page }) => {
-    const { landed } = await signUp(page, email);
-    if (landed !== "/profile-setup") await signIn(page, email);
+    await signIn(page, user.email, user.password);
     await page.goto(`${BASE}/appeal`);
   });
 
@@ -53,11 +57,14 @@ test.describe("Safety tips page", () => {
 });
 
 test.describe("Block and Report UI — profile card dialogs", () => {
-  const email = uniqueEmail();
+  let user: TestUser;
+
+  test.beforeAll(async () => {
+    user = await createTestUser("safety", { profile: true });
+  });
 
   test.beforeEach(async ({ page }) => {
-    const { landed } = await signUp(page, email);
-    if (landed !== "/profile-setup") await signIn(page, email);
+    await signIn(page, user.email, user.password);
     await page.goto(`${BASE}/profiles`);
     await page.waitForURL(/\/(profiles|subscription)/, { timeout: 15000 });
   });

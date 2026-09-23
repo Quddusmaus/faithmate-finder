@@ -3,16 +3,19 @@
  * Actual Daily.co calls are not initiated (requires DAILY_API_KEY + matched users).
  */
 import { test, expect } from "@playwright/test";
-import { BASE, uniqueEmail, signUp, signIn } from "./helpers/auth";
+import { BASE, createTestUser, signIn } from "./helpers/auth";
+import type { TestUser } from "./globalSetup";
 
 test.describe("Call UI — messages page elements", () => {
-  const email = uniqueEmail();
-
   test.describe.configure({ mode: "serial" });
+  let user: TestUser;
+
+  test.beforeAll(async () => {
+    user = await createTestUser("calls", { profile: true });
+  });
 
   test.beforeEach(async ({ page }) => {
-    const { landed } = await signUp(page, email);
-    if (landed !== "/profile-setup") await signIn(page, email);
+    await signIn(page, user.email, user.password);
     await page.goto(`${BASE}/messages`);
     await page.waitForTimeout(3000);
   });
@@ -47,9 +50,8 @@ test.describe("Call UI — messages page elements", () => {
 test.describe("Call UI — VideoCall component shell", () => {
   test("VideoCall page does not crash when navigated directly", async ({ page }) => {
     // Messages page hosts the VideoCall component — verify no crashes
-    const email2 = uniqueEmail();
-    const { landed } = await signUp(page, email2);
-    if (landed !== "/profile-setup") await signIn(page, email2);
+    const user = await createTestUser("videocall", { profile: true });
+    await signIn(page, user.email, user.password);
     await page.goto(`${BASE}/messages`);
     await page.waitForTimeout(2000);
     const errors: string[] = [];

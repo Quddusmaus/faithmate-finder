@@ -1,6 +1,7 @@
 import { Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
-import { USERS_FILE, TestUsers } from "../globalSetup";
+import { USERS_FILE, EXTRA_USERS_FILE, TestUser, TestUsers } from "../globalSetup";
 
 /** Returns the pre-created confirmed test users written by globalSetup. */
 export function readTestUsers(): TestUsers {
@@ -38,6 +39,60 @@ export function uniqueEmail(): string {
 
 export const DEFAULT_PASSWORD = "Test1234!";
 export const DEFAULT_NAME = "E2E Test User";
+
+function adminClient() {
+  const url = (process.env.VITE_SUPABASE_URL ?? "").replace(/\s/g, "");
+  const key = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").replace(/\s/g, "");
+  if (!url || !key) {
+    throw new Error("VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set to create E2E test users.");
+  }
+  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+}
+
+// Records a user id so globalTeardown deletes it (profiles etc. cascade from auth.users).
+function registerForCleanup(id: string): void {
+  fs.appendFileSync(EXTRA_USERS_FILE, `${id}\n`);
+}
+
+/**
+ * Creates a pre-confirmed user via the service-role Admin API — no signup form,
+ * no confirmation email, so specs don't hit Supabase's auth email rate limit.
+ * With `profile: true` a minimal profile row is inserted so the user skips the
+ * setup wizard. Every user created here is deleted by globalTeardown.
+ */
+export async function createTestUser(
+  tag: string,
+  { profile = false }: { profile?: boolean } = {},
+): Promise<TestUser> {
+  const admin = adminClient();
+  const email = `e2e_${tag}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}@mailinator.com`;
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password: DEFAULT_PASSWORD,
+    email_confirm: true,
+    user_metadata: { full_name: `E2E ${tag}` },
+  });
+  if (error || !data.user) throw new Error(`Failed to create test user ${tag}: ${error?.message}`);
+  registerForCleanup(data.user.id);
+
+  if (profile) {
+    const { error: profileError } = await admin
+      .from("profiles")
+      .insert({ user_id: data.user.id, name: `E2E ${tag}` });
+    if (profileError) throw new Error(`Failed to create profile for ${tag}: ${profileError.message}`);
+  }
+  return { id: data.user.id, email, password: DEFAULT_PASSWORD };
+}
+
+/** Registers a user created through the signup form for teardown, looked up by email. */
+export async function cleanupUserByEmail(email: string): Promise<void> {
+  const admin = adminClient();
+  const { data, error } = await admin.auth.admin.listUsers({ perPage: 1000 });
+  if (error) return;
+  const users: { id: string; email?: string }[] = data.users;
+  const user = users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+  if (user) registerForCleanup(user.id);
+}
 
 export async function signUp(
   page: Page,

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { BASE, uniqueEmail, DEFAULT_PASSWORD, signUp } from "./helpers/auth";
+import { BASE, uniqueEmail, signUp, cleanupUserByEmail } from "./helpers/auth";
 
 test.describe("Auth page", () => {
   test("login form renders on default load", async ({ page }) => {
@@ -44,9 +44,12 @@ test.describe("Auth page", () => {
     expect(new URL(page.url()).pathname).toBe("/auth");
   });
 
-  test("signup → check-email or profile-setup", async ({ page }) => {
+  // The only spec that drives the real signup form. Every other spec uses
+  // createTestUser() so the suite sends at most one confirmation email per run.
+  test("signup → check-email (with back to sign in) or profile-setup", async ({ page }) => {
     const email = uniqueEmail();
     const { landed } = await signUp(page, email);
+    await cleanupUserByEmail(email);
 
     if (landed === "/profile-setup") {
       await expect(page.locator("nav").first()).toBeVisible();
@@ -55,17 +58,8 @@ test.describe("Auth page", () => {
       await expect(page.getByRole("heading", { name: "Check Your Email" })).toBeVisible({ timeout: 5000 });
       await expect(page.getByText(email)).toBeVisible();
       await expect(page.getByRole("button", { name: /resend/i })).toBeVisible();
-    }
-  });
-
-  test("check-email screen — back to sign in", async ({ page }) => {
-    const { landed } = await signUp(page, uniqueEmail());
-    if (landed !== "/profile-setup") {
-      await expect(page.getByRole("heading", { name: "Check Your Email" })).toBeVisible({ timeout: 5000 });
       await page.getByRole("button", { name: /back to sign in/i }).click();
       await expect(page.getByRole("heading", { name: "Welcome Back" })).toBeVisible();
-    } else {
-      test.skip(true, "Email confirmation disabled — check-email screen not shown");
     }
   });
 

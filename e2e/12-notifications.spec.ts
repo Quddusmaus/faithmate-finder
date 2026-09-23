@@ -2,18 +2,18 @@
  * Notification preferences and notification bell tests.
  */
 import { test, expect } from "@playwright/test";
-import { BASE, uniqueEmail, signUp, signIn } from "./helpers/auth";
-
-async function signedIn(page: import("@playwright/test").Page, email: string) {
-  const { landed } = await signUp(page, email);
-  if (landed !== "/profile-setup") await signIn(page, email);
-}
+import { BASE, createTestUser, signIn } from "./helpers/auth";
+import type { TestUser } from "./globalSetup";
 
 test.describe("Notification bell", () => {
-  const email = uniqueEmail();
+  let user: TestUser;
+
+  test.beforeAll(async () => {
+    user = await createTestUser("bell");
+  });
 
   test.beforeEach(async ({ page }) => {
-    await signedIn(page, email);
+    await signIn(page, user.email, user.password);
     await page.goto(`${BASE}/profile-setup`);
     await page.waitForTimeout(2000);
   });
@@ -40,25 +40,18 @@ test.describe("Notification bell", () => {
 
 test.describe("Notification preferences — email toggles", () => {
   test.setTimeout(90000);
-  const email = uniqueEmail();
+  let user: TestUser;
+
+  // Profile is inserted directly, so the Settings tab is available without the wizard
+  test.beforeAll(async () => {
+    user = await createTestUser("notifprefs", { profile: true });
+  });
 
   test.beforeEach(async ({ page }) => {
-    await signedIn(page, email);
-
-    // Create profile if needed
-    if (new URL(page.url()).pathname === "/profile-setup") {
-      const step1 = page.getByText(/step 1 of 5/i);
-      if (await step1.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await page.getByLabel(/name/i).fill("Notif Test User");
-        await page.getByRole("button", { name: /continue/i }).click();
-        await page.getByRole("button", { name: /continue/i }).click();
-        await page.getByRole("button", { name: /continue/i }).click();
-        await page.getByRole("button", { name: /continue/i }).click();
-        await page.getByRole("button", { name: /create profile|update profile/i }).click();
-        await page.waitForURL(/\/(profiles|subscription)/, { timeout: 20000 });
-        await page.goto(`${BASE}/profile-setup`);
-        await page.waitForURL(`${BASE}/profile-setup`, { timeout: 10000 });
-      }
+    await signIn(page, user.email, user.password);
+    if (new URL(page.url()).pathname !== "/profile-setup") {
+      await page.goto(`${BASE}/profile-setup`);
+      await page.waitForURL(`${BASE}/profile-setup`, { timeout: 10000 });
     }
 
     const settingsTab = page.getByRole("tab", { name: /settings/i });
