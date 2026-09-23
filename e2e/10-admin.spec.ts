@@ -4,8 +4,10 @@
  * Admin users: full dashboard is accessible (tested opportunistically via env creds).
  */
 import { test, expect } from "@playwright/test";
-import { BASE, createTestUser, signIn } from "./helpers/auth";
+import { BASE, createTestUser, signIn, logPageOnFailure } from "./helpers/auth";
 import type { TestUser } from "./globalSetup";
+
+test.afterEach(async ({ page }, testInfo) => logPageOnFailure(page, testInfo));
 
 test.describe("Admin page — unauthenticated", () => {
   test("unauthenticated user is redirected away from /admin", async ({ page }) => {

@@ -4,8 +4,10 @@
  * The /appeal page is public — we can test that directly.
  */
 import { test, expect } from "@playwright/test";
-import { BASE, createTestUser, signIn } from "./helpers/auth";
+import { BASE, createTestUser, signIn, logPageOnFailure } from "./helpers/auth";
 import type { TestUser } from "./globalSetup";
+
+test.afterEach(async ({ page }, testInfo) => logPageOnFailure(page, testInfo));
 
 test.describe("Ban Appeal page — unauthenticated redirect", () => {
   test("unauthenticated user is redirected to /auth from /appeal", async ({ page }) => {

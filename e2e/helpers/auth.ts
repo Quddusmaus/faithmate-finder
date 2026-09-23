@@ -1,4 +1,4 @@
-import { Page } from "@playwright/test";
+import { Page, TestInfo } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import { USERS_FILE, EXTRA_USERS_FILE, TestUser, TestUsers } from "../globalSetup";
@@ -105,6 +105,8 @@ export async function signUp(
   await page.getByLabel("Full Name").fill(name);
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
+  // Required 18+ age gate — "Create Account" stays disabled until it is checked
+  await page.getByLabel(/18 years of age or older/i).check();
   await page.getByRole("button", { name: "Create Account" }).click();
   // Wait for navigation away from /auth rather than a fixed delay
   await page.waitForURL(/\/(profile-setup|check-email|profiles|subscription)/, { timeout: 15000 }).catch(() => {});
@@ -121,8 +123,25 @@ export async function signIn(
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign In" }).click();
-  await page.waitForURL(/\/(profiles|subscription|profile-setup)/, { timeout: 20000 });
+  try {
+    await page.waitForURL(/\/(profiles|subscription|profile-setup)/, { timeout: 20000 });
+  } catch {
+    // Surface the app's own error (e.g. "Invalid login credentials") instead of a bare timeout
+    const messages = await page
+      .locator("[role=status], [role=alert], li[data-sonner-toast]")
+      .allInnerTexts()
+      .catch(() => []);
+    const shown = messages.map((m) => m.trim()).filter(Boolean).join(" | ") || "(no message shown)";
+    throw new Error(`signIn(${email}) did not leave ${new URL(page.url()).pathname}; app said: ${shown}`);
+  }
   return new URL(page.url()).pathname;
+}
+
+/** afterEach hook: on failure, log where the page ended up and what it showed. */
+export async function logPageOnFailure(page: Page, testInfo: TestInfo): Promise<void> {
+  if (testInfo.status === testInfo.expectedStatus) return;
+  const text = await page.locator("body").innerText({ timeout: 2000 }).catch(() => "(unreadable)");
+  console.log(`[${testInfo.title}] failed on ${page.url()}\n  page text: ${text.replace(/\s+/g, " ").slice(0, 600)}`);
 }
 
 export async function signOut(page: Page): Promise<void> {

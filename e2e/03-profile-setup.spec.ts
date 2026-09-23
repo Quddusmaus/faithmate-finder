@@ -1,9 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { BASE, createTestUser, signIn } from "./helpers/auth";
+import { BASE, createTestUser, signIn, logPageOnFailure } from "./helpers/auth";
 import type { TestUser } from "./globalSetup";
 
 // Serial: tests share one profile-less user. "full wizard" saves a profile, so
 // it runs last — after it the wizard no longer shows "step 1 of 5".
+test.afterEach(async ({ page }, testInfo) => logPageOnFailure(page, testInfo));
+
 test.describe("Profile setup wizard", () => {
   test.describe.configure({ mode: "serial" });
   let user: TestUser;
