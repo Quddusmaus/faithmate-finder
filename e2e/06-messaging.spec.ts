@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { BASE, uniqueEmail, signUp, signIn } from "./helpers/auth";
+import { BASE, createTestUser, signIn } from "./helpers/auth";
+import type { TestUser } from "./globalSetup";
 
 test.describe("Messages — auth gate", () => {
   test("unauthenticated user redirected to /auth", async ({ page }) => {
@@ -9,13 +10,15 @@ test.describe("Messages — auth gate", () => {
 });
 
 test.describe("Messages — authenticated user", () => {
-  const email = uniqueEmail();
-
   test.describe.configure({ mode: "serial" });
+  let user: TestUser;
+
+  test.beforeAll(async () => {
+    user = await createTestUser("messages", { profile: true });
+  });
 
   test.beforeEach(async ({ page }) => {
-    const { landed } = await signUp(page, email);
-    if (landed !== "/profile-setup") await signIn(page, email);
+    await signIn(page, user.email, user.password);
     await page.goto(`${BASE}/messages`);
     await page.waitForTimeout(3000);
   });

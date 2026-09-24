@@ -4,7 +4,10 @@
  * Admin users: full dashboard is accessible (tested opportunistically via env creds).
  */
 import { test, expect } from "@playwright/test";
-import { BASE, uniqueEmail, signUp, signIn } from "./helpers/auth";
+import { BASE, createTestUser, signIn, logPageOnFailure } from "./helpers/auth";
+import type { TestUser } from "./globalSetup";
+
+test.afterEach(async ({ page }, testInfo) => logPageOnFailure(page, testInfo));
 
 test.describe("Admin page — unauthenticated", () => {
   test("unauthenticated user is redirected away from /admin", async ({ page }) => {
@@ -25,11 +28,14 @@ test.describe("Admin page — unauthenticated", () => {
 });
 
 test.describe("Admin page — non-admin authenticated user", () => {
-  const email = uniqueEmail();
+  let user: TestUser;
+
+  test.beforeAll(async () => {
+    user = await createTestUser("nonadmin", { profile: true });
+  });
 
   test.beforeEach(async ({ page }) => {
-    const { landed } = await signUp(page, email);
-    if (landed !== "/profile-setup") await signIn(page, email);
+    await signIn(page, user.email, user.password);
     await page.goto(`${BASE}/admin`);
     await page.waitForTimeout(3000);
   });

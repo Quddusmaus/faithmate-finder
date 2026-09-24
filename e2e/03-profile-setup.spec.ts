@@ -1,19 +1,24 @@
 import { test, expect } from "@playwright/test";
-import { BASE, uniqueEmail, DEFAULT_PASSWORD, signUp, signIn } from "./helpers/auth";
+import { BASE, createTestUser, signIn, logPageOnFailure } from "./helpers/auth";
+import type { TestUser } from "./globalSetup";
 
-const email = uniqueEmail();
+// Serial: tests share one profile-less user. "full wizard" saves a profile, so
+// it runs last — after it the wizard no longer shows "step 1 of 5".
+test.afterEach(async ({ page }, testInfo) => logPageOnFailure(page, testInfo));
 
 test.describe("Profile setup wizard", () => {
   test.describe.configure({ mode: "serial" });
+  let user: TestUser;
+
+  test.beforeAll(async () => {
+    user = await createTestUser("wizard");
+  });
 
   test.beforeEach(async ({ page }) => {
-    const { landed } = await signUp(page, email);
-    if (landed !== "/profile-setup") {
-      const dest = await signIn(page, email);
-      if (dest !== "/profile-setup") {
-        await page.goto(`${BASE}/profile-setup`);
-        await page.waitForURL(`${BASE}/profile-setup`, { timeout: 10000 });
-      }
+    const dest = await signIn(page, user.email, user.password);
+    if (dest !== "/profile-setup") {
+      await page.goto(`${BASE}/profile-setup`);
+      await page.waitForURL(`${BASE}/profile-setup`, { timeout: 10000 });
     }
   });
 
@@ -35,6 +40,18 @@ test.describe("Profile setup wizard", () => {
     await expect(page.getByText(/step 2 of 5/i)).toBeVisible({ timeout: 5000 });
     await page.getByRole("button", { name: /back/i }).click();
     await expect(page.getByText(/step 1 of 5/i)).toBeVisible({ timeout: 5000 });
+  });
+
+  test("profile setup nav — sign out button visible", async ({ page }) => {
+    await expect(page.getByText(/step 1 of 5/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("button", { name: /sign out/i }).first()).toBeVisible();
+  });
+
+  test("profile setup nav — branding link visible", async ({ page }) => {
+    await expect(page.locator("nav").first()).toBeVisible({ timeout: 20000 });
+    // Heart icon link is always visible; "Uniting Hearts" text uses `hidden xs:inline` so may be CSS-hidden
+    const navBrand = page.locator("nav a").filter({ has: page.locator("svg") }).first();
+    await expect(navBrand).toBeVisible({ timeout: 10000 });
   });
 
   test("full wizard — all 5 steps and profile saved", async ({ page }) => {
@@ -70,17 +87,5 @@ test.describe("Profile setup wizard", () => {
     // Save
     await page.getByRole("button", { name: /create profile|update profile/i }).click();
     await page.waitForURL(/\/(profiles|subscription)/, { timeout: 20000 });
-  });
-
-  test("profile setup nav — sign out button visible", async ({ page }) => {
-    await expect(page.getByText(/step 1 of 5/i)).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole("button", { name: /sign out/i }).first()).toBeVisible();
-  });
-
-  test("profile setup nav — branding link visible", async ({ page }) => {
-    await expect(page.locator("nav").first()).toBeVisible({ timeout: 20000 });
-    // Heart icon link is always visible; "Uniting Hearts" text uses `hidden xs:inline` so may be CSS-hidden
-    const navBrand = page.locator("nav a").filter({ has: page.locator("svg") }).first();
-    await expect(navBrand).toBeVisible({ timeout: 10000 });
   });
 });

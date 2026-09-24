@@ -1,27 +1,20 @@
 import { test, expect } from "@playwright/test";
-import { BASE, uniqueEmail, signUp, signIn } from "./helpers/auth";
-
-const email = uniqueEmail();
+import { BASE, createTestUser, signIn } from "./helpers/auth";
+import type { TestUser } from "./globalSetup";
 
 // Payments were removed: Stripe is gone and every signed-in member has full
 // access. The /subscription route is kept as a no-op "you have full access"
 // page so existing links don't 404. These tests assert that page, not a paywall.
 test.describe("Subscription page (no-op full-access)", () => {
   test.describe.configure({ mode: "serial" });
-  test.setTimeout(90000);
+  let user: TestUser;
 
-  test.beforeAll(async ({ browser }) => {
-    const page = await browser.newPage();
-    const { landed } = await signUp(page, email);
-    if (landed !== "/profile-setup") await signIn(page, email);
-    await page.close();
+  test.beforeAll(async () => {
+    user = await createTestUser("subscription", { profile: true });
   });
 
   test.beforeEach(async ({ page }) => {
-    const { landed } = await signUp(page, email).catch(() => ({ landed: "" }));
-    if (landed !== "/profile-setup") {
-      await signIn(page, email).catch(() => {});
-    }
+    await signIn(page, user.email, user.password);
     await page.goto(`${BASE}/subscription`);
     await page.waitForURL(`${BASE}/subscription`, { timeout: 10000 });
   });
