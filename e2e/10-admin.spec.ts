@@ -4,9 +4,10 @@
  * Admin users: full dashboard is accessible (tested opportunistically via env creds).
  */
 import { test, expect } from "@playwright/test";
-import { BASE, createTestUser, signIn, logPageOnFailure } from "./helpers/auth";
+import { BASE, createTestUser, signIn, logPageOnFailure, watchRequests } from "./helpers/auth";
 import type { TestUser } from "./globalSetup";
 
+test.beforeEach(async ({ page }) => watchRequests(page));
 test.afterEach(async ({ page }, testInfo) => logPageOnFailure(page, testInfo));
 
 test.describe("Admin page — unauthenticated", () => {
@@ -37,7 +38,9 @@ test.describe("Admin page — non-admin authenticated user", () => {
   test.beforeEach(async ({ page }) => {
     await signIn(page, user.email, user.password);
     await page.goto(`${BASE}/admin`);
-    await page.waitForTimeout(3000);
+    // ProtectedRoute requireAdmin renders nothing until the admin lookup
+    // resolves (3 attempts x 3s timeout), then redirects non-admins to "/".
+    await page.waitForURL((url) => url.pathname !== "/admin", { timeout: 15000 }).catch(() => {});
   });
 
   test("non-admin user does not see dashboard content", async ({ page }) => {

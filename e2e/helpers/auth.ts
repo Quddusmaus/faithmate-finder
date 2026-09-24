@@ -137,11 +137,67 @@ export async function signIn(
   return new URL(page.url()).pathname;
 }
 
-/** afterEach hook: on failure, log where the page ended up and what it showed. */
+interface RequestLog {
+  started: number;
+  label: string;
+  status?: string;
+  ms?: number;
+}
+
+const requestLogs = new WeakMap<Page, { requests: Map<object, RequestLog>; consoleErrors: string[] }>();
+
+/**
+ * beforeEach hook: record Supabase requests and console errors for this page so
+ * logPageOnFailure can say which backend call stalled. Failures that show a
+ * blank page or a "Saving..." button that never finishes are otherwise
+ * indistinguishable from a UI bug.
+ */
+export function watchRequests(page: Page): void {
+  const log = { requests: new Map<object, RequestLog>(), consoleErrors: [] as string[] };
+  requestLogs.set(page, log);
+  const isBackend = (url: string) => url.includes(".supabase.co/");
+  const label = (method: string, url: string) =>
+    `${method} ${url.replace(/^https:\/\/[^/]+/, "").replace(/apikey=[^&]+/, "apikey=…").slice(0, 160)}`;
+  const finish = (req: object, status: string) => {
+    const entry = log.requests.get(req);
+    if (entry && entry.status === undefined) {
+      entry.status = status;
+      entry.ms = Date.now() - entry.started;
+    }
+  };
+
+  page.on("request", (req) => {
+    if (isBackend(req.url())) log.requests.set(req, { started: Date.now(), label: label(req.method(), req.url()) });
+  });
+  page.on("requestfinished", async (req) => {
+    const res = await req.response().catch(() => null);
+    finish(req, String(res?.status() ?? "?"));
+  });
+  page.on("requestfailed", (req) => finish(req, `failed: ${req.failure()?.errorText ?? "?"}`));
+  page.on("console", (msg) => {
+    if (msg.type() === "error" && !msg.text().includes("WebSocket")) log.consoleErrors.push(msg.text().slice(0, 300));
+  });
+  page.on("pageerror", (err) => log.consoleErrors.push(`pageerror: ${err.message.slice(0, 300)}`));
+}
+
+/** afterEach hook: on failure, log where the page ended up, what it showed, and stalled backend calls. */
 export async function logPageOnFailure(page: Page, testInfo: TestInfo): Promise<void> {
   if (testInfo.status === testInfo.expectedStatus) return;
   const text = await page.locator("body").innerText({ timeout: 2000 }).catch(() => "(unreadable)");
-  console.log(`[${testInfo.title}] failed on ${page.url()}\n  page text: ${text.replace(/\s+/g, " ").slice(0, 600)}`);
+  const lines = [`[${testInfo.title}] failed on ${page.url()}`, `  page text: ${text.replace(/\s+/g, " ").slice(0, 600)}`];
+
+  const log = requestLogs.get(page);
+  if (log) {
+    const now = Date.now();
+    const entries = [...log.requests.values()];
+    const pending = entries.filter((e) => e.status === undefined);
+    const slow = entries.filter((e) => e.ms !== undefined && (e.ms > 3000 || !e.status!.startsWith("2")));
+    lines.push(`  supabase requests: ${entries.length} total, ${pending.length} still pending`);
+    for (const e of pending) lines.push(`    PENDING ${((now - e.started) / 1000).toFixed(1)}s  ${e.label}`);
+    for (const e of slow) lines.push(`    ${e.status} in ${(e.ms! / 1000).toFixed(1)}s  ${e.label}`);
+    for (const c of log.consoleErrors.slice(-10)) lines.push(`    console: ${c}`);
+  }
+  console.log(lines.join("\n"));
 }
 
 export async function signOut(page: Page): Promise<void> {
