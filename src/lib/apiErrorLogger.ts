@@ -92,6 +92,9 @@ export const setupFetchInterceptor = (): void => {
     const startTime = Date.now();
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
     const method = init?.method || "GET";
+    // Never log failures of the error-log insert itself: each failed insert
+    // would log another insert, looping forever.
+    const isErrorLogRequest = url.includes("/rest/v1/error_logs");
     
     try {
       const response = await originalFetch(input, init);
@@ -100,9 +103,11 @@ export const setupFetchInterceptor = (): void => {
       // Log failed responses (4xx and 5xx status codes)
       // Exclude 401 on auth endpoints (expected for unauthenticated users)
       const isAuthEndpoint = url.includes("/auth/") || url.includes("gotrue");
-      const shouldLog = !response.ok && !(response.status === 401 && isAuthEndpoint);
+      const shouldLog = !response.ok && !isErrorLogRequest && !(response.status === 401 && isAuthEndpoint);
       
-      if (shouldLog) {
+      // Logging runs in the background: the caller gets its response
+      // immediately rather than waiting on the error_logs insert.
+      if (shouldLog) void (async () => {
         // Clone response to read body without consuming it
         const clonedResponse = response.clone();
         let responseBody: Json = null;
@@ -136,7 +141,7 @@ export const setupFetchInterceptor = (): void => {
           responseBody,
           duration,
         });
-      }
+      })().catch(() => {});
       
       return response;
     } catch (err) {
@@ -144,12 +149,14 @@ export const setupFetchInterceptor = (): void => {
       const duration = Date.now() - startTime;
       
       // Log network errors (failed to fetch, CORS issues, etc.)
-      await logApiError({
-        url,
-        method,
-        errorMessage: error.message,
-        duration,
-      });
+      if (!isErrorLogRequest) {
+        logApiError({
+          url,
+          method,
+          errorMessage: error.message,
+          duration,
+        }).catch(() => {});
+      }
       
       throw err;
     }
