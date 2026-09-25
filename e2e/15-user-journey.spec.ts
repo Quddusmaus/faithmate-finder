@@ -11,7 +11,16 @@
  * depends on the one before.
  */
 import { test, expect, type Browser, type Page } from "@playwright/test";
-import { BASE, createTestUser, signIn, logPageOnFailure, watchRequests } from "./helpers/auth";
+import {
+  BASE,
+  DEFAULT_PASSWORD,
+  createTestUser,
+  ensurePersistentUser,
+  rowExists,
+  signIn,
+  logPageOnFailure,
+  watchRequests,
+} from "./helpers/auth";
 import type { TestUser } from "./globalSetup";
 
 const run = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
@@ -31,9 +40,14 @@ async function openPage(browser: Browser): Promise<Page> {
   return page;
 }
 
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** Matches a profile heading, "Name" or "Name, 29", and nothing longer. */
+const nameHeading = (name: string) => new RegExp(`^${escapeRegExp(name)}(, \\d+)?$`);
+
 /** The browse card for a profile, found by the name in its heading. */
 function profileCard(page: Page, name: string) {
-  return page.locator(".group").filter({ has: page.getByRole("heading", { name }) });
+  return page.locator(".group").filter({ has: page.getByRole("heading", { name: nameHeading(name) }) });
 }
 
 async function openProfile(page: Page, name: string) {
@@ -43,17 +57,21 @@ async function openProfile(page: Page, name: string) {
   await expect(card).toBeVisible({ timeout: 10000 });
   await card.getByRole("button", { name: "View Profile" }).click();
   const dialog = page.getByRole("dialog");
-  await expect(dialog.getByRole("heading", { name })).toBeVisible();
+  await expect(dialog.getByRole("heading", { name: nameHeading(name) })).toBeVisible();
   return dialog;
 }
 
 async function openChat(page: Page, name: string) {
   await page.goto(`${BASE}/messages`);
-  const match = page.getByRole("button", { name: new RegExp(name) });
+  const match = page.getByRole("button", { name: new RegExp(escapeRegExp(name)) });
   await expect(match).toBeVisible({ timeout: 20000 });
   await match.click();
   await expect(page.getByPlaceholder("Type a message...")).toBeVisible();
 }
+
+test.beforeEach(() => {
+  pages.length = 0;
+});
 
 // Playwright requires the fixtures argument to be destructured, even when empty
 // eslint-disable-next-line no-empty-pattern
@@ -188,4 +206,79 @@ test("member journey: profile, super like, match, chat, report, block, admin rev
       await expect(admin.getByText(reportDetails)).toBeVisible({ timeout: 20000 });
     });
   }
+});
+
+/**
+ * Leaves a conversation you can read afterwards. Your account (E2E_OBSERVER_*
+ * secrets) and a permanent test partner are never deleted, so each run adds a
+ * new pair of messages to the same chat. Nothing here reports or blocks, which
+ * would hide the conversation. The accounts exist only in the E2E project.
+ */
+test("observer conversation: the test partner and your account match and chat", async ({ browser }) => {
+  const observerEmail = process.env.E2E_OBSERVER_EMAIL;
+  const observerPassword = process.env.E2E_OBSERVER_PASSWORD;
+  test.skip(!observerEmail || !observerPassword, "E2E_OBSERVER_EMAIL / E2E_OBSERVER_PASSWORD not set");
+  test.setTimeout(180000);
+
+  const sharedProfile = { age: 30, location: "E2E Test City", interests: ["Devotionals", "Music"], is_visible: true };
+  const partner = await ensurePersistentUser(
+    "e2e_journey_partner@mailinator.com",
+    DEFAULT_PASSWORD,
+    { ...sharedProfile, name: "E2E Test Partner", bio: "Automated test account. My messages come from the E2E suite." },
+    { resetPassword: true },
+  );
+  const observer = await ensurePersistentUser(observerEmail!, observerPassword!, {
+    ...sharedProfile,
+    name: "Quddus (E2E)",
+    bio: "Observer account for E2E runs.",
+  });
+
+  const stamp = new Date().toISOString().slice(0, 16).replace("T", " ");
+  const partnerMessage = `[E2E ${stamp} UTC] Hi! Test partner here, run ${run}.`;
+  const observerMessage = `[E2E ${stamp} UTC] Reply sent by the test from your account, run ${run}.`;
+
+  const p = await openPage(browser);
+  const o = await openPage(browser);
+
+  // The dialog shows "Like"/"Super Like" until it has loaded the current
+  // state, so decide from the database whether an earlier run already did it.
+  const alreadySuperLiked = await rowExists("super_likes", { user_id: partner.id, super_liked_user_id: observer.id });
+  const partnerAlreadyLiked = await rowExists("likes", { user_id: partner.id, liked_user_id: observer.id });
+  const observerAlreadyLiked = await rowExists("likes", { user_id: observer.id, liked_user_id: partner.id });
+
+  await test.step("partner likes and super likes you (first run; later runs find it done)", async () => {
+    await signIn(p, partner.email, partner.password);
+    const dialog = await openProfile(p, observer.name);
+    if (!alreadySuperLiked) await dialog.getByRole("button", { name: /send super like/i }).click();
+    await expect(dialog.getByRole("button", { name: /super like sent!/i })).toBeVisible({ timeout: 10000 });
+    if (!partnerAlreadyLiked) await dialog.getByRole("button", { name: "Like Profile" }).click();
+    await expect(dialog.getByRole("button", { name: "Unlike Profile" })).toBeVisible({ timeout: 10000 });
+  });
+
+  await test.step("your account likes the partner back, making a match", async () => {
+    await signIn(o, observer.email, observer.password);
+    const dialog = await openProfile(o, partner.name);
+    if (!observerAlreadyLiked) await dialog.getByRole("button", { name: "Like Profile" }).click();
+    await expect(dialog.getByRole("button", { name: "Unlike Profile" })).toBeVisible({ timeout: 10000 });
+  });
+
+  await test.step("partner messages you", async () => {
+    await openChat(p, observer.name);
+    await p.getByPlaceholder("Type a message...").fill(partnerMessage);
+    await p.keyboard.press("Enter");
+    await expect(p.getByText(partnerMessage).first()).toBeVisible({ timeout: 10000 });
+  });
+
+  await test.step("your account reads it and replies", async () => {
+    await openChat(o, partner.name);
+    await expect(o.getByText(partnerMessage).first()).toBeVisible({ timeout: 15000 });
+    await o.getByPlaceholder("Type a message...").fill(observerMessage);
+    await o.keyboard.press("Enter");
+    await expect(o.getByText(observerMessage).first()).toBeVisible({ timeout: 10000 });
+  });
+
+  await test.step("partner sees your reply", async () => {
+    await openChat(p, observer.name);
+    await expect(p.getByText(observerMessage).first()).toBeVisible({ timeout: 15000 });
+  });
 });

@@ -85,6 +85,56 @@ export async function createTestUser(
   return { id: data.user.id, email, password: DEFAULT_PASSWORD };
 }
 
+async function findUserIdByEmail(email: string): Promise<string | null> {
+  const admin = adminClient();
+  for (let page = 1; ; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw new Error(`listUsers failed: ${error.message}`);
+    const users: { id: string; email?: string }[] = data.users;
+    const match = users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+    if (match) return match.id;
+    if (users.length < 1000) return null;
+  }
+}
+
+/**
+ * Returns a long-lived account that globalTeardown never deletes, so what
+ * specs do with it stays visible afterwards. Creates the account (confirmed,
+ * with `password`) and a profile row only when missing; an existing account's
+ * password and profile are left untouched unless `resetPassword` is set.
+ */
+export async function ensurePersistentUser(
+  email: string,
+  password: string,
+  profile: Record<string, unknown>,
+  { resetPassword = false }: { resetPassword?: boolean } = {},
+): Promise<TestUser & { name: string }> {
+  const admin = adminClient();
+  let id = await findUserIdByEmail(email);
+  if (!id) {
+    const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+    if (error || !data.user) throw new Error(`Failed to create persistent user: ${error?.message}`);
+    id = data.user.id;
+  } else if (resetPassword) {
+    const { error } = await admin.auth.admin.updateUserById(id, { password });
+    if (error) throw new Error(`Failed to reset persistent user password: ${error.message}`);
+  }
+
+  const { data: existing } = await admin.from("profiles").select("name").eq("user_id", id).maybeSingle();
+  if (!existing) {
+    const { error } = await admin.from("profiles").insert({ user_id: id, ...profile });
+    if (error) throw new Error(`Failed to create profile for persistent user: ${error.message}`);
+  }
+  return { id, email, password, name: existing?.name ?? String(profile.name) };
+}
+
+/** Whether a row matching every column in `match` exists, read with the service role. */
+export async function rowExists(table: string, match: Record<string, string>): Promise<boolean> {
+  const { data, error } = await adminClient().from(table).select("id").match(match).limit(1);
+  if (error) throw new Error(`Reading ${table} failed: ${error.message}`);
+  return (data ?? []).length > 0;
+}
+
 /** Registers a user created through the signup form for teardown, looked up by email. */
 export async function cleanupUserByEmail(email: string): Promise<void> {
   const admin = adminClient();
