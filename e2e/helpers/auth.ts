@@ -58,11 +58,12 @@ function registerForCleanup(id: string): void {
  * Creates a pre-confirmed user via the service-role Admin API — no signup form,
  * no confirmation email, so specs don't hit Supabase's auth email rate limit.
  * With `profile: true` a minimal profile row is inserted so the user skips the
- * setup wizard. Every user created here is deleted by globalTeardown.
+ * setup wizard; pass an object instead to set extra profile columns. Every
+ * user created here is deleted by globalTeardown.
  */
 export async function createTestUser(
   tag: string,
-  { profile = false }: { profile?: boolean } = {},
+  { profile = false }: { profile?: boolean | Record<string, unknown> } = {},
 ): Promise<TestUser> {
   const admin = adminClient();
   const email = `e2e_${tag}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}@mailinator.com`;
@@ -78,7 +79,7 @@ export async function createTestUser(
   if (profile) {
     const { error: profileError } = await admin
       .from("profiles")
-      .insert({ user_id: data.user.id, name: `E2E ${tag}` });
+      .insert({ user_id: data.user.id, name: `E2E ${tag}`, ...(profile === true ? {} : profile) });
     if (profileError) throw new Error(`Failed to create profile for ${tag}: ${profileError.message}`);
   }
   return { id: data.user.id, email, password: DEFAULT_PASSWORD };
