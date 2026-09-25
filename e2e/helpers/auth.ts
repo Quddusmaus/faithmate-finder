@@ -171,7 +171,10 @@ export function watchRequests(page: Page): void {
   });
   page.on("requestfinished", async (req) => {
     const res = await req.response().catch(() => null);
-    finish(req, String(res?.status() ?? "?"));
+    const status = res?.status();
+    // Error bodies carry the reason (e.g. a missing column or function).
+    const body = status && status >= 400 ? await res!.text().catch(() => "") : "";
+    finish(req, `${status ?? "?"}${body ? ` ${body.replace(/\s+/g, " ").slice(0, 200)}` : ""}`);
   });
   page.on("requestfailed", (req) => finish(req, `failed: ${req.failure()?.errorText ?? "?"}`));
   page.on("console", (msg) => {
@@ -192,9 +195,12 @@ export async function logPageOnFailure(page: Page, testInfo: TestInfo): Promise<
     const entries = [...log.requests.values()];
     const pending = entries.filter((e) => e.status === undefined);
     const slow = entries.filter((e) => e.ms !== undefined && (e.ms > 3000 || !e.status!.startsWith("2")));
+    // Collapse repeats (a retry loop can issue hundreds of identical requests).
+    const counts = new Map<string, number>();
+    for (const e of slow) counts.set(`${e.status}  ${e.label}`, (counts.get(`${e.status}  ${e.label}`) ?? 0) + 1);
     lines.push(`  supabase requests: ${entries.length} total, ${pending.length} still pending`);
     for (const e of pending) lines.push(`    PENDING ${((now - e.started) / 1000).toFixed(1)}s  ${e.label}`);
-    for (const e of slow) lines.push(`    ${e.status} in ${(e.ms! / 1000).toFixed(1)}s  ${e.label}`);
+    for (const [line, n] of counts) lines.push(`    ${n > 1 ? `${n}x ` : ""}${line}`);
     for (const c of log.consoleErrors.slice(-10)) lines.push(`    console: ${c}`);
   }
   console.log(lines.join("\n"));
