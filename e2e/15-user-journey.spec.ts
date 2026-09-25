@@ -124,12 +124,16 @@ test("member journey: profile, super like, match, chat, report, block, admin rev
     await a.waitForURL(/\/profiles/, { timeout: 20000 });
   });
 
-  await test.step("A super likes and likes B", async () => {
+  await test.step("A super likes B, which also likes B", async () => {
     const dialog = await openProfile(a, nameB);
     await dialog.getByRole("button", { name: /send super like/i }).click();
     await expect(dialog.getByRole("button", { name: /super like sent!/i })).toBeVisible({ timeout: 10000 });
-    await dialog.getByRole("button", { name: "Like Profile" }).click();
-    await expect(dialog.getByRole("button", { name: "Unlike Profile" })).toBeVisible({ timeout: 10000 });
+    // A DB trigger adds the regular like, so the button already reads "Unlike Profile".
+    // Don't click it: that would remove the like and B's like back would make no match.
+    await expect(dialog.getByRole("button", { name: "Unlike Profile", exact: true })).toBeVisible({ timeout: 10000 });
+    await expect
+      .poll(() => rowExists("likes", { user_id: userA.id, liked_user_id: userB.id }), { timeout: 10000 })
+      .toBe(true);
   });
 
   await test.step("B sees the Super Like and likes A back, making a match", async () => {
@@ -243,7 +247,6 @@ test("observer conversation: the test partner and your account match and chat", 
   // The dialog shows "Like"/"Super Like" until it has loaded the current
   // state, so decide from the database whether an earlier run already did it.
   const alreadySuperLiked = await rowExists("super_likes", { user_id: partner.id, super_liked_user_id: observer.id });
-  const partnerAlreadyLiked = await rowExists("likes", { user_id: partner.id, liked_user_id: observer.id });
   const observerAlreadyLiked = await rowExists("likes", { user_id: observer.id, liked_user_id: partner.id });
 
   await test.step("partner likes and super likes you (first run; later runs find it done)", async () => {
@@ -251,15 +254,22 @@ test("observer conversation: the test partner and your account match and chat", 
     const dialog = await openProfile(p, observer.name);
     if (!alreadySuperLiked) await dialog.getByRole("button", { name: /send super like/i }).click();
     await expect(dialog.getByRole("button", { name: /super like sent!/i })).toBeVisible({ timeout: 10000 });
-    if (!partnerAlreadyLiked) await dialog.getByRole("button", { name: "Like Profile" }).click();
-    await expect(dialog.getByRole("button", { name: "Unlike Profile" })).toBeVisible({ timeout: 10000 });
+    // The super like's trigger also adds the regular like; clicking would unlike.
+    await expect(dialog.getByRole("button", { name: "Unlike Profile", exact: true })).toBeVisible({ timeout: 10000 });
+    await expect
+      .poll(() => rowExists("likes", { user_id: partner.id, liked_user_id: observer.id }), { timeout: 10000 })
+      .toBe(true);
   });
 
   await test.step("your account likes the partner back, making a match", async () => {
     await signIn(o, observer.email, observer.password);
     const dialog = await openProfile(o, partner.name);
-    if (!observerAlreadyLiked) await dialog.getByRole("button", { name: "Like Profile" }).click();
-    await expect(dialog.getByRole("button", { name: "Unlike Profile" })).toBeVisible({ timeout: 10000 });
+    // exact: a plain "Like Profile" name also matches "Unlike Profile" as a substring
+    if (!observerAlreadyLiked) await dialog.getByRole("button", { name: "Like Profile", exact: true }).click();
+    await expect(dialog.getByRole("button", { name: "Unlike Profile", exact: true })).toBeVisible({ timeout: 10000 });
+    await expect
+      .poll(() => rowExists("likes", { user_id: observer.id, liked_user_id: partner.id }), { timeout: 10000 })
+      .toBe(true);
   });
 
   await test.step("partner messages you", async () => {
