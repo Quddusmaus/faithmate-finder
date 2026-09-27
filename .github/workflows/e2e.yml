@@ -27,7 +27,7 @@ jobs:
       E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
       E2E_OBSERVER_EMAIL: ${{ secrets.E2E_OBSERVER_EMAIL }}
       E2E_OBSERVER_PASSWORD: ${{ secrets.E2E_OBSERVER_PASSWORD }}
-      E2E_GROUP_SIZE: ${{ inputs.group_size || '10' }}
+      E2E_GROUP_SIZE: ${{ inputs.group_size || '50' }}
 
     steps:
       - name: Checkout
