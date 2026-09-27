@@ -10,7 +10,7 @@
  * spec sends no auth emails. Every step runs in order in one test because each
  * depends on the one before.
  */
-import { test, expect, type Browser, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import {
   BASE,
   DEFAULT_PASSWORD,
@@ -19,8 +19,8 @@ import {
   rowExists,
   signIn,
   logPageOnFailure,
-  watchRequests,
 } from "./helpers/auth";
+import { openChat, openPage, openProfile, pages, profileCard } from "./helpers/journey";
 import type { TestUser } from "./globalSetup";
 
 const run = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
@@ -29,45 +29,6 @@ const nameB = `Journey Ben ${run}`;
 const hello = `Hello Ben, this is Ava (${run})`;
 const reply = `Hi Ava, nice to meet you (${run})`;
 const reportDetails = `E2E journey report ${run}`;
-
-const pages: Page[] = [];
-
-async function openPage(browser: Browser): Promise<Page> {
-  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
-  const page = await context.newPage();
-  watchRequests(page);
-  pages.push(page);
-  return page;
-}
-
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-/** Matches a profile heading, "Name" or "Name, 29", and nothing longer. */
-const nameHeading = (name: string) => new RegExp(`^${escapeRegExp(name)}(, \\d+)?$`);
-
-/** The browse card for a profile, found by the name in its heading. */
-function profileCard(page: Page, name: string) {
-  return page.locator(".group").filter({ has: page.getByRole("heading", { name: nameHeading(name) }) });
-}
-
-async function openProfile(page: Page, name: string) {
-  await page.goto(`${BASE}/profiles`);
-  await expect(page.getByText(/showing \d+ of \d+ profiles/i)).toBeVisible({ timeout: 20000 });
-  const card = profileCard(page, name);
-  await expect(card).toBeVisible({ timeout: 10000 });
-  await card.getByRole("button", { name: "View Profile" }).click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog.getByRole("heading", { name: nameHeading(name) })).toBeVisible();
-  return dialog;
-}
-
-async function openChat(page: Page, name: string) {
-  await page.goto(`${BASE}/messages`);
-  const match = page.getByRole("button", { name: new RegExp(escapeRegExp(name)) });
-  await expect(match).toBeVisible({ timeout: 20000 });
-  await match.click();
-  await expect(page.getByPlaceholder("Type a message...")).toBeVisible();
-}
 
 test.beforeEach(() => {
   pages.length = 0;

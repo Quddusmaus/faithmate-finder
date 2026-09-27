@@ -1,0 +1,48 @@
+name: Production smoke
+
+# Read-only checks against the live site. Manual only: it never runs on a push or PR.
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Site to check"
+        default: "https://unityhearts.app"
+        required: true
+
+jobs:
+  smoke:
+    name: Production smoke (read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      PROD_URL: ${{ inputs.url }}
+      # Optional: a paused account you created on the site. Without these, only public pages are checked.
+      PROD_SMOKE_EMAIL: ${{ secrets.PROD_SMOKE_EMAIL }}
+      PROD_SMOKE_PASSWORD: ${{ secrets.PROD_SMOKE_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright browsers + system deps
+        run: npx playwright install --with-deps chromium
+
+      - name: Run production smoke checks
+        run: npx playwright test --config playwright.prod.config.ts
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prod-smoke-report
+          path: playwright-report-prod/
+          retention-days: 14
