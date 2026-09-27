@@ -76,7 +76,7 @@ CI (`.github/workflows/e2e.yml`) runs the full suite from GitHub secrets against
 
 `setupFetchInterceptor` (`src/lib/apiErrorLogger.ts`) logs every failed fetch to `error_logs`. It must never log failures of the `error_logs` insert itself and must not block the caller on logging: when it did both, a failing insert looped forever and the original request never returned, so pages froze on their loading state.
 
-Specs are numbered `01-public` through `15-user-journey`. `10-admin` and the admin step of `15-user-journey` need `E2E_ADMIN_EMAIL`/`E2E_ADMIN_PASSWORD`. `15-user-journey`'s observer test needs `E2E_OBSERVER_EMAIL`/`E2E_OBSERVER_PASSWORD` and is skipped without them; it uses `ensurePersistentUser`, whose accounts globalTeardown never deletes, so their conversation stays readable in the E2E project.
+Specs are numbered `01-public` through `16-group-journey`. `15` and `16` share browse/chat helpers in `e2e/helpers/journey.ts`; `16` drives ten members in ten browsers (six matches, chats, a report and a block) and takes a few minutes. `10-admin` and the admin steps of `15-user-journey` and `16-group-journey` need `E2E_ADMIN_EMAIL`/`E2E_ADMIN_PASSWORD`. `15-user-journey`'s observer test needs `E2E_OBSERVER_EMAIL`/`E2E_OBSERVER_PASSWORD` and is skipped without them; it uses `ensurePersistentUser`, whose accounts globalTeardown never deletes, so their conversation stays readable in the E2E project.
 
 Known gotchas:
 
