@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      group_size:
+        description: "Members in 16-group-journey (even, at least 10). Pushes and PRs use 10."
+        default: "50"
+        required: true
 
 jobs:
   e2e:
@@ -22,6 +27,7 @@ jobs:
       E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
       E2E_OBSERVER_EMAIL: ${{ secrets.E2E_OBSERVER_EMAIL }}
       E2E_OBSERVER_PASSWORD: ${{ secrets.E2E_OBSERVER_PASSWORD }}
+      E2E_GROUP_SIZE: ${{ inputs.group_size || '10' }}
 
     steps:
       - name: Checkout

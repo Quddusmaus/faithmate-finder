@@ -8,12 +8,22 @@ import { BASE, watchRequests } from "./auth";
 
 export const pages: Page[] = [];
 
-export async function openPage(browser: Browser): Promise<Page> {
-  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+type StorageState = Exclude<Parameters<Browser["newContext"]>[0], undefined>["storageState"];
+
+/** Opens a page in a fresh browser context, optionally restoring a saved session. */
+export async function openPage(browser: Browser, storageState?: StorageState): Promise<Page> {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, storageState });
   const page = await context.newPage();
   watchRequests(page);
   pages.push(page);
   return page;
+}
+
+/** Closes a page from openPage together with its context. */
+export async function closePage(page: Page): Promise<void> {
+  const i = pages.indexOf(page);
+  if (i >= 0) pages.splice(i, 1);
+  await page.context().close();
 }
 
 export const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
