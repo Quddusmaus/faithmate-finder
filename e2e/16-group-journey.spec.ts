@@ -130,12 +130,33 @@ test(`group journey: ${SIZE} members browse, match, chat, report and block`, asy
     return member.page;
   }
 
+  /**
+   * Opens `to`'s profile as `from` and waits for the dialog's like/super-like status requests.
+   * A status response that lands after a click resets the button to its old state, so the
+   * like looks undone (the row is still saved); under load that happened within 10 seconds.
+   */
+  async function openProfileSettled(page: Page, from: Member, to: Member) {
+    const status = (table: string, column: string) =>
+      page.waitForResponse((r) => {
+        const url = new URL(r.url());
+        return (
+          url.pathname === `/rest/v1/${table}` &&
+          url.searchParams.get("user_id") === `eq.${from.id}` &&
+          url.searchParams.get(column) === `eq.${to.id}`
+        );
+      });
+    const settled = Promise.all([status("likes", "liked_user_id"), status("super_likes", "super_liked_user_id")]);
+    const dialog = await openProfile(page, to.name);
+    await settled;
+    return dialog;
+  }
+
   /** Likes made so far, to know which like completes a match. */
   const done = new Set<string>();
   async function like(fromIndex: number, toIndex: number) {
     const [from, to] = [members[fromIndex], members[toIndex]];
     const page = await pageOf(from);
-    const dialog = await openProfile(page, to.name);
+    const dialog = await openProfileSettled(page, from, to);
     await dialog.getByRole("button", { name: "Like Profile", exact: true }).click();
     await expect(dialog.getByRole("button", { name: "Unlike Profile", exact: true })).toBeVisible({ timeout: 10000 });
     await expect
@@ -215,7 +236,7 @@ test(`group journey: ${SIZE} members browse, match, chat, report and block`, asy
   await test.step("a Super Like is liked back from the Super Likes panel", async () => {
     const [from, to] = SUPER.map((i) => members[i]);
     const fromPage = await pageOf(from);
-    const dialog = await openProfile(fromPage, to.name);
+    const dialog = await openProfileSettled(fromPage, from, to);
     await dialog.getByRole("button", { name: /send super like/i }).click();
     await expect(dialog.getByRole("button", { name: /super like sent!/i })).toBeVisible({ timeout: 10000 });
     // The super like's trigger also adds the regular like; clicking Like here would unlike.
