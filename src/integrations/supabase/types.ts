@@ -496,6 +496,7 @@ export type Database = {
       notifications: {
         Row: {
           created_at: string
+          event_key: string | null
           id: string
           message: string | null
           read: boolean
@@ -506,6 +507,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          event_key?: string | null
           id?: string
           message?: string | null
           read?: boolean
@@ -516,6 +518,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          event_key?: string | null
           id?: string
           message?: string | null
           read?: boolean
