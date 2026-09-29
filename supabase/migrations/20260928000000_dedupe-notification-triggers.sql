@@ -35,8 +35,12 @@
 --
 -- Existing duplicate rows are left in place.
 --
--- NOTE: the edge-function URL is hardcoded below, as in 20260513193638. If
--- the project ref changes, these functions must be rewritten again.
+-- NOTE: the edge-function URL is hardcoded below. It now points at
+-- nyhlwamvqjmaxpmqxzah, the project unityhearts.app actually uses (per .env,
+-- the vite.config.ts fallback and the deployed bundle). 20260508000000,
+-- 20260513000000 and 20260513193638 pointed these functions at
+-- qclefndzismozdogsfot, so message/like/match emails went to the wrong
+-- project. If the project ref changes, these functions must be rewritten.
 
 -- ---------------------------------------------------------------------------
 -- a. Remove every notification trigger, however it was created
@@ -118,7 +122,7 @@ CREATE OR REPLACE FUNCTION public.notify_new_message()
 AS $function$
 DECLARE
   sender_name TEXT;
-  supabase_url TEXT := 'https://qclefndzismozdogsfot.supabase.co';
+  supabase_url TEXT := 'https://nyhlwamvqjmaxpmqxzah.supabase.co';
   internal_secret TEXT;
 BEGIN
   IF NEW.sender_id = NEW.receiver_id THEN
@@ -183,7 +187,7 @@ DECLARE
   is_mutual        boolean;
   liker_matched    boolean;
   liked_matched    boolean;
-  supabase_url     text := 'https://qclefndzismozdogsfot.supabase.co';
+  supabase_url     text := 'https://nyhlwamvqjmaxpmqxzah.supabase.co';
   internal_secret  text;
 BEGIN
   BEGIN
