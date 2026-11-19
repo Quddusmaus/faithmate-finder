@@ -1,0 +1,364 @@
+name: Nightly build + E2E
+
+# Every night: build, then run the Playwright suite against the unity-hearts-e2e
+# Supabase project. If either fails, Claude diagnoses the failure and, when it finds
+# a code fix, a separate job opens a pull request with it.
+#
+# The work is split into three jobs so no job holds more access than it needs:
+#   test      Supabase E2E secrets, read-only repo token. No Claude.
+#   diagnose  Claude + Anthropic key, read-only repo token. No Supabase secrets.
+#   open-pr   Write token, no Claude. Checks the change for secrets, then pushes it
+#             to a new nightly-fix/<run id> branch and opens a PR. Never pushes to main.
+
+on:
+  schedule:
+    # 03:00 in Cancun. America/Cancun is UTC-5 all year (no daylight saving), so 08:00 UTC.
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-e2e
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # The unity-hearts-e2e project. The suite creates and deletes users, so it must never
+  # run against production (nyhlwamvqjmaxpmqxzah).
+  E2E_PROJECT_REF: hawxapwjhjoaqbcslmtb
+
+jobs:
+  test:
+    name: Build + Playwright E2E
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    outputs:
+      failed: ${{ steps.result.outputs.failed }}
+
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+      E2E_OBSERVER_EMAIL: ${{ secrets.E2E_OBSERVER_EMAIL }}
+      E2E_OBSERVER_PASSWORD: ${{ secrets.E2E_OBSERVER_PASSWORD }}
+      E2E_GROUP_SIZE: "10"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Confirm the suite targets unity-hearts-e2e
+        run: |
+          url=$(printf '%s' "$VITE_SUPABASE_URL" | tr -d '[:space:]')
+          if ! [[ "$url" =~ ^https://${E2E_PROJECT_REF}\.supabase\.co/?$ ]]; then
+            echo "::error::The VITE_SUPABASE_URL secret is not the unity-hearts-e2e project (${E2E_PROJECT_REF}). Refusing to run a suite that writes to the database."
+            exit 1
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # package-lock.json is out of sync with package.json, so `npm ci` fails; same as e2e.yml.
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Install Playwright browsers + system deps
+        run: npx playwright install --with-deps chromium
+
+      - name: Build
+        id: build
+        continue-on-error: true
+        run: |
+          mkdir -p "$RUNNER_TEMP/nightly-logs"
+          set -o pipefail
+          npm run build 2>&1 | tee "$RUNNER_TEMP/nightly-logs/build.log"
+
+      - name: Run Playwright tests
+        id: e2e
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          npx playwright test 2>&1 | tee "$RUNNER_TEMP/nightly-logs/e2e.log"
+
+      - name: Collect failure context for diagnosis
+        if: steps.build.outcome == 'failure' || steps.e2e.outcome == 'failure'
+        run: |
+          # Playwright's per-test error-context files (page snapshot at the failure).
+          if [ -d test-results ]; then
+            find test-results -name 'error-context.md' -size -200k | while read -r f; do
+              dest="$RUNNER_TEMP/nightly-logs/$f"
+              mkdir -p "$(dirname "$dest")"
+              cp "$f" "$dest"
+            done
+          fi
+          # Files written by tee are not masked the way the console log is. Replace every
+          # secret value before the logs leave this job, since Claude may quote them in a
+          # public PR.
+          node -e '
+            const fs = require("fs"), path = require("path");
+            const names = ["VITE_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SERVICE_ROLE_KEY",
+              "E2E_ADMIN_EMAIL", "E2E_ADMIN_PASSWORD", "E2E_OBSERVER_EMAIL", "E2E_OBSERVER_PASSWORD"];
+            const secrets = names.map((n) => (process.env[n] || "").trim()).filter((v) => v.length >= 4);
+            const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).forEach((e) => {
+              const p = path.join(d, e.name);
+              if (e.isDirectory()) return walk(p);
+              let s = fs.readFileSync(p, "utf8");
+              for (const v of secrets) s = s.split(v).join("***");
+              fs.writeFileSync(p, s);
+            });
+            walk(process.argv[1]);
+          ' "$RUNNER_TEMP/nightly-logs"
+
+      - name: Upload logs for diagnosis
+        if: steps.build.outcome == 'failure' || steps.e2e.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-logs
+          path: ${{ runner.temp }}/nightly-logs/
+          retention-days: 7
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload test results (traces, videos, screenshots)
+        if: steps.e2e.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 7
+
+      - name: Result
+        id: result
+        run: |
+          echo "Build: ${{ steps.build.outcome }}  E2E: ${{ steps.e2e.outcome }}"
+          if [ "${{ steps.build.outcome }}" = failure ] || [ "${{ steps.e2e.outcome }}" = failure ]; then
+            echo "failed=true" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          echo "failed=false" >> "$GITHUB_OUTPUT"
+
+  diagnose:
+    name: Diagnose with Claude
+    needs: test
+    if: always() && needs.test.outputs.failed == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      has_fix: ${{ steps.package.outputs.has_fix }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Skip if an earlier nightly fix PR is still open
+        id: open_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          open=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --json headRefName \
+            --jq '[.[] | select(.headRefName | startswith("nightly-fix/"))] | length')
+          if [ "$open" != "0" ]; then
+            echo "::notice::A nightly-fix PR is already open; merge or close it before another is made."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node.js
+        if: steps.open_pr.outputs.skip != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        if: steps.open_pr.outputs.skip != 'true'
+        run: |
+          npm install --no-audit --no-fund
+          # npm install rewrites the out-of-sync lockfile; keep that out of the fix.
+          git checkout -- package-lock.json
+
+      - name: Download logs
+        if: steps.open_pr.outputs.skip != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: nightly-logs
+          path: .nightly/logs
+
+      - name: Diagnose and fix
+        if: steps.open_pr.outputs.skip != 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Read-only token: Claude cannot push or open anything from this job.
+          github_token: ${{ github.token }}
+          prompt: |
+            The nightly build + Playwright E2E run of this repository failed. Read CLAUDE.md first.
+
+            Logs are in .nightly/logs/: build.log, e2e.log, and per-test error-context.md
+            files under .nightly/logs/test-results/. Secret values in them were replaced with ***.
+
+            Your job: find the root cause and, if it is in this repository's code, fix it by
+            editing files in the working tree. Do not commit, push, or create branches; a later
+            job turns your edits into a pull request.
+
+            You can run `npm run build`, `npm run lint`, `npx tsc --noEmit` and `npx vitest run`.
+            You cannot run the Playwright suite here (no database access), so reason from the logs.
+
+            Rules:
+            - This repository is public. Never write secrets, keys, tokens, passwords, email
+              addresses, or member data into any file, including the PR description.
+            - Never edit anything under .github/, any .env file, or package-lock.json.
+            - Never skip, disable, delete, or loosen a test or an assertion to make it pass.
+              Fix the app or the test's real defect.
+            - Keep the change minimal: only what the failure needs.
+            - If the cause is outside the code (a Supabase outage, schema drift in the
+              unity-hearts-e2e project, a missing or wrong GitHub secret, a network flake),
+              make no code changes and say so.
+
+            In every case, write .nightly/PR_BODY.md. Its first line must be the PR title as
+            "# <title>" (under 70 characters). Then sections: Failure (which step and tests
+            failed, with a short quoted error), Root cause, Fix (or why no code change was
+            made), and Verified (which local checks you ran and their result). If a migration
+            is part of the fix, say it must also be applied to the unity-hearts-e2e project.
+          claude_args: |
+            --permission-mode default
+            --max-turns 80
+            --allowedTools Read,Edit,Write,Glob,Grep,Bash(npm run build),Bash(npm run lint),Bash(npx tsc --noEmit),Bash(npx vitest run),Bash(npx vitest run:*)
+            --disallowedTools WebFetch,WebSearch
+
+      - name: Package the change
+        id: package
+        if: steps.open_pr.outputs.skip != 'true'
+        run: |
+          out="$RUNNER_TEMP/nightly-fix"
+          mkdir -p "$out"
+          if [ -f .nightly/PR_BODY.md ]; then
+            cp .nightly/PR_BODY.md "$out/PR_BODY.md"
+            cat .nightly/PR_BODY.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Claude did not write a diagnosis." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          rm -rf .nightly
+          # `npm run build` regenerates the sitemap; drop that and the lockfile if touched.
+          git checkout -- public/sitemap.xml package-lock.json
+          git add -A
+          git diff --cached --stat
+          git diff --cached --binary > "$out/fix.patch"
+          if [ -s "$out/fix.patch" ] && [ -f "$out/PR_BODY.md" ]; then
+            echo "has_fix=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::No code fix was produced; see the job summary for the diagnosis."
+          fi
+
+      - name: Upload the change
+        if: steps.package.outputs.has_fix == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-fix
+          path: ${{ runner.temp }}/nightly-fix/
+          retention-days: 7
+
+  open-pr:
+    name: Open fix PR
+    needs: diagnose
+    if: always() && needs.diagnose.outputs.has_fix == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download the change
+        uses: actions/download-artifact@v4
+        with:
+          name: nightly-fix
+          path: ${{ runner.temp }}/nightly-fix
+
+      - name: Apply and check the change
+        env:
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+          E2E_OBSERVER_EMAIL: ${{ secrets.E2E_OBSERVER_EMAIL }}
+          E2E_OBSERVER_PASSWORD: ${{ secrets.E2E_OBSERVER_PASSWORD }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          dir="$RUNNER_TEMP/nightly-fix"
+          patch="$dir/fix.patch"
+          body="$dir/PR_BODY.md"
+
+          # Paths the fix may not touch.
+          bad=$(git apply --numstat "$patch" | cut -f3 | grep -E '^\.github/|(^|/)\.env|^package-lock\.json$' || true)
+          if [ -n "$bad" ]; then
+            echo "::error::The fix touches files it must not change:"; echo "$bad"; exit 1
+          fi
+          git apply --index "$patch"
+
+          # 1. No known secret value anywhere in the added lines or the PR body.
+          added="$dir/added.txt"
+          grep -E '^\+' "$patch" | grep -vE '^\+\+\+ ' > "$added" || true
+          for name in VITE_SUPABASE_PUBLISHABLE_KEY SUPABASE_SERVICE_ROLE_KEY E2E_ADMIN_EMAIL \
+                      E2E_ADMIN_PASSWORD E2E_OBSERVER_EMAIL E2E_OBSERVER_PASSWORD ANTHROPIC_API_KEY; do
+            value=$(printenv "$name" || true)
+            [ ${#value} -ge 4 ] || continue
+            if grep -qF -- "$value" "$added" "$body"; then
+              echo "::error::The fix or PR description contains the value of $name. Not publishing."; exit 1
+            fi
+          done
+
+          # 2. No secret-shaped strings in the added lines or the PR body.
+          mkdir -p "$dir/scan"
+          cp "$added" "$body" "$dir/scan/"
+          docker run --rm -v "$dir/scan:/scan:ro" ghcr.io/gitleaks/gitleaks:v8.21.2 \
+            dir /scan --redact --no-banner --exit-code 1
+
+      - name: Push branch and open PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          dir="$RUNNER_TEMP/nightly-fix"
+          branch="nightly-fix/${GITHUB_RUN_ID}"
+          title=$(head -n1 "$dir/PR_BODY.md" | sed -E 's/^#+[[:space:]]*//' | cut -c1-100)
+          [ -n "$title" ] || title="Fix nightly build/E2E failure"
+          tail -n +2 "$dir/PR_BODY.md" > "$dir/body.md"
+          {
+            echo
+            echo "---"
+            echo "Opened by the [nightly run](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}). Claude wrote this change; review it before merging."
+          } >> "$dir/body.md"
+
+          git switch -c "$branch"
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -m "$title" -m "Automated fix from nightly run ${GITHUB_RUN_ID}."
+          # Explicit refspec: this only ever creates the nightly-fix branch.
+          git push origin "HEAD:refs/heads/${branch}"
+
+          gh pr create --base main --head "$branch" --title "$title" --body-file "$dir/body.md"
+
+          # PRs opened with GITHUB_TOKEN do not trigger pull_request workflows, so start the
+          # E2E suite on the branch directly.
+          gh workflow run e2e.yml --ref "$branch" -f group_size=10

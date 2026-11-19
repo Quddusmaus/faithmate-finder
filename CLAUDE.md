@@ -80,6 +80,8 @@ Specs are numbered `01-public` through `16-group-journey`. `15` and `16` share b
 
 `e2e-prod/smoke.spec.ts` is separate: read-only checks against the deployed site through `playwright.prod.config.ts` (no dev server, no globalSetup/teardown), run only by hand via `npm run test:prod` or the "Production smoke" workflow. Its signed-in checks need `PROD_SMOKE_EMAIL`/`PROD_SMOKE_PASSWORD` for a paused account created on the site, and stop if that account is not paused. Keep it read-only: real members use production, so never create users, like, message, report, block, open a chat or change settings there.
 
+`.github/workflows/nightly.yml` runs the build and the full E2E suite at 03:00 Cancun time (08:00 UTC) and refuses to start unless `VITE_SUPABASE_URL` is the E2E project. On failure, `claude-code-action` (needs the `ANTHROPIC_API_KEY` secret) diagnoses from scrubbed logs with a read-only token and no Supabase secrets; a separate job checks its change for secrets with gitleaks and opens a PR from a `nightly-fix/<run id>` branch, never `main`. It makes no new PR while one from `nightly-fix/` is open.
+
 Known gotchas:
 
 - Helpers live in `e2e/helpers/auth.ts` (`signUp`, `signIn`, `signOut`, `uniqueEmail`, `dismissCookieBanner`).
