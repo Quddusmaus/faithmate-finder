@@ -345,7 +345,7 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
                           variant={superLiked ? "default" : "outline"} 
                           size="icon" 
                           onClick={handleSuperLike}
-                          disabled={superLiking || superLiked || !subscribed}
+                          disabled={superLiking || superLiked || !subscribed || !canSuperLike}
                           className={superLiked 
                             ? "bg-amber-500 text-white hover:bg-amber-600" 
                             : subscribed 
@@ -470,7 +470,7 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
                 
                 <Button 
                   onClick={handleSuperLike}
-                  disabled={superLiking || superLiked || !subscribed}
+                  disabled={superLiking || superLiked || !subscribed || !canSuperLike}
                   className={`w-full ${
                     superLiked 
                       ? 'bg-amber-500 hover:bg-amber-600 text-white' 
