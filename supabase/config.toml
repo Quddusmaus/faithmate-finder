@@ -24,3 +24,6 @@ verify_jwt = false
 [functions.customer-portal]
 verify_jwt = false
 
+
+[functions.unsubscribe]
+verify_jwt = false
