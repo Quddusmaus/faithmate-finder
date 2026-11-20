@@ -6,7 +6,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 // appId is permanent once the app is in the App Store / Play Store.
 const config: CapacitorConfig = {
   appId: 'app.unityhearts',
-  appName: 'Unity Hearts',
+  appName: 'Uniting Hearts',
   webDir: 'dist',
 };
 
