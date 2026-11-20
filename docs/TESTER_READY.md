@@ -12,7 +12,7 @@ Items too big for one PR get split, with the remainder added here unchecked.
 
 - [x] Add Capacitor (core, cli, ios, android) with `capacitor.config.ts`; `webDir = dist`. Propose bundle ID `app.unityhearts` under NEEDS Q. Commit the generated `android/` and `ios/` projects (not gitignored) so builds are reproducible; keep secrets/keystores out. Add npm scripts `cap:sync`, `cap:android`, `cap:ios`.
 - [x] Make the PWA service worker not register inside the native app (`Capacitor.isNativePlatform()`), and confirm the Vite fallback Supabase config works in the native build.
-- [ ] Native permissions: camera, microphone, photo library usage strings in iOS `Info.plist` and `AndroidManifest.xml` (needed for Daily.co video and photo verification). Check `getUserMedia`/video calls work in the WebView config.
+- [x] Native permissions: camera, microphone, photo library usage strings in iOS `Info.plist` and `AndroidManifest.xml` (needed for Daily.co video and photo verification). Check `getUserMedia`/video calls work in the WebView config.
 - [ ] Auth in native: Supabase email confirmation, password reset and any OAuth redirects must return into the app (deep link / custom URL scheme or universal links). Document the redirect URLs Q must add in Supabase auth settings.
 - [ ] Android back button, safe-area insets (notch), status bar, external links open in system browser, keyboard not covering chat input.
 - [ ] App icons and splash screens generated from the existing logo (`@capacitor/assets`).

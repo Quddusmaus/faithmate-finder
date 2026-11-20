@@ -22,6 +22,12 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Uniting Hearts uses your camera for video calls with your matches, to take profile photos, and to verify your photos with a selfie.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Uniting Hearts uses your microphone for voice and video calls with your matches.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Uniting Hearts lets you choose photos from your library to add to your profile.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
