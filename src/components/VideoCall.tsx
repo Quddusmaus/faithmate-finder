@@ -79,7 +79,7 @@ export const VideoCall = ({
   }, [remoteAudioTrack]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col">
+    <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]">
       {/* Hidden audio element for remote audio */}
       <audio ref={remoteAudioRef} autoPlay playsInline />
 

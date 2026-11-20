@@ -16,7 +16,7 @@ Items too big for one PR get split, with the remainder added here unchecked.
 - [x] Auth in native: Supabase email confirmation, password reset and any OAuth redirects must return into the app (deep link / custom URL scheme or universal links). Document the redirect URLs Q must add in Supabase auth settings.
 - [ ] Captcha in native: sign-up and password reset send a Cloudflare Turnstile token, and inside the app the page's hostname is `localhost`. Confirm on the first device build that the widget loads and Supabase accepts the token; if not, add `localhost` to the widget's hostnames in Cloudflare (NEEDS Q) or host the widget on a unityhearts.app page.
 - [ ] Optional, only if auth email links don't open the app reliably: switch Supabase email templates to `https://unityhearts.app/auth?token_hash={{ .TokenHash }}&type=…` and handle `token_hash` in `Auth.tsx` with `supabase.auth.verifyOtp` (see `docs/NATIVE_LINKS.md`).
-- [ ] Android back button, safe-area insets (notch), status bar, external links open in system browser, keyboard not covering chat input.
+- [x] Android back button, safe-area insets (notch), status bar, external links open in system browser, keyboard not covering chat input.
 - [ ] App icons and splash screens generated from the existing logo (`@capacitor/assets`).
 - [ ] GitHub Actions workflow that builds an unsigned Android debug APK on pull requests to prove the native project compiles.
 - [ ] Document (`docs/RELEASE.md`) the exact steps for Q to make a signed Android AAB and an iOS archive for TestFlight, including where signing secrets go.

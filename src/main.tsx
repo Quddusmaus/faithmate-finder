@@ -9,6 +9,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { setupGlobalErrorHandlers } from "@/hooks/useErrorLogging";
 import { setupFetchInterceptor } from "@/lib/apiErrorLogger";
 import { setupNativeDeepLinks } from "@/lib/nativeLinks";
+import { setupNativeShell } from "@/lib/nativeShell";
 
 // Setup global error handlers for uncaught errors and promise rejections
 setupGlobalErrorHandlers();
@@ -21,6 +22,8 @@ if (Capacitor.isNativePlatform()) {
   // Open unityhearts.app links (sign-up confirmation, password reset,
   // notification emails) inside the app.
   setupNativeDeepLinks().catch((error) => console.warn("Deep link setup failed:", error));
+  // Status bar text colour and the Android back button.
+  setupNativeShell().catch((error) => console.warn("Native shell setup failed:", error));
 } else {
   // Offline caching / auto-update service worker: website only. The native app
   // ships its web files inside the app bundle and updates through the stores.
