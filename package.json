@@ -15,9 +15,15 @@
     "test:report": "playwright show-report",
     "test:prod": "playwright test --config playwright.prod.config.ts",
     "predev": "tsx ./scripts/generate-sitemap.ts",
-    "prebuild": "tsx ./scripts/generate-sitemap.ts"
+    "prebuild": "tsx ./scripts/generate-sitemap.ts",
+    "cap:sync": "npm run build && cap sync",
+    "cap:android": "npm run cap:sync && cap open android",
+    "cap:ios": "npm run cap:sync && cap open ios"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/ios": "^8.6.2",
     "@daily-co/daily-js": "^0.85.0",
     "@hookform/resolvers": "^3.10.0",
     "@marsidev/react-turnstile": "^1.5.2",
@@ -77,6 +83,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
     "@eslint/js": "^9.32.0",
     "@playwright/test": "^1.59.1",
     "@tailwindcss/typography": "^0.5.16",
