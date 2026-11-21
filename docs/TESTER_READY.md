@@ -19,7 +19,7 @@ Items too big for one PR get split, with the remainder added here unchecked.
 - [x] Android back button, safe-area insets (notch), status bar, external links open in system browser, keyboard not covering chat input.
 - [x] App icons and splash screens generated from the existing logo (`@capacitor/assets`). Sources in `assets/`, regenerate with `npm run cap:assets`.
 - [ ] Push notifications for new matches and messages (Capacitor Push Notifications + FCM/APNs), sent from the existing notification triggers. Strongest protection against Apple's "just a website in a wrapper" rejection. List the Firebase/APNs keys Q must create under NEEDS Q. Split into smaller PRs if needed (client registration + token table, then sending).
-- [ ] GitHub Actions workflow that builds an unsigned Android debug APK on pull requests to prove the native project compiles.
+- [x] GitHub Actions workflow that builds an unsigned Android debug APK on pull requests to prove the native project compiles.
 - [ ] Document (`docs/RELEASE.md`) the exact steps for Q to make a signed Android AAB and an iOS archive for TestFlight, including where signing secrets go.
 
 - [ ] Add a first-phone-build test list to `docs/RELEASE.md`: Cloudflare Turnstile captcha inside the app (origin is `localhost`), a real video call on iPhone, deep links, app icon and launch screen look right.
