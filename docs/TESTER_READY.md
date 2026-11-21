@@ -8,9 +8,9 @@ The nightly run takes the first unchecked item that has no open PR, does it in
 one PR (branch `nightly/YYYY-MM-DD-short-slug`), and ticks the box in that PR.
 Items too big for one PR get split, with the remainder added here unchecked.
 
-## Blocking (do first)
+## Performance (do first)
 
-- [ ] Browse fires one `get_today_like_count` + one `get_today_super_like_count` RPC per `ProfileCard` (~160 calls per Browse load with ~120 profiles), starving the page's real requests until they time out. This makes `15-user-journey` and `16-group-journey` fail in CI. Fetch both counts once per page (e.g. in `Profiles.tsx` or a small context) and pass them to the cards; keep everyone at full access (no paywall gating).
+- [ ] Browse fires one `get_today_like_count` + one `get_today_super_like_count` RPC per `ProfileCard` (~160 calls per Browse load with ~120 profiles). On a slow/cold database this starves the page's real requests until they time out (seen once in CI on `15-user-journey`/`16-group-journey`; passed on re-run). Fetch both counts once per page (e.g. in `Profiles.tsx` or a small context) and pass them to the cards; keep everyone at full access (no paywall gating).
 
 ## Native wrapper
 
