@@ -18,7 +18,8 @@
     "prebuild": "tsx ./scripts/generate-sitemap.ts",
     "cap:sync": "npm run build && cap sync",
     "cap:android": "npm run cap:sync && cap open android",
-    "cap:ios": "npm run cap:sync && cap open ios"
+    "cap:ios": "npm run cap:sync && cap open ios",
+    "cap:assets": "npx --yes @capacitor/assets@4.0.0 generate --ios --android --iconBackgroundColor '#7cc9b8' --splashBackgroundColor '#faf8f4'"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",

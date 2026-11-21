@@ -17,9 +17,12 @@ Items too big for one PR get split, with the remainder added here unchecked.
 - [ ] Captcha in native: sign-up and password reset send a Cloudflare Turnstile token, and inside the app the page's hostname is `localhost`. Confirm on the first device build that the widget loads and Supabase accepts the token; if not, add `localhost` to the widget's hostnames in Cloudflare (NEEDS Q) or host the widget on a unityhearts.app page.
 - [ ] Optional, only if auth email links don't open the app reliably: switch Supabase email templates to `https://unityhearts.app/auth?token_hash={{ .TokenHash }}&type=…` and handle `token_hash` in `Auth.tsx` with `supabase.auth.verifyOtp` (see `docs/NATIVE_LINKS.md`).
 - [x] Android back button, safe-area insets (notch), status bar, external links open in system browser, keyboard not covering chat input.
-- [ ] App icons and splash screens generated from the existing logo (`@capacitor/assets`).
+- [x] App icons and splash screens generated from the existing logo (`@capacitor/assets`). Sources in `assets/`, regenerate with `npm run cap:assets`.
+- [ ] Push notifications for new matches and messages (Capacitor Push Notifications + FCM/APNs), sent from the existing notification triggers. Strongest protection against Apple's "just a website in a wrapper" rejection. List the Firebase/APNs keys Q must create under NEEDS Q. Split into smaller PRs if needed (client registration + token table, then sending).
 - [ ] GitHub Actions workflow that builds an unsigned Android debug APK on pull requests to prove the native project compiles.
 - [ ] Document (`docs/RELEASE.md`) the exact steps for Q to make a signed Android AAB and an iOS archive for TestFlight, including where signing secrets go.
+
+- [ ] Add a first-phone-build test list to `docs/RELEASE.md`: Cloudflare Turnstile captcha inside the app (origin is `localhost`), a real video call on iPhone, deep links, app icon and launch screen look right.
 
 ## Store-required features
 
@@ -30,11 +33,11 @@ Items too big for one PR get split, with the remainder added here unchecked.
 ## Pre-launch fixes
 
 - [ ] Unsubscribe link in notification emails.
-- [ ] `send-notification-email` links use `match_id`, not the raw sender UUID.
+- [x] `send-notification-email` links use `match_id`, not the raw sender UUID. Not a real leak: the Messages page keys conversations by the other member's user id. Already fine on main.
 - [ ] Per-user rate limit on `verify-pose`.
 - [ ] `Promise.race` timeout on `PhotoUpload` storage upload.
-- [ ] Password reset success toast and redirect.
-- [ ] Wire `send-suspension-email` into the admin ban flow.
+- [x] Password reset success toast and redirect. Already done on main.
+- [x] Wire `send-suspension-email` into the admin ban flow. Already done on main.
 - [ ] Rate-limited buttons disable before the error toast.
 - [ ] Empty messages state gets a "Browse profiles" button.
 - [ ] `.env.example` documenting every required env var and edge-function secret (names only).
