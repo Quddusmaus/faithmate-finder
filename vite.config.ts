@@ -47,6 +47,10 @@ export default defineConfig(({ mode }) => {
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
+      // Registered from src/main.tsx instead, so it can be skipped inside the
+      // native (Capacitor) app, where a service worker would serve stale
+      // bundles after app updates and cache Supabase API responses.
+      injectRegister: null,
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "pwa-192x192.png", "pwa-512x512.png"],
       manifest: {
         name: "Uniting Hearts - Baháʼí Dating",
