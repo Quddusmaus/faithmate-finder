@@ -5,7 +5,7 @@
 // discard that part of the diff before committing.
 const sharp = require("sharp");
 const SRC = "public/pwa-512x512.png";
-const CREAM = "#f7f5f0"; // app background / manifest background_color
+const CREAM = "#faf8f4"; // app background: --background in src/index.css
 (async () => {
   // Inner artwork without the baked-in rounded corners: 400x400 from (56,56).
   const crop = await sharp(SRC).removeAlpha().extract({ left: 56, top: 56, width: 400, height: 400 }).png().toBuffer();

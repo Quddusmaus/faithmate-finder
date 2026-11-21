@@ -19,7 +19,7 @@
     "cap:sync": "npm run build && cap sync",
     "cap:android": "npm run cap:sync && cap open android",
     "cap:ios": "npm run cap:sync && cap open ios",
-    "cap:assets": "node scripts/make-app-assets.cjs && capacitor-assets generate --ios --android --splashBackgroundColor \"#f7f5f0\" --splashBackgroundColorDark \"#f7f5f0\""
+    "cap:assets": "node scripts/make-app-assets.cjs && capacitor-assets generate --ios --android --splashBackgroundColor \"#faf8f4\" --splashBackgroundColorDark \"#faf8f4\""
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",
