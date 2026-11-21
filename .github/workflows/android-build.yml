@@ -1,0 +1,62 @@
+name: Android build
+
+# Builds an installable debug APK of the native app on every pull request and
+# push to main, so we know the Android project compiles and anyone can install
+# the result on an Android phone for testing (no Play Store needed).
+#
+# To install: open the run → "Artifacts" → download uniting-hearts-debug-apk,
+# unzip, copy app-debug.apk to the phone, open it and allow "install unknown
+# apps". The app talks to the live Supabase project, exactly like the website.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: android-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    name: Debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22  # Capacitor 8 CLI requires Node >= 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web app
+        run: npm run build
+
+      - name: Copy web app into the Android project
+        run: npx cap sync android
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: uniting-hearts-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
