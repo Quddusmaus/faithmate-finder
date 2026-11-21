@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { getSessionWithTimeout, getUserWithTimeout, withTimeout } from "@/lib/safeAuth";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
+import { authRedirectUrl } from "@/lib/nativeLinks";
 import type { User, Session } from "@supabase/supabase-js";
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
@@ -190,7 +191,7 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth`,
+            emailRedirectTo: authRedirectUrl(),
             data: { name },
             captchaToken,
           },
@@ -230,7 +231,7 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const redirectUrl = `${window.location.origin}/auth`;
+      const redirectUrl = authRedirectUrl();
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
@@ -581,7 +582,7 @@ const Auth = () => {
                         const { error } = await supabase.auth.resend({
                           type: "signup",
                           email,
-                          options: { emailRedirectTo: `${window.location.origin}/auth` },
+                          options: { emailRedirectTo: authRedirectUrl() },
                         });
                         if (error) throw error;
                         toast({ title: "Email resent", description: "Check your inbox again." });

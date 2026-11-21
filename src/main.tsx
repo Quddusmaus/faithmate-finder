@@ -8,6 +8,7 @@ import "./i18n";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { setupGlobalErrorHandlers } from "@/hooks/useErrorLogging";
 import { setupFetchInterceptor } from "@/lib/apiErrorLogger";
+import { setupNativeDeepLinks } from "@/lib/nativeLinks";
 
 // Setup global error handlers for uncaught errors and promise rejections
 setupGlobalErrorHandlers();
@@ -16,9 +17,13 @@ setupGlobalErrorHandlers();
 // Setup fetch interceptor to automatically log failed API requests.
 setupFetchInterceptor();
 
-// Offline caching / auto-update service worker: website only. The native app
-// ships its web files inside the app bundle and updates through the stores.
-if (!Capacitor.isNativePlatform()) {
+if (Capacitor.isNativePlatform()) {
+  // Open unityhearts.app links (sign-up confirmation, password reset,
+  // notification emails) inside the app.
+  setupNativeDeepLinks().catch((error) => console.warn("Deep link setup failed:", error));
+} else {
+  // Offline caching / auto-update service worker: website only. The native app
+  // ships its web files inside the app bundle and updates through the stores.
   import("virtual:pwa-register")
     .then(({ registerSW }) => registerSW({ immediate: true }))
     .catch((error) => console.warn("Service worker registration failed:", error));
