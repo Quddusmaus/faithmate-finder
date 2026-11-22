@@ -107,32 +107,24 @@ export const GDPRTools = ({ userId, userEmail }: GDPRToolsProps) => {
     setIsDeleting(true);
 
     try {
-      // Delete user data from all tables (cascade should handle most)
-      // The profile deletion should trigger cascades, but let's be thorough
-      
-      // Delete messages (both sent and received)
-      await supabase.from("messages").delete().eq("sender_id", userId);
-      
-      // Delete likes
-      await supabase.from("likes").delete().eq("user_id", userId);
-      
-      // Delete notifications
-      await supabase.from("notifications").delete().eq("user_id", userId);
-      
-      // Delete notification preferences
-      await supabase.from("notification_preferences").delete().eq("user_id", userId);
-      
-      // Delete photo verifications
-      await supabase.from("photo_verifications").delete().eq("user_id", userId);
-      
-      // Delete blocked users
-      await supabase.from("blocked_users").delete().or(`blocker_id.eq.${userId},blocked_id.eq.${userId}`);
-      
-      // Delete profile (main data)
-      await supabase.from("profiles").delete().eq("user_id", userId);
+      // The server deletes everything in one all-or-nothing step, including the
+      // sign-in account itself (required by Apple and Google).
+      const { error } = await supabase.functions.invoke("delete-account", {
+        body: { confirm_email: confirmEmail },
+      });
 
-      // Sign out and redirect
-      await supabase.auth.signOut();
+      if (error) {
+        let serverMessage: string | undefined;
+        try {
+          serverMessage = (await (error as { context?: Response }).context?.json())?.error;
+        } catch {
+          // Body wasn't JSON; fall back to the generic error.
+        }
+        throw serverMessage ? new Error(serverMessage) : error;
+      }
+
+      // The account no longer exists on the server, so only clear this device's session.
+      await supabase.auth.signOut({ scope: "local" });
       
       toast({
         title: t('gdpr.deleteSuccess'),
