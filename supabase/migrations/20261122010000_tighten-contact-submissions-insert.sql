@@ -23,3 +23,10 @@ WITH CHECK (
   AND char_length(subject) BETWEEN 1 AND 200
   AND char_length(message) BETWEEN 1 AND 5000
 );
+
+-- The policy above admits visitors who aren't signed in, but a policy only
+-- filters what a role is already granted. The E2E project (rebuilt from
+-- these migrations) had no INSERT grant for anon, so visitors couldn't use the
+-- contact form at all. Grant it explicitly; the policy still decides what
+-- gets in. Only INSERT: reading stays limited by the SELECT policies.
+GRANT INSERT ON public.contact_submissions TO anon, authenticated;
