@@ -10,6 +10,7 @@ import { setupGlobalErrorHandlers } from "@/hooks/useErrorLogging";
 import { setupFetchInterceptor } from "@/lib/apiErrorLogger";
 import { setupNativeDeepLinks } from "@/lib/nativeLinks";
 import { setupNativeShell } from "@/lib/nativeShell";
+import { registerServiceWorker } from "@/lib/registerServiceWorker";
 
 // Setup global error handlers for uncaught errors and promise rejections
 setupGlobalErrorHandlers();
@@ -27,9 +28,7 @@ if (Capacitor.isNativePlatform()) {
 } else {
   // Offline caching / auto-update service worker: website only. The native app
   // ships its web files inside the app bundle and updates through the stores.
-  import("virtual:pwa-register")
-    .then(({ registerSW }) => registerSW({ immediate: true }))
-    .catch((error) => console.warn("Service worker registration failed:", error));
+  registerServiceWorker();
 }
 
 createRoot(document.getElementById("root")!).render(
