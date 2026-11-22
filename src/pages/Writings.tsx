@@ -30,7 +30,7 @@ const Writings = () => {
       </Helmet>
 
       {/* Header */}
-      <div className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+      <div className="border-b bg-background/80 backdrop-blur-sm sticky top-[env(safe-area-inset-top,0px)] z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" asChild>

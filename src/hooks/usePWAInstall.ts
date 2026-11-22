@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -16,7 +17,9 @@ export const usePWAInstall = () => {
     const checkInstalled = () => {
       const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
       const isIOSStandalone = (window.navigator as any).standalone === true;
-      setIsInstalled(isStandalone || isIOSStandalone);
+      // Inside the native app there is nothing to "install": hide the
+      // Add-to-Home-Screen banner and prompts.
+      setIsInstalled(isStandalone || isIOSStandalone || Capacitor.isNativePlatform());
     };
 
     // Check if iOS

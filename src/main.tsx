@@ -1,5 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
+import { Capacitor } from "@capacitor/core";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
@@ -7,6 +8,8 @@ import "./i18n";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { setupGlobalErrorHandlers } from "@/hooks/useErrorLogging";
 import { setupFetchInterceptor } from "@/lib/apiErrorLogger";
+import { setupNativeDeepLinks } from "@/lib/nativeLinks";
+import { setupNativeShell } from "@/lib/nativeShell";
 
 // Setup global error handlers for uncaught errors and promise rejections
 setupGlobalErrorHandlers();
@@ -14,6 +17,20 @@ setupGlobalErrorHandlers();
 
 // Setup fetch interceptor to automatically log failed API requests.
 setupFetchInterceptor();
+
+if (Capacitor.isNativePlatform()) {
+  // Open unityhearts.app links (sign-up confirmation, password reset,
+  // notification emails) inside the app.
+  setupNativeDeepLinks().catch((error) => console.warn("Deep link setup failed:", error));
+  // Status bar text colour and the Android back button.
+  setupNativeShell().catch((error) => console.warn("Native shell setup failed:", error));
+} else {
+  // Offline caching / auto-update service worker: website only. The native app
+  // ships its web files inside the app bundle and updates through the stores.
+  import("virtual:pwa-register")
+    .then(({ registerSW }) => registerSW({ immediate: true }))
+    .catch((error) => console.warn("Service worker registration failed:", error));
+}
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

@@ -2,6 +2,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 interface Match {
   match_id: string;
@@ -38,6 +40,9 @@ export const MatchesList = ({ matches, loading, selectedMatchId, onSelectMatch }
           <p className="mt-2 text-sm text-muted-foreground">
             Start liking profiles to make connections!
           </p>
+          <Button asChild className="mt-4">
+            <Link to="/profiles">Browse profiles</Link>
+          </Button>
         </div>
       </div>
     );

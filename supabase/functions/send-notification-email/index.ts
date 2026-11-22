@@ -16,6 +16,19 @@ interface NotificationEmailRequest {
   sender_user_id: string;
 }
 
+// Must match supabase/functions/unsubscribe/index.ts
+async function unsubscribeToken(userId: string, secret: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`unsubscribe:${userId}`));
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, "&amp;")
@@ -89,6 +102,14 @@ const handler = async (req: Request): Promise<Response> => {
     const recipientEmail = userData.user.email;
     console.log(`Sending ${type} email to ${recipientEmail}`);
 
+    // Unsubscribe link for the footer, plus one-click headers for mail apps.
+    const token = await unsubscribeToken(recipient_user_id, INTERNAL_WEBHOOK_SECRET);
+    const unsubscribeQuery = `u=${encodeURIComponent(recipient_user_id)}&t=${token}`;
+    const unsubscribePageUrl = `https://unityhearts.app/unsubscribe?${unsubscribeQuery}`;
+    const unsubscribeOneClickUrl = `${supabaseUrl}/functions/v1/unsubscribe?${unsubscribeQuery}`;
+    const unsubscribeFooter = `
+              <a href="${unsubscribePageUrl}" style="color: #9ca3af;">Unsubscribe</a> &middot; `;
+
     let subject: string;
     let htmlContent: string;
 
@@ -122,7 +143,7 @@ const handler = async (req: Request): Promise<Response> => {
               Uniting Hearts - Find your perfect match in the Baháʼí community
             </p>
             <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 8px;">
-              <a href="https://unityhearts.app/profile-setup" style="color: #9ca3af;">Manage email preferences</a>
+              ${unsubscribeFooter}<a href="https://unityhearts.app/profile-setup" style="color: #9ca3af;">Manage email preferences</a>
             </p>
           </div>
         </body>
@@ -158,7 +179,7 @@ const handler = async (req: Request): Promise<Response> => {
               Uniting Hearts - Find your perfect match in the Baháʼí community
             </p>
             <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 8px;">
-              <a href="https://unityhearts.app/profile-setup" style="color: #9ca3af;">Manage email preferences</a>
+              ${unsubscribeFooter}<a href="https://unityhearts.app/profile-setup" style="color: #9ca3af;">Manage email preferences</a>
             </p>
           </div>
         </body>
@@ -195,7 +216,7 @@ const handler = async (req: Request): Promise<Response> => {
               Uniting Hearts - Find your perfect match in the Baháʼí community
             </p>
             <p style="color: #9ca3af; font-size: 11px; text-align: center; margin-top: 8px;">
-              <a href="https://unityhearts.app/profile-setup" style="color: #9ca3af;">Manage email preferences</a>
+              ${unsubscribeFooter}<a href="https://unityhearts.app/profile-setup" style="color: #9ca3af;">Manage email preferences</a>
             </p>
           </div>
         </body>
@@ -215,6 +236,10 @@ const handler = async (req: Request): Promise<Response> => {
         to: [recipientEmail],
         subject,
         html: htmlContent,
+        headers: {
+          "List-Unsubscribe": `<${unsubscribeOneClickUrl}>, <${unsubscribePageUrl}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
       }),
     });
 

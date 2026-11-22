@@ -1,4 +1,4 @@
-project_id = "qclefndzismozdogsfot"
+project_id = "nyhlwamvqjmaxpmqxzah"
 
 [functions.send-notification-email]
 verify_jwt = false
@@ -24,6 +24,8 @@ verify_jwt = false
 [functions.customer-portal]
 verify_jwt = false
 
+
+[functions.unsubscribe]
 
 [functions.delete-account]
 verify_jwt = false
