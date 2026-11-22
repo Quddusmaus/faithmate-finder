@@ -209,4 +209,52 @@ test.describe("RLS — cross-user data isolation", () => {
       await (admin.auth as any).admin.deleteUser(userCId);
     }
   });
+
+  test("contact form: honest submissions go through, spoofed ones are rejected", async () => {
+    const { userA, userB } = readTestUsers();
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const marker = `rls-contact-${Date.now()}`;
+    const base = { name: "RLS Test", email: "rls@example.com", subject: "general", message: marker };
+
+    const visitor = createClient(SUPABASE_URL, ANON_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const member = createClient(SUPABASE_URL, ANON_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    await member.auth.signInWithPassword({ email: userA.email, password: userA.password });
+
+    try {
+      // Allowed: a visitor with no user id, and a member with their own id.
+      const asVisitor = await visitor.from("contact_submissions").insert({ ...base, user_id: null });
+      expect(asVisitor.error, JSON.stringify(asVisitor.error)).toBeNull();
+      const asSelf = await member.from("contact_submissions").insert({ ...base, user_id: userA.id });
+      expect(asSelf.error, JSON.stringify(asSelf.error)).toBeNull();
+
+      // Rejected: another member's id, pre-set admin fields, oversized message.
+      const spoofed = await member.from("contact_submissions").insert({ ...base, user_id: userB.id });
+      expect(spoofed.error?.message ?? "").toMatch(/row-level security/i);
+      const anonSpoof = await visitor.from("contact_submissions").insert({ ...base, user_id: userB.id });
+      expect(anonSpoof.error?.message ?? "").toMatch(/row-level security/i);
+      const preResolved = await visitor
+        .from("contact_submissions")
+        .insert({ ...base, user_id: null, status: "resolved", admin_notes: "x" });
+      expect(preResolved.error?.message ?? "").toMatch(/row-level security/i);
+      const huge = await visitor
+        .from("contact_submissions")
+        .insert({ ...base, user_id: null, message: marker + "x".repeat(6000) });
+      expect(huge.error?.message ?? "").toMatch(/row-level security/i);
+
+      // Exactly the two honest rows exist.
+      const { count } = await admin
+        .from("contact_submissions")
+        .select("id", { count: "exact", head: true })
+        .like("message", `${marker}%`);
+      expect(count).toBe(2);
+    } finally {
+      await admin.from("contact_submissions").delete().like("message", `${marker}%`);
+    }
+  });
 });
