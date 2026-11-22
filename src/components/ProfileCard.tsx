@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ReportProfileDialog } from "./ReportProfileDialog";
 import { BlockUserDialog } from "./BlockUserDialog";
 import { CompatibilityBadge } from "./CompatibilityBadge";
+import { faithLabel } from "@/lib/faith";
 import { calculateCompatibility } from "@/hooks/useCurrentUserProfile";
 import { useLikeLimits } from "@/hooks/useLikeLimits";
 import { useSuperLikeLimits } from "@/hooks/useSuperLikeLimits";
@@ -34,6 +35,7 @@ interface Profile {
   photo_urls: string[];
   gender: string | null;
   looking_for: string | null;
+  faith?: string | null;
   user_id?: string;
   verified: boolean | null;
   interests?: string[];
@@ -303,6 +305,14 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
                 {profile.age && `, ${profile.age}`}
               </h3>
             </div>
+            {faithLabel(profile.faith) && (
+              <Badge
+                data-testid="faith-badge"
+                className="mb-1 border-white/30 bg-white/20 text-white backdrop-blur-sm hover:bg-white/20"
+              >
+                {faithLabel(profile.faith)}
+              </Badge>
+            )}
             {profile.location && (
               <div className="flex items-center gap-1 text-sm text-white/90">
                 <MapPin className="h-4 w-4" />
@@ -435,7 +445,12 @@ export const ProfileCard = ({ profile, userInterests = [], currentUserId }: Prof
               </div>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              {faithLabel(profile.faith) && (
+                <Badge data-testid="faith-badge" className="bg-primary/15 text-primary hover:bg-primary/15">
+                  {faithLabel(profile.faith)}
+                </Badge>
+              )}
               {profile.gender && (
                 <Badge variant="secondary">{profile.gender}</Badge>
               )}

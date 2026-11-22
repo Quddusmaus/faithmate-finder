@@ -18,6 +18,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getUserWithTimeout, withTimeout } from "@/lib/safeAuth";
 import type { User } from "@supabase/supabase-js";
+import { isMissingFaithColumn } from "@/lib/faith";
 
 const ProfileSetup = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -35,6 +36,7 @@ const ProfileSetup = () => {
     gender: "",
     location: "",
     lookingFor: "",
+    faith: "",
     bio: "",
     photoUrls: [] as string[],
     interests: [] as string[],
@@ -80,6 +82,7 @@ const ProfileSetup = () => {
           gender: profile.gender || "",
           location: profile.location || "",
           lookingFor: profile.looking_for || "",
+          faith: profile.faith || "",
           bio: profile.bio || "",
           photoUrls: profile.photo_urls || [],
           interests: profile.interests || [],
@@ -135,6 +138,7 @@ const ProfileSetup = () => {
         gender: data.gender || null,
         location: data.location || null,
         looking_for: data.lookingFor || null,
+        faith: data.faith || null,
         bio: data.bio || null,
         photo_urls: data.photoUrls,
         interests: data.interests,
@@ -142,10 +146,15 @@ const ProfileSetup = () => {
       };
 
       if (existingProfile) {
-        const { error } = await supabase
-          .from("profiles")
-          .update(dbData)
-          .eq("id", existingProfile.id);
+        const save = (row: Partial<typeof dbData>) =>
+          supabase.from("profiles").update(row).eq("id", existingProfile.id);
+        let { error } = await save(dbData);
+        if (isMissingFaithColumn(error)) {
+          // Website deployed before the faith migration reached this database.
+          const { faith: _faith, ...withoutFaith } = dbData;
+          console.warn("profiles.faith column missing; saved profile without it");
+          ({ error } = await save(withoutFaith));
+        }
 
         if (error) throw error;
 
@@ -154,9 +163,15 @@ const ProfileSetup = () => {
           description: "Your profile has been updated successfully.",
         });
       } else {
-        const { error } = await supabase
-          .from("profiles")
-          .insert([dbData]);
+        const save = (row: Partial<typeof dbData>) =>
+          supabase.from("profiles").insert([row as typeof dbData]);
+        let { error } = await save(dbData);
+        if (isMissingFaithColumn(error)) {
+          // Website deployed before the faith migration reached this database.
+          const { faith: _faith, ...withoutFaith } = dbData;
+          console.warn("profiles.faith column missing; saved profile without it");
+          ({ error } = await save(withoutFaith));
+        }
 
         if (error) throw error;
 

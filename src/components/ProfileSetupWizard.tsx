@@ -20,6 +20,8 @@ import {
   Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { FAITH_LABELS, isFaith, type Faith } from "@/lib/faith";
 
 interface ProfileData {
   name: string;
@@ -27,6 +29,7 @@ interface ProfileData {
   gender: string;
   location: string;
   lookingFor: string;
+  faith: string;
   bio: string;
   photoUrls: string[];
   interests: string[];
@@ -67,7 +70,7 @@ export const ProfileSetupWizard = ({
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return data.name.trim().length > 0;
+        return data.name.trim().length > 0 && isFaith(data.faith);
       case 2:
         return true; // Location is optional
       case 3:
@@ -194,6 +197,35 @@ export const ProfileSetupWizard = ({
                 </p>
               </div>
 
+              <div className="space-y-2">
+                <Label id="faith-label" className="flex items-center gap-1">
+                  Are you a Bahá'í? <span className="text-destructive">*</span>
+                </Label>
+                <RadioGroup
+                  aria-labelledby="faith-label"
+                  value={data.faith}
+                  onValueChange={(v) => updateData("faith", v)}
+                  className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+                >
+                  {(Object.keys(FAITH_LABELS) as Faith[]).map((value) => (
+                    <Label
+                      key={value}
+                      htmlFor={`faith-${value}`}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-3 rounded-lg border p-3 font-normal transition-colors",
+                        data.faith === value ? "border-primary bg-primary/10" : "border-border hover:bg-muted/50"
+                      )}
+                    >
+                      <RadioGroupItem id={`faith-${value}`} value={value} />
+                      {FAITH_LABELS[value]}
+                    </Label>
+                  ))}
+                </RadioGroup>
+                <p className="text-xs text-muted-foreground">
+                  Shown on your profile to every member, and members can filter by it
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="age">Age</Label>
@@ -228,7 +260,7 @@ export const ProfileSetupWizard = ({
                 <p className="flex items-start gap-2">
                   <Sparkles className="h-4 w-4 mt-0.5 text-primary shrink-0" />
                   <span>
-                    Your name is the only required field. Complete other sections to increase your chances of finding meaningful connections!
+                    Your name and faith are the only required fields. Complete other sections to increase your chances of finding meaningful connections!
                   </span>
                 </p>
               </div>

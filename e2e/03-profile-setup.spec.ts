@@ -34,9 +34,18 @@ test.describe("Profile setup wizard", () => {
     await expect(page.getByRole("button", { name: /continue/i })).toBeDisabled();
   });
 
+  test("continue stays disabled until faith is chosen", async ({ page }) => {
+    await expect(page.getByText(/step 1 of 5/i)).toBeVisible({ timeout: 10000 });
+    await page.getByLabel(/name/i).fill("Faith Test");
+    await expect(page.getByRole("button", { name: /continue/i })).toBeDisabled();
+    await page.getByRole("radio", { name: "Non-Bahá'í visitor", exact: true }).click();
+    await expect(page.getByRole("button", { name: /continue/i })).toBeEnabled();
+  });
+
   test("back button returns to previous step", async ({ page }) => {
     await expect(page.getByText(/step 1 of 5/i)).toBeVisible({ timeout: 10000 });
     await page.getByLabel(/name/i).fill("Back Test");
+    await page.getByRole("radio", { name: "Bahá'í", exact: true }).click();
     await page.getByRole("button", { name: /continue/i }).click();
     await expect(page.getByText(/step 2 of 5/i)).toBeVisible({ timeout: 5000 });
     await page.getByRole("button", { name: /back/i }).click();
@@ -60,6 +69,7 @@ test.describe("Profile setup wizard", () => {
 
     // Step 1 — Basics
     await page.getByLabel(/name/i).fill("Full Wizard Test");
+    await page.getByRole("radio", { name: "Bahá'í", exact: true }).click();
     const age = page.getByLabel(/age/i);
     if (await age.isVisible()) await age.fill("29");
     await page.getByRole("button", { name: /continue/i }).click();
