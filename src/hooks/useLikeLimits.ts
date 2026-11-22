@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubscription, SubscriptionTier } from '@/contexts/SubscriptionContext';
 import { toast } from '@/hooks/use-toast';
 import { getUserWithTimeout, withTimeout } from '@/lib/safeAuth';
+import { useDailyCount } from '@/hooks/useDailyCount';
 
 interface LikeLimits {
   maxLikes: number | null; // null means unlimited
@@ -20,42 +21,23 @@ const TIER_LIKE_LIMITS: Record<string, number | null> = {
 
 export function useLikeLimits() {
   const { tier, subscribed, isLoading: subscriptionLoading } = useSubscription();
-  const [usedLikes, setUsedLikes] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
 
   const maxLikes = subscribed && tier ? TIER_LIKE_LIMITS[tier] : null; // Non-subscribers get unlimited (free tier)
-  
+
+  // Shared across every ProfileCard (one request per page, not per card).
+  // Unlimited likes (everyone, while payments are removed) need no count at all.
+  const {
+    count: usedLikes,
+    isLoading,
+    setCount: setUsedLikes,
+    refresh: fetchUsedLikes,
+  } = useDailyCount('get_today_like_count', !subscriptionLoading && maxLikes !== null);
+
   const remainingLikes = maxLikes === null 
     ? null 
     : Math.max(0, maxLikes - usedLikes);
   
   const canLike = maxLikes === null || usedLikes < maxLikes;
-
-  const fetchUsedLikes = useCallback(async () => {
-    try {
-      const user = await getUserWithTimeout(5000);
-      if (!user) {
-        setIsLoading(false);
-        return;
-      }
-
-      const { data, error } = await withTimeout(
-        supabase.rpc('get_today_like_count', { p_user_id: user.id }),
-        5000,
-        'Like count request timed out',
-      );
-
-      if (error) {
-        console.error('Error fetching like count:', error);
-      } else {
-        setUsedLikes(data || 0);
-      }
-    } catch (error) {
-      console.error('Error fetching like count:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
   const incrementLikeCount = useCallback(async (): Promise<boolean> => {
     // Check if user can like first
@@ -92,12 +74,6 @@ export function useLikeLimits() {
       return false;
     }
   }, [canLike, tier, maxLikes, usedLikes]);
-
-  useEffect(() => {
-    if (!subscriptionLoading) {
-      fetchUsedLikes();
-    }
-  }, [subscriptionLoading, fetchUsedLikes]);
 
   return {
     maxLikes,

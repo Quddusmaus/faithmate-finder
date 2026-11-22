@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSubscription, SubscriptionTier } from '@/contexts/SubscriptionContext';
 import { toast } from '@/hooks/use-toast';
 import { getUserWithTimeout, withTimeout } from '@/lib/safeAuth';
+import { useDailyCount } from '@/hooks/useDailyCount';
 
 interface SuperLikeLimits {
   maxSuperLikes: number | null;
@@ -20,43 +21,26 @@ const TIER_SUPER_LIKE_LIMITS: Record<string, number | null> = {
 
 export function useSuperLikeLimits() {
   const { tier, subscribed, isLoading: subscriptionLoading } = useSubscription();
-  const [usedSuperLikes, setUsedSuperLikes] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Only subscribers get super likes
   const maxSuperLikes = subscribed && tier ? TIER_SUPER_LIKE_LIMITS[tier] : 0;
-  
+
+  // Shared across every ProfileCard (one request per page, not per card).
+  const {
+    count: usedSuperLikes,
+    isLoading,
+    setCount: setUsedSuperLikes,
+    refresh: fetchUsedSuperLikes,
+  } = useDailyCount(
+    'get_today_super_like_count',
+    !subscriptionLoading && maxSuperLikes !== null && maxSuperLikes > 0,
+  );
+
   const remainingSuperLikes = maxSuperLikes === null 
     ? null 
     : Math.max(0, maxSuperLikes - usedSuperLikes);
   
   const canSuperLike = subscribed && (maxSuperLikes === null || usedSuperLikes < maxSuperLikes);
-
-  const fetchUsedSuperLikes = useCallback(async () => {
-    try {
-      const user = await getUserWithTimeout(5000);
-      if (!user) {
-        setIsLoading(false);
-        return;
-      }
-
-      const { data, error } = await withTimeout<any>(
-        supabase.rpc('get_today_super_like_count' as any, { p_user_id: user.id }) as any,
-        5000,
-        'Super Like count request timed out',
-      );
-
-      if (error) {
-        console.error('Error fetching super like count:', error);
-      } else {
-        setUsedSuperLikes(data || 0);
-      }
-    } catch (error) {
-      console.error('Error fetching super like count:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
   const incrementSuperLikeCount = useCallback(async (): Promise<boolean> => {
     if (!canSuperLike) {
@@ -92,12 +76,6 @@ export function useSuperLikeLimits() {
       return false;
     }
   }, [canSuperLike, tier, maxSuperLikes, usedSuperLikes]);
-
-  useEffect(() => {
-    if (!subscriptionLoading) {
-      fetchUsedSuperLikes();
-    }
-  }, [subscriptionLoading, fetchUsedSuperLikes]);
 
   return {
     maxSuperLikes,

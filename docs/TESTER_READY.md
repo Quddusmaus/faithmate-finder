@@ -10,7 +10,7 @@ Items too big for one PR get split, with the remainder added here unchecked.
 
 ## Performance (do first)
 
-- [ ] Browse fires one `get_today_like_count` + one `get_today_super_like_count` RPC per `ProfileCard` (~160 calls per Browse load with ~120 profiles). On a slow/cold database this starves the page's real requests until they time out (seen once in CI on `15-user-journey`/`16-group-journey`; passed on re-run). Fetch both counts once per page (e.g. in `Profiles.tsx` or a small context) and pass them to the cards; keep everyone at full access (no paywall gating).
+- [x] Browse fires one `get_today_like_count` + one `get_today_super_like_count` RPC per `ProfileCard` (~160 calls per Browse load with ~120 profiles). On a slow/cold database this starves the page's real requests until they time out (seen once in CI on `15-user-journey`/`16-group-journey`; passed on re-run). Fetch both counts once per page (e.g. in `Profiles.tsx` or a small context) and pass them to the cards; keep everyone at full access (no paywall gating). Done: counts are shared through the React Query cache (`src/hooks/useDailyCount.ts`), one Super Like request per page and no like-count request while likes are unlimited.
 
 ## Native wrapper
 
@@ -30,21 +30,21 @@ Items too big for one PR get split, with the remainder added here unchecked.
 
 ## Store-required features
 
-- [ ] In-app account deletion that is atomic: a `delete_user_data()` Postgres function / edge function replacing the sequential client deletes in `GDPRTools.tsx` (Apple requires in-app deletion).
+- [x] In-app account deletion that is atomic: a `delete_user_data()` Postgres function / edge function replacing the sequential client deletes in `GDPRTools.tsx` (Apple requires in-app deletion). Done in PR #14 (`delete-account` edge function).
 - [ ] Privacy policy and terms pages reachable in-app and at public URLs; list data collected (for Apple privacy labels / Google data safety) in `docs/RELEASE.md`.
 - [ ] In-app reporting and blocking verified working (required for dating apps).
 
 ## Pre-launch fixes
 
-- [ ] Unsubscribe link in notification emails.
+- [x] Unsubscribe link in notification emails. Done in PR #13.
 - [x] `send-notification-email` links use `match_id`, not the raw sender UUID. Not a real leak: the Messages page keys conversations by the other member's user id. Already fine on main.
-- [ ] Per-user rate limit on `verify-pose`.
-- [ ] `Promise.race` timeout on `PhotoUpload` storage upload.
+- [x] Per-user rate limit on `verify-pose`. Done in PR #13 (migration `20261120000000_verify-pose-attempts.sql`).
+- [x] `Promise.race` timeout on `PhotoUpload` storage upload. Done in PR #12.
 - [x] Password reset success toast and redirect. Already done on main.
 - [x] Wire `send-suspension-email` into the admin ban flow. Already done on main.
-- [ ] Rate-limited buttons disable before the error toast.
-- [ ] Empty messages state gets a "Browse profiles" button.
-- [ ] `.env.example` documenting every required env var and edge-function secret (names only).
+- [x] Rate-limited buttons disable before the error toast. Done in PR #12 (Super Like disabled at the daily cap).
+- [x] Empty messages state gets a "Browse profiles" button. Done in PR #12 (matches empty state).
+- [x] `.env.example` documenting every required env var and edge-function secret (names only). Done in PR #15.
 - [ ] Investigate why Lovable shows "Build unsuccessful" on GitHub-pushed commits; fix if it is in the code, otherwise explain under NEEDS Q.
 
 When every box is ticked, the nightly run stops opening work PRs and only runs
