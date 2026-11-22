@@ -1,8 +1,11 @@
 /**
  * Demo profiles: the sample members seeded into `demo_profiles` by the first
  * migrations. They have no account behind them, so the only things a member can
- * do with one are see it in browse, filter it, and open its details. This spec
- * checks exactly that, plus that nothing offers to like, report or block one.
+ * do with one are see it in browse, filter it, and open its details. Since
+ * 20261122030000 only admins can read them, so real members and app-store
+ * reviewers never see them. This spec checks that a member sees none, and that
+ * an admin sees them, can filter them and open their details, and is offered
+ * no like, report or block.
  *
  * Runs against the E2E project only (the seed rows come from the migrations);
  * it never touches production.
@@ -18,11 +21,8 @@ const SARAH = "Sarah Johnson";
 const MICHAEL = "Michael Chen";
 const LEILA = "Leila Hassan";
 
-let user: TestUser;
-
-test.beforeAll(async () => {
-  user = await createTestUser("demo", { profile: true });
-});
+const adminEmail = process.env.E2E_ADMIN_EMAIL;
+const adminPassword = process.env.E2E_ADMIN_PASSWORD;
 
 test.afterEach(async ({ page }, testInfo) => {
   await logPageOnFailure(page, testInfo);
@@ -42,9 +42,24 @@ async function pickSelect(page: Page, triggerId: string, option: string) {
   await page.getByRole("option", { name: option, exact: true }).click();
 }
 
-test("demo profiles show in browse, filter correctly and can't be liked", async ({ page }) => {
+test("members don't see demo profiles in browse", async ({ page }) => {
+  test.setTimeout(60000);
+  const member: TestUser = await createTestUser("demo_member", { profile: true });
+  await signIn(page, member.email, member.password);
+  await page.goto(`${BASE}/profiles`);
+  // Browse shows either the count summary or the empty state once loaded.
+  await expect(page.getByText(/showing \d+ of \d+ profiles|no profiles|check back soon/i).first()).toBeVisible({
+    timeout: 20000,
+  });
+  for (const name of [SARAH, MICHAEL, LEILA]) {
+    await expect(profileCard(page, name)).toHaveCount(0);
+  }
+});
+
+test("admins see demo profiles, can filter them, and can't like them", async ({ page }) => {
+  test.skip(!adminEmail || !adminPassword, "E2E_ADMIN_EMAIL / E2E_ADMIN_PASSWORD not set");
   test.setTimeout(90000);
-  await signIn(page, user.email, user.password);
+  await signIn(page, adminEmail!, adminPassword!);
 
   await test.step("browse lists demo profiles with only a View Profile button", async () => {
     await page.goto(`${BASE}/profiles`);
