@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -789,6 +789,24 @@ export type Database = {
         }
         Relationships: []
       }
+      verify_pose_attempts: {
+        Row: {
+          created_at: string
+          id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       matches: {
@@ -825,6 +843,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: boolean
       }
+      delete_user_data: { Args: { target_user_id: string }; Returns: undefined }
       get_internal_webhook_secret: { Args: never; Returns: string }
       get_today_call_count: { Args: { p_user_id: string }; Returns: number }
       get_today_like_count: { Args: { p_user_id: string }; Returns: number }
