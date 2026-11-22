@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { withTimeout } from "@/lib/safeAuth";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, X, Loader2 } from "lucide-react";
@@ -38,12 +39,18 @@ export const PhotoUpload = ({ userId, existingPhotos, onPhotosChange }: PhotoUpl
       const fileName = `${userId}/${Date.now()}.${fileExt}`;
 
       // Upload to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('profile-photos')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+      // A stalled upload (weak mobile signal) would otherwise leave the
+      // spinner running forever, so give up after 60 seconds.
+      const { data, error } = await withTimeout(
+        supabase.storage
+          .from('profile-photos')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          }),
+        60_000,
+        "The upload is taking too long. Please check your connection and try again.",
+      );
 
       if (error) throw error;
 
