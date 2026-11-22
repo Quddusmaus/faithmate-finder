@@ -14,6 +14,9 @@ const POSES = [
   { id: "ok_sign", instruction: "Make an OK sign (👌) next to your cheek", description: "OK hand sign near cheek" },
 ];
 
+// Each AI check costs money. Cap how many a member can make per day.
+const MAX_VERIFY_ATTEMPTS_PER_DAY = 10;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -93,6 +96,31 @@ serve(async (req) => {
     if (action === "verify") {
       if (!imageBase64 || !poseType) {
         throw new Error("Missing imageBase64 or poseType");
+      }
+
+      // Per-user daily limit. Uses the service role because members cannot
+      // read the attempts table. If the table is missing (migration not
+      // applied yet) we log and allow, so verification never breaks.
+      const supabaseAdmin = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { count, error: countError } = await supabaseAdmin
+        .from("verify_pose_attempts")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", since);
+
+      if (countError) {
+        console.error("Attempt count failed, allowing:", countError.message);
+      } else if ((count ?? 0) >= MAX_VERIFY_ATTEMPTS_PER_DAY) {
+        return new Response(
+          JSON.stringify({ error: "You've reached today's limit for verification attempts. Please try again tomorrow." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } else {
+        const { error: insertError } = await supabaseAdmin
+          .from("verify_pose_attempts")
+          .insert({ user_id: user.id });
+        if (insertError) console.error("Attempt insert failed:", insertError.message);
       }
 
       const pose = POSES.find(p => p.id === poseType);

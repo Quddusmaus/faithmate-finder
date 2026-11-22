@@ -158,7 +158,17 @@ export const PhotoVerification = ({ userId, onVerified, onCancel }: PhotoVerific
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Show the server's own message (e.g. the daily limit) instead of a
+        // generic "non-2xx status code" error.
+        let serverMessage: string | undefined;
+        try {
+          serverMessage = (await (error as { context?: Response }).context?.json())?.error;
+        } catch {
+          // Body wasn't JSON; fall back to the generic error.
+        }
+        throw serverMessage ? new Error(serverMessage) : error;
+      }
 
       setVerificationResult(data.result);
       setStep("result");

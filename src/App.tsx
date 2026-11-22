@@ -20,6 +20,7 @@ import SafetyTips from "./pages/SafetyTips";
 import Subscription from "./pages/Subscription";
 import Writings from "./pages/Writings";
 import NotFound from "./pages/NotFound";
+import Unsubscribe from "./pages/Unsubscribe";
 import CookieConsent from "./components/CookieConsent";
 import InstallPromptBanner from "./components/InstallPromptBanner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -50,6 +51,7 @@ const App = () => (
               <Route path="/contact" element={<Contact />} />
               <Route path="/install" element={<Install />} />
               <Route path="/safety" element={<SafetyTips />} />
+              <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
               <Route path="/writings" element={<ProtectedRoute><Writings /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
