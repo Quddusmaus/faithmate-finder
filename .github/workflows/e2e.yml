@@ -17,6 +17,13 @@ jobs:
     name: Playwright E2E
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    # Every run shares one small test database. When many ran at once (after
+    # several quick merges) they overloaded it and failed for no real reason.
+    # This makes runs wait their turn. GitHub keeps only one waiting run in a
+    # group, so if three are queued the middle one is cancelled; re-run it.
+    concurrency:
+      group: e2e-test-database
+      cancel-in-progress: false
 
     env:
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
