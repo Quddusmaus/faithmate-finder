@@ -75,7 +75,7 @@ export function useSuperLikeLimits() {
       console.error('Error incrementing super like count:', error);
       return false;
     }
-  }, [canSuperLike, tier, maxSuperLikes, usedSuperLikes]);
+  }, [canSuperLike, tier, maxSuperLikes, usedSuperLikes, setUsedSuperLikes]);
 
   return {
     maxSuperLikes,

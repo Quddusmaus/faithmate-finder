@@ -78,6 +78,29 @@ describe("daily like / Super Like counts", () => {
     });
   });
 
+  it("an increment updates every card when no Super Likes were used yet today", async () => {
+    // Starting from 0 means the count never changes while loading, so this
+    // catches an increment callback still bound to the pre-auth (null user) key.
+    rpc.mockImplementation(async (name: string) => {
+      if (name === "get_today_super_like_count") return { data: 0, error: null };
+      if (name === "increment_super_like_count") return { data: 1, error: null };
+      return { data: 0, error: null };
+    });
+    const { result } = renderHook(() => useManyCards(3), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current[0].superLike.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current[0].superLike.incrementSuperLikeCount();
+    });
+
+    await waitFor(() => {
+      for (const card of result.current) {
+        expect(card.superLike.usedSuperLikes).toBe(1);
+        expect(card.superLike.remainingSuperLikes).toBe(4);
+      }
+    });
+  });
+
   it("disables Super Like on every card at the daily cap", async () => {
     rpc.mockImplementation(async () => ({ data: 5, error: null }));
     const { result } = renderHook(() => useManyCards(3), { wrapper: wrapper() });

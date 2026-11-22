@@ -73,7 +73,7 @@ export function useLikeLimits() {
       console.error('Error incrementing like count:', error);
       return false;
     }
-  }, [canLike, tier, maxLikes, usedLikes]);
+  }, [canLike, tier, maxLikes, usedLikes, setUsedLikes]);
 
   return {
     maxLikes,
