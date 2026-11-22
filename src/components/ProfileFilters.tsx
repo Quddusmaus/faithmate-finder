@@ -11,12 +11,14 @@ import { Search, SlidersHorizontal, X, Sparkles, ShieldCheck, Check } from "luci
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AVAILABLE_INTERESTS } from "./InterestsSelector";
 import { languages } from "@/i18n";
+import type { FaithFilter } from "@/lib/faith";
 
 export interface FilterOptions {
   ageRange: [number, number];
   location: string;
   gender: string;
   lookingFor: string;
+  faith: FaithFilter;
   verifiedOnly: boolean;
   minCompatibility: number;
   interests: string[];
@@ -51,6 +53,7 @@ export const ProfileFilters = ({ filters, onFiltersChange, onClear }: ProfileFil
     filters.location.trim() !== "",
     filters.gender !== "all",
     filters.lookingFor !== "all",
+    filters.faith !== "all",
     filters.verifiedOnly,
     filters.minCompatibility > 0,
     filters.interests.length > 0,
@@ -79,6 +82,26 @@ export const ProfileFilters = ({ filters, onFiltersChange, onClear }: ProfileFil
         </div>
 
         <CollapsibleContent className="space-y-6">
+          {/* Faith */}
+          <div className="space-y-2">
+            <Label htmlFor="faith" className="text-sm font-medium text-foreground">
+              Faith
+            </Label>
+            <Select
+              value={filters.faith}
+              onValueChange={(value) => onFiltersChange({ ...filters, faith: value as FaithFilter })}
+            >
+              <SelectTrigger id="faith" className="bg-background border-border">
+                <SelectValue placeholder="Everyone" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Everyone</SelectItem>
+                <SelectItem value="bahai">Bahá'ís only</SelectItem>
+                <SelectItem value="non_bahai">Non-Bahá'í visitors only</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Quick Filters Row */}
           <div className="flex flex-wrap gap-4 p-4 rounded-lg bg-muted/50">
             <div className="flex items-center gap-2">

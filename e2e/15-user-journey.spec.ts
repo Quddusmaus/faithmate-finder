@@ -51,6 +51,7 @@ test("member journey: profile, super like, match, chat, report, block, admin rev
       location: "Haifa, Israel",
       bio: "E2E journey member B.",
       interests: ["Devotionals", "Music", "Hiking"],
+      faith: "non_bahai",
       is_visible: true,
     },
   });
@@ -62,6 +63,7 @@ test("member journey: profile, super like, match, chat, report, block, admin rev
     expect(await signIn(a, userA.email, userA.password)).toBe("/profile-setup");
     await expect(a.getByText(/step 1 of 5/i)).toBeVisible({ timeout: 10000 });
     await a.getByLabel(/name/i).fill(nameA);
+    await a.getByRole("radio", { name: "Bahá'í", exact: true }).click();
     await a.getByLabel("Age", { exact: true }).fill("29");
     await a.getByRole("button", { name: /continue/i }).click();
 
@@ -87,6 +89,8 @@ test("member journey: profile, super like, match, chat, report, block, admin rev
 
   await test.step("A super likes B, which also likes B", async () => {
     const dialog = await openProfile(a, nameB);
+    // Every member sees the other's faith on their profile.
+    await expect(dialog.getByTestId("faith-badge")).toHaveText("Non-Bahá'í visitor");
     await dialog.getByRole("button", { name: /send super like/i }).click();
     await expect(dialog.getByRole("button", { name: /super like sent!/i })).toBeVisible({ timeout: 10000 });
     // A DB trigger adds the regular like, so the button already reads "Unlike Profile".
@@ -128,6 +132,7 @@ test("member journey: profile, super like, match, chat, report, block, admin rev
 
   await test.step("B reports A", async () => {
     const dialog = await openProfile(b, nameA);
+    await expect(dialog.getByTestId("faith-badge")).toHaveText("Bahá'í");
     await dialog.getByTitle("Report Profile").click();
     const report = b.getByRole("dialog").filter({ hasText: "Why are you reporting this profile?" });
     await report.getByLabel("Harassment or abusive behavior").check();

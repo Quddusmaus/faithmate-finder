@@ -5,6 +5,7 @@ import { Heart, ArrowLeft, LogOut, Settings, MessageCircle, Shield, Menu, BookOp
 import { Link, useNavigate } from "react-router-dom";
 import { ProfileCard } from "@/components/ProfileCard";
 import { ProfileFilters } from "@/components/ProfileFilters";
+import { matchesFaithFilter, type FaithFilter } from "@/lib/faith";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -27,6 +28,7 @@ interface Profile {
   photo_urls: string[];
   gender: string | null;
   looking_for: string | null;
+  faith?: string | null;
   verified: boolean | null;
   interests?: string[];
   preferred_language?: string | null;
@@ -47,6 +49,7 @@ const Profiles = () => {
     location: "",
     gender: "all",
     lookingFor: "all",
+    faith: "all" as FaithFilter,
     verifiedOnly: false,
     minCompatibility: 0,
     interests: [] as string[],
@@ -192,6 +195,10 @@ const Profiles = () => {
     }
 
     // Verified only filter
+    if (filters.faith !== "all") {
+      filtered = filtered.filter((profile) => matchesFaithFilter(profile.faith, filters.faith));
+    }
+
     if (filters.verifiedOnly) {
       filtered = filtered.filter((profile) => profile.verified === true);
     }
@@ -236,6 +243,7 @@ const Profiles = () => {
       location: "",
       gender: "all",
       lookingFor: "all",
+      faith: "all",
       verifiedOnly: false,
       minCompatibility: 0,
       interests: [],

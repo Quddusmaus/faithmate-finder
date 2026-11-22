@@ -617,6 +617,7 @@ export type Database = {
           age: number | null
           bio: string | null
           created_at: string
+          faith: string | null
           gender: string | null
           id: string
           interests: string[] | null
@@ -637,6 +638,7 @@ export type Database = {
           age?: number | null
           bio?: string | null
           created_at?: string
+          faith?: string | null
           gender?: string | null
           id?: string
           interests?: string[] | null
@@ -657,6 +659,7 @@ export type Database = {
           age?: number | null
           bio?: string | null
           created_at?: string
+          faith?: string | null
           gender?: string | null
           id?: string
           interests?: string[] | null
