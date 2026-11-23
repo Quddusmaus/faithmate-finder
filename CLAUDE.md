@@ -37,7 +37,7 @@ Trigger functions in `supabase/migrations/` **hardcode the project URL** for `/f
 
 ## Architecture
 
-Vite + React + TypeScript + Tailwind + shadcn/ui, PWA via `vite-plugin-pwa`, i18next with 20 locales in `src/i18n/locales/` (includes RTL: `ar`, `fa`). Backend is entirely Supabase — Postgres + RLS, auth, and edge functions in `supabase/functions/` (`daily-room`, `send-notification-email`, `send-welcome-email`, `send-suspension-email`, `verify-pose`, plus the Stripe set). Video/voice calling is Daily.co via the `daily-room` function and `useDailyCall`.
+Vite + React + TypeScript + Tailwind + shadcn/ui, PWA via `vite-plugin-pwa`, i18next with 20 locales in `src/i18n/locales/` (includes RTL: `ar`, `fa`). Backend is entirely Supabase — Postgres + RLS, auth, and edge functions in `supabase/functions/` (`daily-room`, `send-notification-email`, `send-welcome-email`, `send-suspension-email`, `verify-pose`, plus the Stripe set). Video/voice calling is Daily.co via the `daily-room` function and `useDailyCall`. Native push notifications (Capacitor) register device tokens in `push_tokens` via `src/lib/pushNotifications.ts`, behind the build switch `VITE_PUSH_NOTIFICATIONS=on` (Android crashes on token request without `google-services.json`); sign out through `signOutAndForgetDevice()` so the token is removed while the session still exists. See `docs/PUSH_NOTIFICATIONS.md`.
 
 Provider nesting in `src/App.tsx`, outermost first: `QueryClientProvider` → `CurrentUserProvider` → `SubscriptionProvider` → `TooltipProvider` → `BrowserRouter`. Auth-required routes are wrapped in `<ProtectedRoute>`; `/admin` uses `<ProtectedRoute requireAdmin>`.
 

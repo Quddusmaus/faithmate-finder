@@ -49,6 +49,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Android 13+: needed to show push notifications (asked at runtime). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Video and voice calls (Daily.co) and selfie photo verification -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />

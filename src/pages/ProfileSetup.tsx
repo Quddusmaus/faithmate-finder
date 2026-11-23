@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { signOutAndForgetDevice } from "@/lib/pushNotifications";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -47,7 +48,7 @@ const ProfileSetup = () => {
   const { isAdmin } = useAdminStatus();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOutAndForgetDevice();
     navigate("/");
   };
 
