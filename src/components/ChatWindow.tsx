@@ -15,7 +15,7 @@ import { VideoCall } from "./VideoCall";
 import { IncomingCallDialog } from "./IncomingCallDialog";
 import { useDailyCall } from "@/hooks/useDailyCall";
 import { useCallLimits } from "@/hooks/useCallLimits";
-import { useAppSwitch } from "@/hooks/useAppSwitch";
+import { useCallsEnabled } from "@/hooks/useAppSwitch";
 import { EmojiPicker } from "./EmojiPicker";
 
 interface Reaction {
@@ -95,9 +95,9 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
     incrementCallCount,
   } = useCallLimits();
 
-  // Admin switch (Admin → Dashboard → Video and voice calls). When off, no call
-  // buttons and no incoming-call prompt; a call already in progress carries on.
-  const { enabled: callsEnabled } = useAppSwitch("video_calls");
+  // Admin switches (Admin → Dashboard → Feature switches). When calls are off
+  // here, no call button and no incoming-call prompt; a call in progress carries on.
+  const callsEnabled = useCallsEnabled();
 
   // Handle incoming call from pendingInvitation
   const handleAcceptIncomingCall = async () => {

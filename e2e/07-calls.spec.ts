@@ -83,6 +83,7 @@ test.describe("Calls switch", () => {
 
   test.afterEach(async () => {
     await setCalls(true);
+    await service().from("app_settings").update({ enabled: true }).eq("key", "video_calls_ios_app");
   });
 
   test("members can't flip it; turning it off hides the call button", async ({ page, browser }) => {
@@ -116,6 +117,8 @@ test.describe("Calls switch", () => {
       await adminPage.goto(`${BASE}/admin`);
       const toggle = adminPage.getByRole("switch", { name: "Video and voice calls" });
       await expect(toggle).toBeChecked({ timeout: 20000 });
+      // The iPhone-only switch is listed too; this browser isn't the iPhone app, so it isn't used here.
+      await expect(adminPage.getByRole("switch", { name: "Calls in the iPhone app" })).toBeChecked();
       await toggle.click();
       await expect(toggle).not.toBeChecked();
       await expect(adminPage.getByText("Calls turned off")).toBeVisible();

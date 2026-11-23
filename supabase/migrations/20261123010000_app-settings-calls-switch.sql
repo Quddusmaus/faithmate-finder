@@ -1,6 +1,8 @@
 -- On/off switches admins can flip without a code change or a Publish.
--- First switch: video_calls. When it is off, the app hides the call buttons and
--- ignores incoming calls, and the daily-room function refuses to create rooms.
+-- video_calls: when off, the app hides the call buttons and ignores incoming
+-- calls everywhere, and the daily-room function refuses to create rooms.
+-- video_calls_ios_app: when off, the same happens only inside the iPhone app
+-- (Capacitor on iOS); the website and Android are unaffected. Safe to re-run.
 -- A missing row or table counts as "on" everywhere, so the app behaves as
 -- before until this migration runs.
 
@@ -29,5 +31,7 @@ WITH CHECK (public.has_role(auth.uid(), 'admin'));
 GRANT SELECT ON public.app_settings TO anon, authenticated;
 GRANT UPDATE (enabled, updated_at, updated_by) ON public.app_settings TO authenticated;
 
-INSERT INTO public.app_settings (key, enabled) VALUES ('video_calls', true)
+INSERT INTO public.app_settings (key, enabled) VALUES
+  ('video_calls', true),
+  ('video_calls_ios_app', true)
 ON CONFLICT (key) DO NOTHING;

@@ -66,7 +66,7 @@ One asymmetry to know: because everyone is `premium`, super-likes are capped at 
 
 ### Admin switches
 
-`public.app_settings` (`key`, `enabled`) holds on/off switches admins flip on the /admin dashboard (`AdminSwitches`), with no code change or Publish. Read with `useAppSwitch(key)`. A missing table, row or failed read counts as **on**, so a hiccup never removes a feature. The only switch so far is `video_calls`: off hides the call button and incoming-call prompt in `ChatWindow`, and `daily-room` returns 403.
+`public.app_settings` (`key`, `enabled`) holds on/off switches admins flip on the /admin dashboard (`AdminSwitches`), with no code change or Publish. Read with `useAppSwitch(key)`. A missing table, row or failed read counts as **on**, so a hiccup never removes a feature. Calls have two: `video_calls` (off everywhere: `ChatWindow` hides the call button and incoming-call prompt, and `daily-room` returns 403) and `video_calls_ios_app` (off only inside the iPhone app, client-side via `useCallsEnabled`; the server cannot tell the platform, so it does not enforce this one).
 
 ## E2E tests
 

@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { withTimeout } from "@/lib/safeAuth";
+import { Capacitor } from "@capacitor/core";
 
-export type AppSwitchKey = "video_calls";
+export type AppSwitchKey = "video_calls" | "video_calls_ios_app";
 
 /**
  * A missing row, a missing table (database not migrated yet) or a failed
@@ -56,4 +57,16 @@ export function useSetAppSwitch(key: AppSwitchKey) {
     },
     onSuccess: (enabled) => client.setQueryData(queryKey(key), enabled),
   });
+}
+
+/** Calls are allowed when the main switch is on and, inside the iPhone app, the iPhone switch too. */
+export function callsAllowed(all: boolean, iosApp: boolean, platform: string): boolean {
+  return all && (platform !== "ios" || iosApp);
+}
+
+/** Whether this device should offer calls (main switch plus the iPhone-app switch). */
+export function useCallsEnabled(platform: string = Capacitor.getPlatform()): boolean {
+  const all = useAppSwitch("video_calls");
+  const iosApp = useAppSwitch("video_calls_ios_app");
+  return callsAllowed(all.enabled, iosApp.enabled, platform);
 }
