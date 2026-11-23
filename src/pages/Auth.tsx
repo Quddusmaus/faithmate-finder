@@ -14,6 +14,11 @@ import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { authRedirectUrl } from "@/lib/nativeLinks";
 import type { User, Session } from "@supabase/supabase-js";
 
+// Must match "Minimum password length" in the Supabase auth settings. Applies to
+// new passwords only; the sign-in field keeps accepting the older 6-character
+// minimum so existing members are never locked out.
+const MIN_PASSWORD_LENGTH = 8;
+
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 type AuthMode = "login" | "signup" | "forgot-password" | "update-password" | "check-email";
@@ -271,10 +276,10 @@ const Auth = () => {
       return;
     }
 
-    if (password.length < 6) {
+    if (password.length < MIN_PASSWORD_LENGTH) {
       toast({
         title: "Password too short",
-        description: "Password must be at least 6 characters long.",
+        description: `Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`,
         variant: "destructive",
       });
       return;
@@ -471,7 +476,7 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    minLength={6}
+                    minLength={MIN_PASSWORD_LENGTH}
                   />
                 </div>
 
@@ -618,7 +623,7 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    minLength={6}
+                    minLength={MIN_PASSWORD_LENGTH}
                   />
                 </div>
 
@@ -631,7 +636,7 @@ const Auth = () => {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
-                    minLength={6}
+                    minLength={MIN_PASSWORD_LENGTH}
                   />
                 </div>
 
