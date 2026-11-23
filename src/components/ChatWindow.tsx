@@ -15,6 +15,7 @@ import { VideoCall } from "./VideoCall";
 import { IncomingCallDialog } from "./IncomingCallDialog";
 import { useDailyCall } from "@/hooks/useDailyCall";
 import { useCallLimits } from "@/hooks/useCallLimits";
+import { useAppSwitch } from "@/hooks/useAppSwitch";
 import { EmojiPicker } from "./EmojiPicker";
 
 interface Reaction {
@@ -93,6 +94,10 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
     isLoading: callLimitsLoading,
     incrementCallCount,
   } = useCallLimits();
+
+  // Admin switch (Admin → Dashboard → Video and voice calls). When off, no call
+  // buttons and no incoming-call prompt; a call already in progress carries on.
+  const { enabled: callsEnabled } = useAppSwitch("video_calls");
 
   // Handle incoming call from pendingInvitation
   const handleAcceptIncomingCall = async () => {
@@ -589,15 +594,17 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
           )}
         </div>
 
-        <CallButton
-          onVoiceCall={handleVoiceCall}
-          onVideoCall={handleVideoCall}
-          canMakeCall={canMakeCall}
-          remainingCalls={remainingCalls}
-          maxCalls={maxCalls}
-          tier={tier}
-          isLoading={callLimitsLoading}
-        />
+        {callsEnabled && (
+          <CallButton
+            onVoiceCall={handleVoiceCall}
+            onVideoCall={handleVideoCall}
+            canMakeCall={canMakeCall}
+            remainingCalls={remainingCalls}
+            maxCalls={maxCalls}
+            tier={tier}
+            isLoading={callLimitsLoading}
+          />
+        )}
 
         <BlockUserDialog
           userId={match.match_id}
@@ -609,7 +616,7 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
       </div>
 
       {/* Incoming Call Dialog */}
-      {pendingInvitation && (
+      {callsEnabled && pendingInvitation && (
         <IncomingCallDialog
           callerName={match.name}
           callerPhoto={match.photo_urls?.[0]}

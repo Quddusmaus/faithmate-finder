@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Shield, Users, CheckCircle, XCircle, Clock, ArrowLeft, Flag, AlertTriangle, Ban, Scale, LayoutDashboard, Bug } from "lucide-react";
 import { AdminErrorLogs } from "@/components/AdminErrorLogs";
+import { AdminSwitches } from "@/components/AdminSwitches";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -580,6 +581,7 @@ const Admin = () => {
               <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
               <p className="text-muted-foreground">Overview of platform statistics and activity</p>
             </div>
+            <AdminSwitches />
             <AdminAnalytics />
           </>
         ) : activeSection === "verifications" ? (

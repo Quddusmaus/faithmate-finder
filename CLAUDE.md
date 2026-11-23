@@ -64,6 +64,10 @@ Deliberately left in place: the `comped_users` table and `useCompStatus` (harmle
 
 One asymmetry to know: because everyone is `premium`, super-likes are capped at 5/day (`useSuperLikeLimits.ts`), while likes and calls are unlimited.
 
+### Admin switches
+
+`public.app_settings` (`key`, `enabled`) holds on/off switches admins flip on the /admin dashboard (`AdminSwitches`), with no code change or Publish. Read with `useAppSwitch(key)`. A missing table, row or failed read counts as **on**, so a hiccup never removes a feature. The only switch so far is `video_calls`: off hides the call button and incoming-call prompt in `ChatWindow`, and `daily-room` returns 403.
+
 ## E2E tests
 
 Playwright, `testDir: ./e2e`, `workers: 1`, `fullyParallel: false`, retries 1, baseURL `http://localhost:8080`. `webServer` auto-starts `npm run dev` and reuses an existing server.

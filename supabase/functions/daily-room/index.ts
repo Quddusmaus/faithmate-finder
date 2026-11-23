@@ -77,6 +77,20 @@ serve(async (req) => {
       );
     }
     
+    // Admin switch (app_settings, 20261123010000). Only an explicit "off" blocks
+    // calls; a missing table or row, or a read error, leaves calls on.
+    const { data: callsSetting } = await supabase
+      .from("app_settings")
+      .select("enabled")
+      .eq("key", "video_calls")
+      .maybeSingle();
+    if (callsSetting?.enabled === false) {
+      return new Response(
+        JSON.stringify({ error: "Calls are turned off right now" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     console.log(`Creating Daily.co room for call between ${callerUserId} and ${receiverUserId}`);
 
     // Create a unique room name based on users
