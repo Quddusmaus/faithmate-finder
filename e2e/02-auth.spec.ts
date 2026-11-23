@@ -24,6 +24,15 @@ test.describe("Auth page", () => {
     await expect(page.getByLabel("Full Name")).toBeVisible();
   });
 
+  test("new passwords need 8 characters; sign-in still accepts older 6-character ones", async ({ page }) => {
+    await page.goto(`${BASE}/auth?mode=signup`);
+    await expect(page.getByRole("heading", { name: "Join Us" })).toBeVisible();
+    await expect(page.locator("#password")).toHaveAttribute("minlength", "8");
+    await page.goto(`${BASE}/auth`);
+    await expect(page.getByRole("heading", { name: "Welcome Back" })).toBeVisible();
+    await expect(page.locator("#password")).toHaveAttribute("minlength", "6");
+  });
+
   test("bad credentials — stays on /auth and shows error", async ({ page }) => {
     await page.goto(`${BASE}/auth`);
     await page.getByLabel("Email").fill("nobody_at_all@example.com");
