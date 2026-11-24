@@ -1,8 +1,12 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { buildPushContent, pushConfigFromEnv, sendPushToUser, type PushDb, type PushSummary } from "./push.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const INTERNAL_WEBHOOK_SECRET = Deno.env.get("INTERNAL_WEBHOOK_SECRET");
+// Native app push (FCM_SERVICE_ACCOUNT_JSON, APNS_KEY_P8/APNS_KEY_ID/APNS_TEAM_ID).
+// Without those secrets push is simply skipped. See docs/PUSH_NOTIFICATIONS.md.
+const PUSH_CONFIG = pushConfigFromEnv((name) => Deno.env.get(name));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -65,6 +69,16 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Push to the member's phones first (matches and messages only). It is
+    // independent of the email settings below: members turn app notifications
+    // off in their phone's settings. Never throws.
+    let push: PushSummary | undefined;
+    const pushContent = buildPushContent(type, rawSenderName, sender_user_id);
+    if (pushContent) {
+      push = await sendPushToUser(supabase as unknown as PushDb, PUSH_CONFIG, recipient_user_id, pushContent);
+      console.log(`Push for ${type}:`, JSON.stringify(push));
+    }
+
     // Check user's notification preferences
     const { data: preferences, error: prefError } = await supabase
       .from("notification_preferences")
@@ -82,7 +96,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!isEnabled) {
       console.log(`User has disabled ${type} email notifications, skipping`);
-      return new Response(JSON.stringify({ success: true, skipped: true, reason: "disabled" }), {
+      return new Response(JSON.stringify({ success: true, skipped: true, reason: "disabled", push }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -93,7 +107,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     if (userError || !userData?.user?.email) {
       console.error("Could not find user email:", userError);
-      return new Response(JSON.stringify({ error: "User email not found" }), {
+      return new Response(JSON.stringify({ error: "User email not found", push }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -252,7 +266,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Email sent successfully:", emailResult);
 
-    return new Response(JSON.stringify({ success: true, emailResult }), {
+    return new Response(JSON.stringify({ success: true, emailResult, push }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
