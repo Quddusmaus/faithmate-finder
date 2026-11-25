@@ -38,3 +38,11 @@ test-results-prod/
 # Put them in place locally (or from a CI secret) before a native build.
 android/app/google-services.json
 ios/App/App/GoogleService-Info.plist
+
+# Store signing material — never commit (see docs/RELEASE.md)
+*.jks
+*.keystore
+keystore.properties
+*.p8
+*.p12
+*.mobileprovision

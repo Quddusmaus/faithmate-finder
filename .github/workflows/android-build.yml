@@ -53,6 +53,21 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
 
+      # Proves the release-signing setup in docs/RELEASE.md works, using a
+      # throwaway key made on the spot (never the real upload key, which only
+      # Q has). The signed bundle is checked and then discarded.
+      - name: Check signed release bundle (throwaway key)
+        working-directory: android
+        run: |
+          keytool -genkeypair -v -keystore ci-throwaway.jks -alias ci \
+            -keyalg RSA -keysize 2048 -validity 1 \
+            -storepass ci-throwaway -keypass ci-throwaway \
+            -dname "CN=CI throwaway"
+          printf 'storeFile=ci-throwaway.jks\nstorePassword=ci-throwaway\nkeyAlias=ci\nkeyPassword=ci-throwaway\n' > keystore.properties
+          ./gradlew bundleRelease --no-daemon --stacktrace
+          jarsigner -verify app/build/outputs/bundle/release/app-release.aab | grep -q "jar verified"
+          rm -f keystore.properties ci-throwaway.jks app/build/outputs/bundle/release/app-release.aab
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
