@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { Heart, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Heart } from "lucide-react";
+import { LegalBackButton } from "@/components/LegalBackButton";
+import { CONTACT_EMAIL, LEGAL_LAST_UPDATED } from "@/lib/legal";
 
 const TermsOfService = () => {
   return (
@@ -11,12 +12,7 @@ const TermsOfService = () => {
             <Heart className="h-8 w-8 text-primary" fill="currentColor" />
             <span className="text-2xl font-bold text-foreground">Uniting Hearts</span>
           </Link>
-          <Link to="/">
-            <Button variant="ghost" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Button>
-          </Link>
+          <LegalBackButton />
         </div>
       </nav>
 
@@ -27,7 +23,7 @@ const TermsOfService = () => {
           </h1>
           
           <p className="text-muted-foreground mb-6">
-            Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            Last updated: {LEGAL_LAST_UPDATED}
           </p>
 
           <div className="space-y-8 text-card-foreground">
@@ -97,7 +93,19 @@ const TermsOfService = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">6. Safety and Security</h2>
+              <h2 className="text-xl font-semibold mb-3">6. Reporting, Blocking and Zero Tolerance</h2>
+              <p className="text-muted-foreground leading-relaxed mb-3">
+                There is no tolerance for objectionable content or abusive members on Uniting Hearts.
+              </p>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+                <li>You can <strong>report</strong> any member from their profile or from your conversation with them. Reports go to our moderators.</li>
+                <li>You can <strong>block</strong> any member. Once blocked, they can no longer see your profile or message you.</li>
+                <li>We review reports and remove content that breaks these terms, and we suspend or permanently ban the members responsible.</li>
+              </ul>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold mb-3">7. Safety and Security</h2>
               <p className="text-muted-foreground leading-relaxed">
                 While we strive to create a safe environment, Uniting Hearts cannot guarantee the 
                 conduct of any user. We encourage you to exercise caution when interacting with 
@@ -107,17 +115,17 @@ const TermsOfService = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">7. Termination</h2>
+              <h2 className="text-xl font-semibold mb-3">8. Termination</h2>
               <p className="text-muted-foreground leading-relaxed">
                 We reserve the right to suspend or terminate your account at any time, with or 
                 without notice, for violations of these Terms of Service or for any other reason 
-                we deem appropriate. You may also delete your account at any time through your 
-                account settings.
+                we deem appropriate. You may also delete your account at any time in the app under
+                Profile → Settings → Delete Account, which permanently removes your account and data.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">8. Disclaimer of Warranties</h2>
+              <h2 className="text-xl font-semibold mb-3">9. Disclaimer of Warranties</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Uniting Hearts is provided &quot;as is&quot; without warranties of any kind. We do not 
                 guarantee that you will find a match, that the service will be uninterrupted, 
@@ -127,7 +135,7 @@ const TermsOfService = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">9. Limitation of Liability</h2>
+              <h2 className="text-xl font-semibold mb-3">10. Limitation of Liability</h2>
               <p className="text-muted-foreground leading-relaxed">
                 To the maximum extent permitted by law, Uniting Hearts shall not be liable for any 
                 indirect, incidental, special, consequential, or punitive damages arising out of 
@@ -137,7 +145,7 @@ const TermsOfService = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">10. Changes to Terms</h2>
+              <h2 className="text-xl font-semibold mb-3">11. Changes to Terms</h2>
               <p className="text-muted-foreground leading-relaxed">
                 We may modify these Terms of Service at any time. We will notify users of 
                 significant changes via email or through the platform. Your continued use of 
@@ -146,11 +154,11 @@ const TermsOfService = () => {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">11. Contact Us</h2>
+              <h2 className="text-xl font-semibold mb-3">12. Contact Us</h2>
               <p className="text-muted-foreground leading-relaxed">
                 If you have any questions about these Terms of Service, please contact us at{" "}
-                <a href="mailto:support@unityhearts.com" className="text-primary hover:underline">
-                  support@unityhearts.com
+                <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline">
+                  {CONTACT_EMAIL}
                 </a>
               </p>
             </section>
@@ -165,7 +173,7 @@ const TermsOfService = () => {
             <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link to="/contact" className="hover:text-primary transition-colors">Contact Us</Link>
           </div>
-          <p>&copy; 2024 Uniting Hearts.</p>
+          <p>&copy; {new Date().getFullYear()} Uniting Hearts.</p>
         </div>
       </footer>
     </div>

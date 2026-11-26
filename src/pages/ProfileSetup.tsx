@@ -12,6 +12,7 @@ import { NotificationPreferences } from "@/components/NotificationPreferences";
 import { Loader2, BadgeCheck, Clock, ShieldCheck, Pause, Play, Heart, Users, MessageCircle, Shield, LogOut, Menu, Camera, Settings } from "lucide-react";
 import { PhotoVerification } from "@/components/PhotoVerification";
 import { GDPRTools } from "@/components/GDPRTools";
+import { LegalLinks } from "@/components/LegalLinks";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useAdminStatus } from "@/hooks/useAdminStatus";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -465,6 +466,9 @@ const ProfileSetup = () => {
                 {user.email && (
                   <GDPRTools userId={user.id} userEmail={user.email} />
                 )}
+
+                {/* Privacy policy, terms, safety, contact */}
+                <LegalLinks />
               </TabsContent>
             </Tabs>
           ) : (

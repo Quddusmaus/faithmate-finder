@@ -55,9 +55,9 @@ const CookieConsent = () => {
                     We value your privacy 🍪
                   </h3>
                   <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                    We use cookies to enhance your browsing experience, provide personalized content, 
-                    and analyze our traffic. By clicking &quot;Accept All&quot;, you consent to our use of cookies. 
-                    You can also choose to accept only essential cookies needed for the site to function.
+                    We only store what the site needs to work on your device, such as keeping you
+                    signed in and remembering your language. We don&apos;t use advertising or
+                    analytics cookies.
                   </p>
                   <p className="text-muted-foreground text-sm">
                     Read our{" "}

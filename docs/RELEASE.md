@@ -196,7 +196,114 @@ testers. Tick them in `docs/TESTER_READY.md` (or tell Claude the results).
 - [ ] Android back button goes back a page (and leaves the app from the home
       screen); the chat input stays above the keyboard; nothing hides under
       the notch or status bar.
-- [ ] Links to outside sites (privacy policy, external links) open in the
-      phone's browser, not inside the app.
+- [ ] Links to outside sites open in the phone's browser, not inside the app.
+      Profile → Settings → "Legal & support" opens the Privacy Policy and
+      Terms inside the app, and "Back" returns to Settings. The sign-up form
+      links to both as well.
 - [ ] Report and block another member; delete the test account from the profile
       page ("Data & Privacy" section) and confirm you can no longer sign in with it.
+
+## Privacy policy, terms and the store privacy forms
+
+Both stores ask for the policy URLs and a description of the data the app
+collects. Everything below was checked against the code (database tables in
+`src/integrations/supabase/types.ts`, the edge functions in
+`supabase/functions/`, and what the app sends from the phone). If a feature
+that collects new data is added, update this section, the Privacy Policy page
+(`src/pages/PrivacyPolicy.tsx`) and its date (`src/lib/legal.ts`).
+
+### URLs to paste
+
+| Field | URL |
+| --- | --- |
+| Privacy policy (App Store Connect, Play Console) | https://unityhearts.app/privacy |
+| Terms of use / EULA (App Store description or "License Agreement") | https://unityhearts.app/terms |
+| Account deletion web page (Play Console → Data safety → "Delete account URL") | https://unityhearts.app/privacy#delete-account |
+| Support URL (App Store Connect) | https://unityhearts.app/contact |
+
+Inside the app the same pages are under Profile → Settings → "Legal &
+support", and linked from the sign-up form.
+
+### What the app collects
+
+| Data | Where it comes from | Why | Linked to the member |
+| --- | --- | --- | --- |
+| Name, email address | Sign-up form | Account, emails | Yes |
+| Password | Sign-up form | Sign-in (stored hashed by Supabase Auth) | Yes |
+| Profile photos | Photo upload (camera or library) | Shown to other members | Yes |
+| Age, gender, faith, town/region (typed text, no GPS), bio, interests, "looking for", language | Profile form | Matching, shown to other members | Yes |
+| Messages and reactions | Chat | Sent to the match | Yes |
+| Verification selfie and its result | Optional photo verification | Fake-profile protection; checked by Google Gemini through Lovable's AI gateway, then reviewed by admins | Yes |
+| Likes, Super Likes, matches, blocks, reports, notification settings | Using the app | App features, safety | Yes |
+| Contact form and suspension appeal messages | Contact / appeal pages | Support | Yes |
+| IP address of sign-in attempts | Sign-in | Stop password guessing (`login_attempts`) | By email |
+| Error reports (page, browser/device, error text) | Automatic when something fails | Fixing bugs (`error_logs`) | Yes |
+| Push token | Phone app, only if notifications are allowed | New match / message notifications | Yes |
+
+Not collected: device GPS location, contacts, payment info (there are no
+purchases), call audio/video (Daily.co connects calls live; nothing is
+recorded), advertising IDs. No ads, no analytics SDKs, no tracking across apps
+or websites.
+
+Service providers that process the data: Supabase (database, sign-in,
+storage), Lovable (hosting, AI gateway), Google Gemini (selfie check only),
+Daily.co (calls), Resend (email), Cloudflare Turnstile (captcha), Firebase
+Cloud Messaging and Apple Push Notification service (notifications). Both
+stores treat these as service providers, so they are not "sharing" or
+"tracking".
+
+### Apple App Store: App Privacy answers
+
+App Store Connect → your app → App Privacy → "Yes, we collect data". For every
+type below choose **App Functionality** as the purpose (add **Product
+Personalization** for the profile fields only if you want; matching uses
+them), **Linked to the user: Yes**, **Used for tracking: No**.
+
+- Contact Info → **Name**, **Email Address**
+- Sensitive Info → **Sensitive Info** (faith / religious beliefs)
+- User Content → **Photos or Videos** (profile photos, verification selfie),
+  **Emails or Text Messages** (in-app chat), **Customer Support**
+  (contact form, appeals), **Other User Content** (bio, interests, the rest of
+  the profile)
+- Identifiers → **User ID**. If you want to be conservative, also
+  **Device ID** for the push token (Apple does not strictly require it).
+- Usage Data → **Product Interaction** (likes, matches, blocks)
+- Diagnostics → **Other Diagnostic Data** (error reports). Not crash data:
+  the app has no crash reporter.
+
+Not collected: Location, Contacts, Health, Financial Info, Browsing History,
+Search History, Purchases, Audio Data.
+
+Age rating questionnaire: it is a dating app with user-generated content and
+chat, so expect **17+** (Apple) and **Mature / 18+** (Play). Answer
+"unrestricted web access": No.
+
+### Google Play: Data safety answers
+
+Play Console → App content → Data safety.
+
+- Does the app collect or share user data? **Yes, collects.** Shared with
+  third parties: **No** (service providers don't count).
+- Encrypted in transit: **Yes** (HTTPS everywhere).
+- Way for users to request deletion: **Yes**, in the app and at
+  https://unityhearts.app/privacy#delete-account.
+- Data types, each "Collected", "Required" unless marked optional, purpose
+  **App functionality** (add **Account management** for name, email and user
+  ID; **Fraud prevention, security, and compliance** for the IP address and
+  verification selfie):
+  - Personal info → **Name**, **Email address**, **User IDs**,
+    **Religious or political beliefs** (faith, optional), **Other info**
+    (age, gender, town/region, bio, interests)
+  - Photos and videos → **Photos**
+  - Messages → **Other in-app messages**
+  - App activity → **App interactions** (likes, matches, blocks, reports),
+    **Other user-generated content** (contact form, appeals)
+  - App info and performance → **Diagnostics** (error reports)
+  - Device or other IDs → **Device or other IDs** (push token, optional)
+  - Not collected: location, financial info, health, contacts, calendar,
+    audio, files, web browsing.
+- IP address of sign-in attempts: Play treats IP addresses under "Device or
+  other IDs" only if you use them to identify the device; they are used for
+  security only here, so the entry above with purpose "Fraud prevention,
+  security, and compliance" covers it.
+
