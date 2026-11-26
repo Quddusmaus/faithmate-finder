@@ -33,7 +33,7 @@ Items too big for one PR get split, with the remainder added here unchecked.
 ## Store-required features
 
 - [x] In-app account deletion that is atomic: a `delete_user_data()` Postgres function / edge function replacing the sequential client deletes in `GDPRTools.tsx` (Apple requires in-app deletion). Done in PR #14 (`delete-account` edge function).
-- [ ] Privacy policy and terms pages reachable in-app and at public URLs; list data collected (for Apple privacy labels / Google data safety) in `docs/RELEASE.md`.
+- [x] Privacy policy and terms pages reachable in-app and at public URLs; list data collected (for Apple privacy labels / Google data safety) in `docs/RELEASE.md`. Done: Settings → "Legal & support" and the sign-up form link to `/privacy` and `/terms`; the policy now lists the real data and service providers, a working contact address, a fixed date and how to delete an account (`/privacy#delete-account`, the web deletion page Google asks for); terms add the zero-tolerance / report / block clause Apple asks dating apps for. Store answers are in `docs/RELEASE.md` → "Privacy policy, terms and the store privacy forms". Wording still needs Q's review.
 - [ ] In-app reporting and blocking verified working (required for dating apps).
 
 ## Pre-launch fixes

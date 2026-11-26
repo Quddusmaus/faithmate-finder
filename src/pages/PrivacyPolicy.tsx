@@ -1,8 +1,19 @@
-import { Link } from "react-router-dom";
-import { Heart, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { Heart } from "lucide-react";
+import { LegalBackButton } from "@/components/LegalBackButton";
+import { CONTACT_EMAIL, LEGAL_LAST_UPDATED } from "@/lib/legal";
 
 const PrivacyPolicy = () => {
+  // The store listings link to https://unityhearts.app/privacy#delete-account
+  // (Google Play asks for a web page explaining account deletion). The browser
+  // can't jump to that anchor on its own because the page renders after load.
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (!hash) return;
+    document.getElementById(hash.slice(1))?.scrollIntoView();
+  }, [hash]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
       <nav className="container mx-auto px-6 py-6">
@@ -11,12 +22,7 @@ const PrivacyPolicy = () => {
             <Heart className="h-8 w-8 text-primary" fill="currentColor" />
             <span className="text-2xl font-bold text-foreground">Uniting Hearts</span>
           </Link>
-          <Link to="/">
-            <Button variant="ghost" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Button>
-          </Link>
+          <LegalBackButton />
         </div>
       </nav>
 
@@ -27,7 +33,7 @@ const PrivacyPolicy = () => {
           </h1>
           
           <p className="text-muted-foreground mb-6">
-            Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            Last updated: {LEGAL_LAST_UPDATED}
           </p>
 
           <div className="space-y-8 text-card-foreground">
@@ -47,15 +53,24 @@ const PrivacyPolicy = () => {
                 We collect information you provide directly to us, including:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2 mb-4">
-                <li><strong>Account Information:</strong> Name, email address, password, date of birth, gender</li>
-                <li><strong>Profile Information:</strong> Photos, bio, location, interests, relationship preferences</li>
-                <li><strong>Communication Data:</strong> Messages sent through our platform</li>
-                <li><strong>Verification Data:</strong> Information submitted for profile verification</li>
-                <li><strong>Usage Data:</strong> How you interact with our service, including likes, matches, and browsing history</li>
+                <li><strong>Account Information:</strong> Name, email address and password (stored only in encrypted, hashed form)</li>
+                <li><strong>Profile Information:</strong> Photos, age, gender, faith, the town or region you type in as your location, bio, interests, what you are looking for, and your preferred language. We do not use your device&apos;s GPS location.</li>
+                <li><strong>Communication Data:</strong> Messages and message reactions you send to your matches. Video and voice calls are connected live and are not recorded.</li>
+                <li><strong>Verification Data:</strong> If you choose to verify your profile, the selfie you take and the result of the automated check</li>
+                <li><strong>Activity Data:</strong> Likes, Super Likes, matches, blocks and reports you make, and the notification settings you choose</li>
+                <li><strong>Support Data:</strong> Messages you send through the contact form or a suspension appeal</li>
               </ul>
-              <p className="text-muted-foreground leading-relaxed">
-                We also automatically collect certain information when you use our service, including 
-                IP address, device information, browser type, and cookies.
+              <p className="text-muted-foreground leading-relaxed mb-3">
+                We also collect some information automatically:
+              </p>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+                <li><strong>Security Data:</strong> The IP address and time of sign-in attempts, used to stop password-guessing attacks, and a captcha check when you sign up or reset your password</li>
+                <li><strong>Error Reports:</strong> When something in the app fails, a technical report (the page, browser or device type, and the error) linked to your account so we can fix it</li>
+                <li><strong>Device Token:</strong> If you use our phone app and allow notifications, a push token for your device so we can tell you about new matches and messages. Signing out removes it.</li>
+              </ul>
+              <p className="text-muted-foreground leading-relaxed mt-3">
+                We do not use advertising or third-party analytics trackers, and we do not track you across
+                other apps or websites.
               </p>
             </section>
 
@@ -73,7 +88,7 @@ const PrivacyPolicy = () => {
                 <li>Verify user identities and prevent fraud</li>
                 <li>Enforce our Terms of Service and community guidelines</li>
                 <li>Respond to your inquiries and provide customer support</li>
-                <li>Analyze usage patterns to improve user experience</li>
+                <li>Find and fix errors, and keep the service secure</li>
               </ul>
             </section>
 
@@ -84,13 +99,25 @@ const PrivacyPolicy = () => {
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2">
                 <li><strong>With Other Users:</strong> Your profile information is visible to other users as part of the matching process</li>
-                <li><strong>Service Providers:</strong> We may share data with third-party vendors who assist in operating our platform</li>
+                <li><strong>Service Providers:</strong> Companies that run parts of the service for us and may only use your data to do so (listed below)</li>
                 <li><strong>Legal Requirements:</strong> We may disclose information if required by law or in response to valid legal requests</li>
                 <li><strong>Safety:</strong> We may share information to protect the safety of our users or the public</li>
                 <li><strong>Business Transfers:</strong> In the event of a merger, acquisition, or sale of assets</li>
               </ul>
+              <p className="text-muted-foreground leading-relaxed mt-4 mb-3">
+                The service providers we use are:
+              </p>
+              <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+                <li><strong>Supabase:</strong> stores your account, profile, photos and messages (database, sign-in and file storage)</li>
+                <li><strong>Lovable:</strong> hosts the website and app</li>
+                <li><strong>Daily.co:</strong> connects video and voice calls (calls are not recorded)</li>
+                <li><strong>Resend:</strong> sends our emails (account, match, message and safety notices)</li>
+                <li><strong>Google (Gemini, through Lovable&apos;s AI service):</strong> checks your verification selfie, only when you choose to verify</li>
+                <li><strong>Cloudflare Turnstile:</strong> the captcha that stops automated sign-ups</li>
+                <li><strong>Google Firebase Cloud Messaging and Apple Push Notification service:</strong> deliver notifications to the phone app; they receive your device token and the notification text</li>
+              </ul>
               <p className="text-muted-foreground leading-relaxed mt-4">
-                We do not sell your personal information to third parties for marketing purposes.
+                We do not sell your personal information and do not share it for advertising.
               </p>
             </section>
 
@@ -104,13 +131,24 @@ const PrivacyPolicy = () => {
               </p>
             </section>
 
-            <section>
-              <h2 className="text-xl font-semibold mb-3">6. Data Retention</h2>
+            <section id="delete-account" className="scroll-mt-6">
+              <h2 className="text-xl font-semibold mb-3">6. Keeping and Deleting Your Data</h2>
               <p className="text-muted-foreground leading-relaxed">
-                We retain your personal information for as long as your account is active or as 
-                needed to provide you services. If you delete your account, we will delete or 
-                anonymize your information within 30 days, except where we are required to retain 
-                certain information for legal or legitimate business purposes.
+                We keep your information while your account exists. You can delete your account
+                at any time in the app under Profile → Settings → Delete Account. This immediately
+                and permanently deletes your profile, photos, messages, likes, matches, verification
+                data and sign-in account. Error reports are kept without your name or account
+                attached, and records of sign-in attempts are kept for security. If we are legally
+                required to keep something longer, we keep only that. Pausing your profile hides it
+                from other members without deleting anything.
+              </p>
+              <p className="text-muted-foreground leading-relaxed mt-3">
+                To delete your account on the website, sign in at unityhearts.app, open Profile →
+                Settings and choose Delete Account. If you can&apos;t sign in, email{" "}
+                <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline">
+                  {CONTACT_EMAIL}
+                </a>{" "}
+                from the address on your account and we will delete it for you.
               </p>
             </section>
 
@@ -120,17 +158,17 @@ const PrivacyPolicy = () => {
                 Depending on your location, you may have the following rights:
               </p>
               <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                <li><strong>Access:</strong> Request a copy of your personal data</li>
+                <li><strong>Access:</strong> Download a copy of your data yourself in Profile → Settings, or ask us for it</li>
                 <li><strong>Correction:</strong> Request correction of inaccurate information</li>
-                <li><strong>Deletion:</strong> Request deletion of your personal data</li>
+                <li><strong>Deletion:</strong> Delete your account and data yourself in Profile → Settings, or ask us to</li>
                 <li><strong>Portability:</strong> Request transfer of your data to another service</li>
                 <li><strong>Opt-out:</strong> Opt out of marketing communications</li>
                 <li><strong>Withdraw Consent:</strong> Withdraw consent where processing is based on consent</li>
               </ul>
               <p className="text-muted-foreground leading-relaxed mt-4">
                 To exercise these rights, please contact us at{" "}
-                <a href="mailto:privacy@unityhearts.com" className="text-primary hover:underline">
-                  privacy@unityhearts.com
+                <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline">
+                  {CONTACT_EMAIL}
                 </a>
               </p>
             </section>
@@ -138,10 +176,10 @@ const PrivacyPolicy = () => {
             <section>
               <h2 className="text-xl font-semibold mb-3">8. Cookies and Tracking</h2>
               <p className="text-muted-foreground leading-relaxed">
-                We use cookies and similar tracking technologies to collect information about your 
-                browsing activities. You can control cookies through your browser settings. For more 
-                information about our use of cookies, please see our Cookie Policy. Essential cookies 
-                are necessary for the platform to function and cannot be disabled.
+                We only store what the service needs to work on your device: your sign-in session,
+                your language, and your cookie-banner choice, kept in your browser&apos;s or app&apos;s
+                local storage. We do not use advertising or analytics cookies. Clearing your browser
+                data signs you out.
               </p>
             </section>
 
@@ -178,8 +216,8 @@ const PrivacyPolicy = () => {
               <p className="text-muted-foreground leading-relaxed">
                 If you have questions or concerns about this Privacy Policy or our data practices, 
                 please contact us at:{" "}
-                <a href="mailto:privacy@unityhearts.com" className="text-primary hover:underline">
-                  privacy@unityhearts.com
+                <a href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline">
+                  {CONTACT_EMAIL}
                 </a>
               </p>
             </section>
@@ -191,7 +229,9 @@ const PrivacyPolicy = () => {
                 additional rights under the General Data Protection Regulation (GDPR). This 
                 includes the right to lodge a complaint with your local data protection authority. 
                 Our legal basis for processing your personal data includes consent, contractual 
-                necessity, and legitimate interests.
+                necessity, and legitimate interests. Your faith, if you add it to your profile, is
+                shown to other members because you chose to share it; you can change or remove it
+                at any time in your profile.
               </p>
             </section>
           </div>
@@ -205,7 +245,7 @@ const PrivacyPolicy = () => {
             <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link to="/contact" className="hover:text-primary transition-colors">Contact Us</Link>
           </div>
-          <p>&copy; 2024 Uniting Hearts.</p>
+          <p>&copy; {new Date().getFullYear()} Uniting Hearts.</p>
         </div>
       </footer>
     </div>

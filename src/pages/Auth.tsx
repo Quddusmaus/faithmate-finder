@@ -502,6 +502,13 @@ const Auth = () => {
                   {loading ? "Please wait..." : "Create Account"}
                 </Button>
 
+                <p className="text-center text-xs text-muted-foreground leading-relaxed">
+                  By creating an account you agree to our{" "}
+                  <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
+                  {" "}and{" "}
+                  <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
+                </p>
+
                 <div className="text-center">
                   <button
                     type="button"
