@@ -17,9 +17,25 @@ import {
 } from "@/components/ui/dialog";
 
 interface ReportProfileDialogProps {
-  profileId: string;
+  /** The reported member's profiles.id. Pass this or reportedUserId. */
+  profileId?: string;
+  /** The reported member's auth user id (e.g. from a chat); the profile id is looked up on submit. */
+  reportedUserId?: string;
   profileName: string;
   currentUserId: string | null;
+}
+
+/** profile_reports stores profiles.id; a chat only knows the other member's user id. */
+async function resolveProfileId(profileId?: string, reportedUserId?: string): Promise<string | null> {
+  if (profileId) return profileId;
+  if (!reportedUserId) return null;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("user_id", reportedUserId)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.id ?? null;
 }
 
 const REPORT_REASONS = [
@@ -33,6 +49,7 @@ const REPORT_REASONS = [
 
 export const ReportProfileDialog = ({
   profileId,
+  reportedUserId,
   profileName,
   currentUserId,
 }: ReportProfileDialogProps) => {
@@ -64,9 +81,12 @@ export const ReportProfileDialog = ({
 
     setSubmitting(true);
     try {
+      const reportedProfileId = await resolveProfileId(profileId, reportedUserId);
+      if (!reportedProfileId) throw new Error(t("common.error"));
+
       const { error } = await supabase.from("profile_reports").insert({
         reporter_id: currentUserId,
-        reported_profile_id: profileId,
+        reported_profile_id: reportedProfileId,
         reason,
         details: details.trim() || null,
       });

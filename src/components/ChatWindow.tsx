@@ -9,6 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 import type { User } from "@supabase/supabase-js";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { BlockUserDialog } from "./BlockUserDialog";
+import { ReportProfileDialog } from "./ReportProfileDialog";
 import { MessageReactions } from "./MessageReactions";
 import { CallButton } from "./CallButton";
 import { VideoCall } from "./VideoCall";
@@ -46,9 +47,11 @@ interface ChatWindowProps {
   match: Match;
   onBack: () => void;
   onMessagesRead?: () => void;
+  /** Called after this member is blocked or unmatched, so the list can drop the conversation. */
+  onMatchRemoved?: (matchUserId: string) => void;
 }
 
-export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowProps) => {
+export const ChatWindow = ({ user, match, onBack, onMessagesRead, onMatchRemoved }: ChatWindowProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -558,6 +561,11 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
     );
   };
 
+  const handleMatchRemoved = () => {
+    if (onMatchRemoved) onMatchRemoved(match.match_id);
+    else onBack();
+  };
+
   return (
     <div className="flex h-full flex-col">
       {/* Chat header */}
@@ -599,12 +607,18 @@ export const ChatWindow = ({ user, match, onBack, onMessagesRead }: ChatWindowPr
           isLoading={callLimitsLoading}
         />
 
+        <ReportProfileDialog
+          reportedUserId={match.match_id}
+          profileName={match.name}
+          currentUserId={user.id}
+        />
+
         <BlockUserDialog
           userId={match.match_id}
           userName={match.name}
           isMatch
-          onBlock={onBack}
-          onUnmatch={onBack}
+          onBlock={handleMatchRemoved}
+          onUnmatch={handleMatchRemoved}
         />
       </div>
 

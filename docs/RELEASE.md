@@ -200,8 +200,52 @@ testers. Tick them in `docs/TESTER_READY.md` (or tell Claude the results).
       Profile → Settings → "Legal & support" opens the Privacy Policy and
       Terms inside the app, and "Back" returns to Settings. The sign-up form
       links to both as well.
-- [ ] Report and block another member; delete the test account from the profile
-      page ("Data & Privacy" section) and confirm you can no longer sign in with it.
+- [ ] Report and block another member, once from their profile card and once
+      from an open chat (flag icon and ⋮ menu in the chat header); the
+      blocked member disappears from your conversations straight away. Delete
+      the test account from the profile page ("Data & Privacy" section) and
+      confirm you can no longer sign in with it.
+
+## Reporting, blocking and moderation (App Review)
+
+Apple (guideline 1.2, user-generated content) and Google both expect a dating
+app to let members report and block others, and to act on reports. What the
+app does:
+
+- **Report:** the flag icon on any profile card and in the header of every
+  chat. The member picks a reason (fake profile, inappropriate content,
+  harassment, spam, appears underage, other) and can add details. Reports go
+  to `profile_reports`.
+- **Block:** the ⋮ menu on a profile card or in a chat → Block User. The
+  database then hides each member from the other (browse, profiles, Super
+  Likes), removes their likes and Super Likes both ways, and refuses
+  messages, calls, likes and Super Likes between them
+  (migration `20261127000000_enforce-blocks.sql`). The blocked member is not
+  told. **Unmatch** (same menu) removes the match without blocking.
+- **Moderation:** admins see reports in `/admin` → Reports, and can dismiss,
+  resolve, suspend or ban (a ban emails the member and they can appeal at
+  `/appeal`). Admins are emailed when a report arrives (`notify-admins`).
+- **Terms:** the Terms of Service have the zero-tolerance clause, and sign-up
+  links to them.
+
+Apple expects reports to be acted on within 24 hours. Someone has to read the
+admin alert emails and check `/admin` → Reports at least daily while the app
+is in review and in testing.
+
+**Text for the App Review notes** (App Store Connect → the version → App
+Review Information → Notes), adjust as needed:
+
+> Unity Hearts is a dating app for Bahá'í singles. Members can report any
+> member from their profile or from a conversation (flag icon on the profile
+> card and in the chat header) and block any member (⋮ menu → Block User); a block hides both
+> members from each other and stops all contact. Reports are emailed to our
+> moderators and reviewed in our admin console within 24 hours; abusive
+> accounts are suspended or banned. Members accept the Terms of Service, which
+> have a zero-tolerance policy for objectionable content and abusive users,
+> when they sign up. A demo account: [email / password].
+
+Google Play asks no separate question about this, but its policy for dating
+apps expects the same report and block features.
 
 ## Privacy policy, terms and the store privacy forms
 
