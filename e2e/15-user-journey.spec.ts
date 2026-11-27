@@ -3,7 +3,8 @@
  *   A builds a profile in the wizard, browses, Super Likes and likes B.
  *   B likes A back from the Super Likes panel, which makes a match.
  *   A and B exchange messages.
- *   B reports A, then blocks A; A disappears from B's browse and matches.
+ *   B reports A, then blocks A, both from the chat; A disappears from B's
+ *   conversations at once, and from browse and matches.
  *   An admin sees B's report in the Reports section.
  *
  * Accounts come from createTestUser (no signup form, see CLAUDE.md), so this
@@ -130,24 +131,34 @@ test("member journey: profile, super like, match, chat, report, block, admin rev
     await expect(a.getByText(reply).first()).toBeVisible({ timeout: 15000 });
   });
 
-  await test.step("B reports A", async () => {
+  // Apple asks dating apps to let members report and block from where they
+  // meet the content, so B does both from the open chat. 16-group-journey
+  // covers reporting and blocking from a profile card.
+  await test.step("B sees A's faith on A's profile", async () => {
     const dialog = await openProfile(b, nameA);
     await expect(dialog.getByTestId("faith-badge")).toHaveText("Bahá'í");
-    await dialog.getByTitle("Report Profile").click();
+  });
+
+  await test.step("B reports A from the chat", async () => {
+    await openChat(b, nameA);
+    await b.getByTitle("Report Profile").click();
     const report = b.getByRole("dialog").filter({ hasText: "Why are you reporting this profile?" });
     await report.getByLabel("Harassment or abusive behavior").check();
     await report.locator("#details").fill(reportDetails);
     await report.getByRole("button", { name: "Submit Report" }).click();
     await expect(b.getByText("Report submitted successfully").first()).toBeVisible({ timeout: 10000 });
+    await expect(report).toHaveCount(0);
   });
 
-  await test.step("B blocks A; A disappears from B's browse and matches", async () => {
-    const dialog = await openProfile(b, nameA);
-    // The "more" (⋮) menu next to the report flag holds Block User
-    await dialog.locator("div.justify-end button").first().click();
+  await test.step("B blocks A from the chat; the conversation goes at once, and A is gone from browse", async () => {
+    await expect(b.getByPlaceholder("Type a message...")).toBeVisible();
+    await b.getByRole("button", { name: "More options" }).click();
     await b.getByRole("menuitem", { name: "Block User" }).click();
     await b.getByRole("alertdialog").getByRole("button", { name: "Block User" }).click();
     await expect(b.getByText("User blocked").first()).toBeVisible({ timeout: 10000 });
+    // No reload: the chat closes and A leaves the conversation list
+    await expect(b.getByPlaceholder("Type a message...")).toHaveCount(0, { timeout: 10000 });
+    await expect(b.getByRole("button", { name: new RegExp(nameA) })).toHaveCount(0, { timeout: 10000 });
 
     await b.goto(`${BASE}/profiles`);
     await expect(b.getByText(/showing \d+ of \d+ profiles/i)).toBeVisible({ timeout: 20000 });

@@ -204,6 +204,7 @@
     "deleteAccount": "Delete Account"
   },
   "block": {
+    "moreOptions": "More options",
     "blockUser": "Block User",
     "unblock": "Unblock",
     "unmatch": "Unmatch",

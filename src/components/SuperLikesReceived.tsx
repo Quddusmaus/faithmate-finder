@@ -97,18 +97,21 @@ export const SuperLikesReceived = ({ currentUserId, onLikeBack }: SuperLikesRece
 
       const myLikedIds = new Set(myLikes?.map(l => l.liked_user_id) || []);
 
-      // Combine data
-      const combined: SuperLiker[] = superLikesData.map((sl: any) => {
+      // Combine data. Skip super likes whose sender's profile we can't see:
+      // RLS hides members either side has blocked (and paused or suspended
+      // ones), and they shouldn't appear as an "Unknown" card to like back.
+      const combined: SuperLiker[] = superLikesData.flatMap((sl: any) => {
         const profile = profilesData?.find(p => p.user_id === sl.user_id);
-        return {
+        if (!profile) return [];
+        return [{
           id: sl.id,
           user_id: sl.user_id,
-          name: profile?.name || "Unknown",
-          age: profile?.age || null,
-          photo_urls: profile?.photo_urls || [],
+          name: profile.name || "Unknown",
+          age: profile.age || null,
+          photo_urls: profile.photo_urls || [],
           created_at: sl.created_at,
           is_matched: myLikedIds.has(sl.user_id),
-        };
+        }];
       });
 
       setSuperLikers(combined);

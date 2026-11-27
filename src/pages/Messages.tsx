@@ -127,6 +127,14 @@ const Messages = () => {
     setSearchParams({});
   };
 
+  // Blocked or unmatched from the chat: drop the conversation now instead of
+  // leaving it in the list until the next reload, then refresh from the server.
+  const handleMatchRemoved = (matchUserId: string) => {
+    setMatches(current => current.filter(m => m.match_id !== matchUserId));
+    handleBackToList();
+    fetchMatches();
+  };
+
   if (!user) {
     return null;
   }
@@ -215,6 +223,7 @@ const Messages = () => {
               match={selectedMatch}
               onBack={handleBackToList}
               onMessagesRead={handleMessagesRead}
+              onMatchRemoved={handleMatchRemoved}
             />
           ) : (
             <div className="flex h-full items-center justify-center">
