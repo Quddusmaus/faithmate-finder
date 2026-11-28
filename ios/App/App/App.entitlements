@@ -9,5 +9,9 @@
 		<string>applinks:unityhearts.app</string>
 		<string>applinks:www.unityhearts.app</string>
 	</array>
+	<!-- Push notifications (APNs). Xcode switches this to "production" when
+	     the app is archived for TestFlight / the App Store. -->
+	<key>aps-environment</key>
+	<string>development</string>
 </dict>
 </plist>

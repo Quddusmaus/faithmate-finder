@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { signOutAndForgetDevice } from "@/lib/pushNotifications";
 import { Button } from "@/components/ui/button";
 import { Heart, ArrowLeft, LogOut, Settings, MessageCircle, Shield, Menu, BookOpen } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -103,7 +104,7 @@ const Profiles = () => {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOutAndForgetDevice();
     setUser(null);
     toast({
       title: "Signed out",

@@ -33,3 +33,8 @@ playwright-report/
 test-results/
 playwright-report-prod/
 test-results-prod/
+
+# Firebase / push config for the native apps: kept out of this public repo.
+# Put them in place locally (or from a CI secret) before a native build.
+android/app/google-services.json
+ios/App/App/GoogleService-Info.plist

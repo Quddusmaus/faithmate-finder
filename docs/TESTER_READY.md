@@ -22,7 +22,8 @@ Items too big for one PR get split, with the remainder added here unchecked.
 - [ ] Optional, only if auth email links don't open the app reliably: switch Supabase email templates to `https://unityhearts.app/auth?token_hash={{ .TokenHash }}&type=…` and handle `token_hash` in `Auth.tsx` with `supabase.auth.verifyOtp` (see `docs/NATIVE_LINKS.md`).
 - [x] Android back button, safe-area insets (notch), status bar, external links open in system browser, keyboard not covering chat input.
 - [x] App icons and splash screens generated from the existing logo (`@capacitor/assets`). Sources in `assets/`, regenerate with `npm run cap:assets`.
-- [ ] Push notifications for new matches and messages (Capacitor Push Notifications + FCM/APNs), sent from the existing notification triggers. Strongest protection against Apple's "just a website in a wrapper" rejection. List the Firebase/APNs keys Q must create under NEEDS Q. Split into smaller PRs if needed (client registration + token table, then sending).
+- [x] Push notifications, part 1: device registration. `push_tokens` table with `register_push_token`/`unregister_push_token`, permission prompt after sign-in, token removed on sign-out, tapping a notification opens its `url`, iOS AppDelegate/entitlement and Android 13 permission. Behind `VITE_PUSH_NOTIFICATIONS=on` until Firebase is set up. See `docs/PUSH_NOTIFICATIONS.md`.
+- [ ] Push notifications, part 2: sending. A `send-push` edge function (FCM HTTP v1 for Android, APNs for iOS) called from the existing new-match / new-message triggers alongside `send-notification-email`, respecting `notification_preferences`, deleting tokens the services report as invalid. Strongest protection against Apple's "just a website in a wrapper" rejection. Needs the Firebase service account and APNs key (NEEDS Q, listed in `docs/PUSH_NOTIFICATIONS.md`).
 - [x] GitHub Actions workflow that builds an unsigned Android debug APK on pull requests to prove the native project compiles.
 - [ ] Document (`docs/RELEASE.md`) the exact steps for Q to make a signed Android AAB and an iOS archive for TestFlight, including where signing secrets go.
 
@@ -45,7 +46,7 @@ Items too big for one PR get split, with the remainder added here unchecked.
 - [x] Rate-limited buttons disable before the error toast. Done in PR #12 (Super Like disabled at the daily cap).
 - [x] Empty messages state gets a "Browse profiles" button. Done in PR #12 (matches empty state).
 - [x] `.env.example` documenting every required env var and edge-function secret (names only). Done in PR #15.
-- [ ] Investigate why Lovable shows "Build unsuccessful" on GitHub-pushed commits; fix if it is in the code, otherwise explain under NEEDS Q.
+- [x] Investigate why Lovable shows "Build unsuccessful" on GitHub-pushed commits; fix if it is in the code, otherwise explain under NEEDS Q. Done on main: the build could not resolve `workbox-window` (PR #27 added it, PR #29 registers the service worker without it).
 
 When every box is ticked, the nightly run stops opening work PRs and only runs
 the health check (`npm ci`, `npm run lint`, `npx tsc --noEmit`,

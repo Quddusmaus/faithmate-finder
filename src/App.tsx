@@ -26,6 +26,7 @@ import InstallPromptBanner from "./components/InstallPromptBanner";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { BottomNav } from "./components/BottomNav";
+import { PushNotificationsRegistrar } from "./components/PushNotificationsRegistrar";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
             <CookieConsent />
             <InstallPromptBanner />
             <BottomNav />
+            <PushNotificationsRegistrar />
           </ErrorBoundary>
         </BrowserRouter>
       </TooltipProvider>
