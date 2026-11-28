@@ -35,7 +35,7 @@ secrets exist, the function skips push silently and emails work as before.
 
 | Piece | Where |
 | --- | --- |
-| Token table + `register_push_token` / `unregister_push_token` | `supabase/migrations/20261123000000_push-tokens.sql` |
+| Token table + `register_push_token` / `unregister_push_token` | `supabase/migrations/20261123000001_push-tokens.sql` |
 | Send to FCM / APNs, delete dead tokens | `supabase/functions/send-notification-email/push.ts` (tests: `src/lib/pushSend.test.ts`) |
 | Ask permission, save token, open tapped notification | `src/lib/pushNotifications.ts`, `src/components/PushNotificationsRegistrar.tsx` |
 | Remove token before sign-out | `signOutAndForgetDevice()` in `src/lib/pushNotifications.ts` |
