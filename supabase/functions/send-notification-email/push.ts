@@ -2,7 +2,7 @@
 //
 // Called by send-notification-email, which the new-like / new-match /
 // new-message database triggers already call. Reads the recipient's devices
-// from push_tokens (see migration 20261123000000_push-tokens.sql) and sends:
+// from push_tokens (see migration 20261123000001_push-tokens.sql) and sends:
 //   - Android rows (FCM tokens) through Firebase Cloud Messaging HTTP v1
 //   - iOS rows (APNs device tokens) straight to Apple Push Notification service
 // Tokens the services report as dead are deleted.
