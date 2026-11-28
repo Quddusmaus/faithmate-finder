@@ -10,17 +10,33 @@ Done in two steps:
    `push_tokens` table. Sign-out removes it. Deleting the account removes it.
    Tapping a notification opens the page in its `url` field
    (for example `/messages?match=…`).
-2. **Sending (next).** The existing new-match and new-message triggers (the
-   same ones that call `send-notification-email`) will also call a new
-   `send-push` edge function, which reads `push_tokens` and sends to
-   Firebase Cloud Messaging (Android) and Apple Push Notification service
-   (iOS). It will respect `notification_preferences`.
+2. **Sending (done, waits for the secrets below).** The database triggers
+   for new matches and new messages already call the
+   `send-notification-email` edge function. That function now first sends a
+   push to each of the recipient's phones (`push.ts` next to it), then sends
+   the email as before. Android goes through Firebase Cloud Messaging
+   (HTTP v1), iPhone straight to Apple (APNs). Tokens the services report as
+   uninstalled are deleted from `push_tokens`. No database change was needed.
+
+What members see (English, like the emails; the message text itself is never
+shown on the lock screen):
+
+| Event | Title | Text | Tapping opens |
+| --- | --- | --- | --- |
+| New match | It's a match! 🎉 | You and *Name* liked each other. Say hello! | `/messages?match=<their id>` |
+| New message | New message 💬 | *Name* sent you a message | `/messages?match=<their id>` |
+
+Likes stay email-only. Push does not follow the email on/off switches on the
+profile page: a member who unsubscribed from emails still gets app
+notifications, and turns those off in the phone's own settings. Until the
+secrets exist, the function skips push silently and emails work as before.
 
 ## How the pieces fit
 
 | Piece | Where |
 | --- | --- |
 | Token table + `register_push_token` / `unregister_push_token` | `supabase/migrations/20261123000001_push-tokens.sql` |
+| Send to FCM / APNs, delete dead tokens | `supabase/functions/send-notification-email/push.ts` (tests: `src/lib/pushSend.test.ts`) |
 | Ask permission, save token, open tapped notification | `src/lib/pushNotifications.ts`, `src/components/PushNotificationsRegistrar.tsx` |
 | Remove token before sign-out | `signOutAndForgetDevice()` in `src/lib/pushNotifications.ts` |
 | iOS: forward the APNs token to Capacitor | `ios/App/App/AppDelegate.swift` |
@@ -54,8 +70,9 @@ Firebase file below is in place.
    `android/app/google-services.json`. It is gitignored: do not commit it
    (this repo is public). For CI builds, store it as a GitHub secret.
 4. Project settings → Service accounts → Generate new private key. This JSON
-   is a **secret**: it will be set as the edge-function secret
-   `FCM_SERVICE_ACCOUNT_JSON` (step 2, not needed yet).
+   is a **secret**: paste the whole file's contents as the edge-function
+   secret `FCM_SERVICE_ACCOUNT_JSON` (Lovable → Cloud → Secrets, or
+   Supabase → Edge Functions → Secrets). Never commit it.
 
 **Apple (iOS)**, needs the paid Apple Developer account:
 
@@ -64,19 +81,32 @@ Firebase file below is in place.
    this.)
 2. Keys → "+" → enable **Apple Push Notifications service (APNs)** →
    download the `.p8` file (can only be downloaded once). Note the **Key ID**
-   and your **Team ID**. These will be the edge-function secrets
-   `APNS_KEY_P8`, `APNS_KEY_ID`, `APNS_TEAM_ID` (step 2, not needed yet).
+   and your **Team ID** (top right of the developer site). Set the
+   edge-function secrets:
+   - `APNS_KEY_P8`: the whole `.p8` file contents, including the
+     `-----BEGIN PRIVATE KEY-----` lines (line breaks may be pasted as `\n`)
+   - `APNS_KEY_ID`: the 10-character Key ID
+   - `APNS_TEAM_ID`: the 10-character Team ID
+
+   The same key works for Xcode debug builds (Apple's "sandbox") and for
+   TestFlight / App Store builds; the function tries both automatically.
 
 The push entitlement means iOS builds need a signing team with a paid
 membership; a free personal team cannot sign it.
 
 ## Testing on a phone (not yet done)
 
-1. Build with `VITE_PUSH_NOTIFICATIONS=on` and the Firebase file in place.
+1. Set the secrets above and build with `VITE_PUSH_NOTIFICATIONS=on` and the
+   Firebase file in place.
 2. Sign in: the app should ask to allow notifications.
 3. In Supabase, `select platform, updated_at from push_tokens` should show the
    device.
-4. Sign out: the row should disappear.
-5. Until step 2 lands, send a test message from the Firebase console
-   (Messaging → test on device, paste the token) with a custom data key
-   `url` = `/messages`, and check that tapping it opens Messages.
+4. Put the app in the background. From a second account (website is fine),
+   match with the test account, then send it a message. A notification should
+   arrive for each; tapping it should open that conversation.
+5. If nothing arrives: Supabase → Edge Functions → `send-notification-email`
+   → Logs. Each call logs `Push for match: {"sent":…,"removed":…,"failed":…}`;
+   `"skipped":"not-configured"` means the secrets are missing,
+   `"skipped":"no-devices"` means step 3 failed, and errors from Google or
+   Apple are logged in full.
+6. Sign out: the row should disappear and notifications stop.
