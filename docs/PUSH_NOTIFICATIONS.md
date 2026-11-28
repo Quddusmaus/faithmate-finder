@@ -20,7 +20,7 @@ Done in two steps:
 
 | Piece | Where |
 | --- | --- |
-| Token table + `register_push_token` / `unregister_push_token` | `supabase/migrations/20261123000000_push-tokens.sql` |
+| Token table + `register_push_token` / `unregister_push_token` | `supabase/migrations/20261123000001_push-tokens.sql` |
 | Ask permission, save token, open tapped notification | `src/lib/pushNotifications.ts`, `src/components/PushNotificationsRegistrar.tsx` |
 | Remove token before sign-out | `signOutAndForgetDevice()` in `src/lib/pushNotifications.ts` |
 | iOS: forward the APNs token to Capacitor | `ios/App/App/AppDelegate.swift` |
